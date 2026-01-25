@@ -169,6 +169,28 @@
 
     <div class="card">
       <label for="input">전성분 입력</label>
+      <label for="imageInput">사진 업로드 (성분표)</label>
+
+      <input
+        id="imageInput"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style="display:none"
+      />
+
+      <div class="row">
+        <button id="btnPhoto" class="btn-secondary" type="button">사진 찍기/올리기</button>
+        <button id="btnOcr" class="btn-secondary" type="button" disabled>사진에서 텍스트 추출(OCR)</button>
+      </div>
+
+      <div id="imgWrap" class="output" style="display:none; padding:12px;">
+        <img id="imgPreview" alt="preview" style="max-width:100%; border-radius:12px; display:block;" />
+        <div class="footer" style="margin-top:8px;">
+          사진이 흐리면 빛 반사 줄이고, 성분표 영역만 가까이 찍어주세요.
+        </div>
+      </div>
+
       <textarea id="input" rows="8" placeholder="예: Water, Glycerin, Niacinamide ..."></textarea>
 
       <div class="row">
@@ -201,6 +223,44 @@
     const $status = document.getElementById("status");
     const $countPill = document.getElementById("countPill");
     const $endpointPill = document.getElementById("endpointPill");
+
+    const $btnPhoto = document.getElementById("btnPhoto");
+    const $btnOcr = document.getElementById("btnOcr");
+    const $imgWrap = document.getElementById("imgWrap");
+    const $imgPreview = document.getElementById("imgPreview");
+
+    let selectedFile = null;
+
+    $btnPhoto.addEventListener("click", () => {
+      $imageInput.click();
+    });
+
+    $imageInput.addEventListener("change", () => {
+      const file = $imageInput.files && $imageInput.files[0];
+      selectedFile = file || null;
+
+      if (!selectedFile) {
+        $imgWrap.style.display = "none";
+        $imgPreview.removeAttribute("src");
+        $btnOcr.disabled = true;
+        return;
+      }
+
+      const url = URL.createObjectURL(selectedFile);
+      $imgPreview.src = url;
+      $imgWrap.style.display = "block";
+      $btnOcr.disabled = false;
+
+      setStatus("사진이 선택되었습니다. OCR을 누르세요.", "");
+    });
+
+    $btnOcr.addEventListener("click", async () => {
+      if (!selectedFile) {
+        setStatus("먼저 사진을 선택하세요.", "err");
+        return;
+      }
+      setStatus("OCR은 다음 단계에서 연결됩니다.", "ok");
+    });
 
     function setStatus(msg, type){
       $status.className = "status show" + (type ? (" " + type) : "");
