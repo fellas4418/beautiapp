@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beauty Analyzer</title>
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --card:#111318;
+      --text:#e8e8ea;
+      --muted:#a8abb4;
+      --border:rgba(255,255,255,.10);
+      --btn:#2b6cff;
+      --btn2:#1f2430;
+      --danger:#ff4d4f;
+      --ok:#20c997;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .wrap{
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 40px;
+    }
+    .header{
+      padding: 12px 4px 6px;
+    }
+    .title{
+      margin:0;
+      font-size: 26px;
+      line-height: 1.2;
+      letter-spacing: -0.2px;
+    }
+    .sub{
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .card{
+      margin-top: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    label{
+      display:block;
+      font-size: 14px;
+      color: var(--muted);
+      margin: 2px 0 8px;
+    }
+    textarea{
+      width: 100%;
+      min-height: 160px;
+      resize: vertical;
+      padding: 14px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.45;
+      outline: none;
+    }
+    textarea:focus{
+      border-color: rgba(43,108,255,.6);
+      box-shadow: 0 0 0 4px rgba(43,108,255,.15);
+    }
+    .row{
+      display:flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    button{
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 14px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 48px;
+    }
+    .btn-primary{
+      background: var(--btn);
+      color: white;
+      flex: 1 1 160px;
+    }
+    .btn-secondary{
+      background: var(--btn2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      flex: 0 0 auto;
+      min-width: 120px;
+    }
+    button:disabled{
+      opacity: .6;
+      cursor: not-allowed;
+    }
+    .meta{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content: space-between;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+    }
+    .status{
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+      display:none;
+    }
+    .status.show{ display:block; }
+    .status.ok{ color: var(--ok); }
+    .status.err{ color: var(--danger); }
+    .output{
+      margin-top: 14px;
+      padding: 14px 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.55;
+      font-size: 15px;
+      min-height: 120px;
+    }
+    .footer{
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 420px){
+      .title{ font-size: 22px; }
+      textarea{ min-height: 170px; }
+      button{ width: 100%; }
+      .btn-secondary{ min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1 class="title">Beauty 분석</h1>
+      <p class="sub">전성분(INCI)을 붙여넣고 분석을 누르세요. 모바일에 맞춰 입력과 결과를 크게 보여줍니다.</p>
+    </div>
+
+    <div class="card">
+      <label for="input">전성분 입력</label>
+      <textarea id="input" rows="8" placeholder="예: Water, Glycerin, Niacinamide ..."></textarea>
+
+      <div class="row">
+        <button id="btnAnalyze" class="btn-primary" onclick="send()">성분 분석하기</button>
+        <button id="btnClear" class="btn-secondary" onclick="clearAll()">지우기</button>
+      </div>
+
+      <div class="meta">
+        <div class="pill" id="countPill">0 글자</div>
+        <div class="pill" id="endpointPill">API 연결됨</div>
+      </div>
+
+      <div id="status" class="status"></div>
+
+      <div id="output" class="output"></div>
+
+      <div class="footer">
+        결과가 이상하면 전성분 텍스트를 전체 선택 후 다시 붙여넣고 재시도하세요.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WORKER_ENDPOINT = "https://beauty-gemini-proxy.ohryee.workers.dev/analyze";
+
+    const $input = document.getElementById("input");
+    const $output = document.getElementById("output");
+    const $btnAnalyze = document.getElementById("btnAnalyze");
+    const $btnClear = document.getElementById("btnClear");
+    const $status = document.getElementById("status");
+    const $countPill = document.getElementById("countPill");
+    const $endpointPill = document.getElementById("endpointPill");
+
+    function setStatus(msg, type){
+      $status.className = "status show" + (type ? (" " + type) : "");
+      $status.textContent = msg;
+    }
+    function clearStatus(){
+      $status.className = "status";
+      $status.textContent = "";
+    }
+    function setLoading(on){
+      $btnAnalyze.disabled = on;
+      $btnClear.disabled = on;
+      $btnAnalyze.textContent = on ? "분석 중..." : "성분 분석하기";
+    }
+    function clearAll(){
+      $input.value = "";
+      $output.textContent = "";
+      clearStatus();
+      updateCount();
+      $input.focus();
+    }
+    function updateCount(){
+      const n = ($input.value || "").length;
+      $countPill.textContent = n.toLocaleString() + " 글자";
+    }
+
+    $input.addEventListener("input", updateCount);
+    updateCount();
+    $endpointPill.textContent = "API: workers.dev";
+
+    async function send() {
+      const text = ($input.value || "").trim();
+      if (!text) {
+        setStatus("전성분을 입력하세요.", "err");
+        $input.focus();
+        return;
+      }
+
+      clearStatus();
+      setLoading(true);
+      $output.textContent = "";
+
+      try {
+        const res = await fetch(WORKER_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          const msg = data?.error || ("오류가 발생했습니다. (" + res.status + ")");
+          setStatus(msg, "err");
+          $output.textContent = JSON.stringify(data, null, 2);
+          return;
+        }
+
+        const outText = data?.text || "";
+        if (!outText) {
+          setStatus("응답은 왔지만 결과 텍스트가 비어 있습니다.", "err");
+          $output.textContent = JSON.stringify(data, null, 2);
+          return;
+        }
+
+        setStatus("완료", "ok");
+        $output.textContent = String(outText).replaceAll("\\n", "\n");
+
+      } catch (e) {
+        setStatus("네트워크 오류: " + String(e), "err");
+      } finally {
+        setLoading(false);
+      }
+    }
+  </script>
+</body>
+</html>
