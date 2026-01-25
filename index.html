@@ -214,7 +214,8 @@
   </div>
 
   <script>
-    const WORKER_ENDPOINT = "https://beauty-gemini-proxy.ohryee.workers.dev/analyze";
+    const API_BASE = "https://beauty-gemini-proxy.ohryee.workers.dev";
+    const WORKER_ENDPOINT = API_BASE + "/analyze";
   
     const $input = document.getElementById("input");
     const $output = document.getElementById("output");
@@ -227,6 +228,9 @@
     const $imageInput = document.getElementById("imageInput"); // ← 이게 빠져있었음(치명)
     const $btnPhoto = document.getElementById("btnPhoto");
     const $btnOcr = document.getElementById("btnOcr");
+    let lastOcrText = "";
+    let lastBase64 = "";
+
     const $imgWrap = document.getElementById("imgWrap");
     const $imgPreview = document.getElementById("imgPreview");
   
@@ -250,10 +254,24 @@
     $btnPhoto.addEventListener("click", () => {
       $imageInput.click();
     });
-  
+    function isLikelyIngredientsText(t) {
+    if (!t) return false;
+    const text = String(t).trim();
+    if (text.length < 80) return false;
+    
+    const commaCount = (text.match(/,/g) || []).length;
+    const hasKeyword = /(ingredients?|inci|전성분|성분)/i.test(text);
+
+    if (commaCount >= 3) return true;
+    if (hasKeyword && text.length >= 120) return true;
+ 
+    return false;
+}
     $imageInput.addEventListener("change", () => {
       const file = $imageInput.files && $imageInput.files[0];
       selectedFile = file || null;
+      lastOcrText = "";
+      updateCount(); // 버튼 상태도 같이 재계산됨
 
       // 🔴 이전 미리보기 URL 해제
       if (previewUrl) {
@@ -290,15 +308,42 @@
     setStatus("사진을 텍스트로 변환 준비 중...", "");
     
     const base64 = await fileToBase64(selectedFile);
+    lastBase64 = base64; // OCR/분석 단계에서 재사용
+    setStatus("성분표 인식(OCR) 중...", "");
+
+const res = await fetch(API_BASE + "/ocr", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ imageBase64: base64 }),
+});
+
+if (!res.ok) {
+  throw new Error("OCR API 실패: " + res.status);
+}
+
+const data = await res.json();
+const text = (data && data.text) ? String(data.text) : "";
+lastOcrText = text;
+
+// OCR 품질 체크 후 분석 버튼 on/off
+if (isLikelyIngredientsText(text)) {
+  $input.value = text;
+  updateCount();
+  setStatus("성분표 인식 완료. 성분 분석을 진행할 수 있습니다.", "ok");
+} else {
+  lastOcrText = "";
+  updateCount();
+  setStatus("성분표가 충분히 인식되지 않았습니다. 성분표 영역을 가까이, 빛 반사 없이 다시 촬영해주세요.", "err");
+}
 
     // 여기서부터 다음 단계: Workers /ocr로 보내면 됨
     // 지금은 확인용으로 textarea에 길이만 표시
-    $input.value = "base64 길이: " + base64.length.toLocaleString() + " chars";
-    updateCount();
-    setStatus("base64 변환 완료. 이제 OCR API로 전송하면 됩니다.", "ok");
+    // base64 길이는 디버그용이므로 UI에 표시하지 않음
+    // $input.value = "base64 길이: " + base64.length.toLocaleString() + " chars";
+    // setStatus는 위 OCR 결과에 따라 이미 처리함
 
   } catch (e) {
-    setStatus("base64 변환 실패: " + String(e), "err");
+    setStatus("OCR 실패: " + String(e), "err");
   } finally {
     $btnOcr.disabled = false;
   }
@@ -313,18 +358,28 @@
       $status.className = "status";
       $status.textContent = "";
     }
-    function setLoading(on){
-      $btnAnalyze.disabled = on;
-      $btnClear.disabled = on;
-      $btnAnalyze.textContent = on ? "분석 중..." : "성분 분석하기";
+    function setLoading(on) {
+    if (on) {
+      $btnAnalyze.disabled = true; 
+      $btnClear.disabled = true;
+      $btnAnalyze.textContent = "분석 중...";
+     return;
     }
+
+      $btnClear.disabled = false;
+      $btnAnalyze.textContent = "성분 분석하기";
+      updateCount();
+    }
+    
     function clearAll(){
       $input.value = "";
       $output.textContent = "";
+      lastOcrText = "";
+      lastBase64 = "";
       clearStatus();
       updateCount();
       $input.focus();
-
+            
       // 사진 관련 초기화 추가
   selectedFile = null;
   
@@ -342,6 +397,12 @@
     function updateCount(){
       const n = ($input.value || "").length;
       $countPill.textContent = n.toLocaleString() + " 글자";
+  
+      const typed = ($input.value || "").trim();
+      const ocr = (lastOcrText || "").trim();
+      const canAnalyze = isLikelyIngredientsText(ocr) || typed.length > 0;
+
+      $btnAnalyze.disabled = !canAnalyze;     
     }
   
     $input.addEventListener("input", updateCount);
@@ -349,12 +410,15 @@
     $endpointPill.textContent = "API: workers.dev";
   
     async function send() {
-      const text = ($input.value || "").trim();
-      if (!text) {
-        setStatus("전성분을 입력하세요.", "err");
-        $input.focus();
-        return;
-      }
+    const typed = ($input.value || "").trim();
+    const ocr = (lastOcrText || "").trim();
+    const text = isLikelyIngredientsText(ocr) ? ocr : typed;
+   
+    if (!text) {
+      setStatus("전성분을 입력하거나 OCR을 먼저 진행하세요.", "err");
+      $input.focus();
+    return;
+}
   
       clearStatus();
       setLoading(true);
