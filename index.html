@@ -125,9 +125,15 @@
       color: var(--muted);
     }
     .status{
+      position: sticky;
+      top: 10px;
       margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(17,19,24,.95);
+      border: 1px solid var(--border);
       font-size: 14px;
-      color: var(--muted);
+      z-index: 20;
       display:none;
     }
     .status.show{ display:block; }
@@ -169,29 +175,27 @@
 
     <div class="card">
       <label for="input">전성분 입력</label>
-      <label for="imageInput">사진 업로드 (성분표)</label>
-
-      <input
-        id="imageInput"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style="display:none"
-      />
+     
+      <input id="imageCamera" type="file" accept="image/*" capture="environment" style="display:none" />
+      <input id="imageGallery" type="file" accept="image/*" style="display:none" />
+     
 
       <div class="row">
-        <button id="btnPhoto" class="btn-secondary" type="button">사진 찍기/올리기</button>
-        <button id="btnOcr" class="btn-secondary" type="button" disabled>사진에서 텍스트 추출(OCR)</button>
+        <button id="btnCamera" class="btn-secondary" type="button">사진 찍기</button>
+        <button id="btnGallery" class="btn-secondary" type="button">사진 불러오기</button>
+        <button id="btnOcr" class="btn-secondary" type="button" disabled>글자 읽기</button>
       </div>
-
+      
       <div id="imgWrap" class="output" style="display:none; padding:12px;">
         <img id="imgPreview" alt="preview" style="max-width:100%; border-radius:12px; display:block;" />
         <div class="footer" style="margin-top:8px;">
-          사진이 흐리면 빛 반사 줄이고, 성분표 영역만 가까이 찍어주세요.
+          사진에서 글자 읽기: 성분표 글자가 크게 보이게 찍어주세요.
         </div>
       </div>
 
       <textarea id="input" rows="8" placeholder="예: Water, Glycerin, Niacinamide ..."></textarea>
+
+      <div id="status" class="status"></div>
 
       <div class="row">
         <button id="btnAnalyze" class="btn-primary" onclick="send()">성분 분석하기</button>
@@ -203,8 +207,7 @@
         <div class="pill" id="endpointPill">API 연결됨</div>
       </div>
 
-      <div id="status" class="status"></div>
-
+      
       <div id="output" class="output"></div>
 
       <div class="footer">
@@ -225,116 +228,185 @@
     const $countPill = document.getElementById("countPill");
     const $endpointPill = document.getElementById("endpointPill");
   
-    const $imageInput = document.getElementById("imageInput"); // ← 이게 빠져있었음(치명)
-    const $btnPhoto = document.getElementById("btnPhoto");
+    const $imageCamera = document.getElementById("imageCamera");
+    const $imageGallery = document.getElementById("imageGallery");
+    
+    const $btnCamera = document.getElementById("btnCamera");
+    const $btnGallery = document.getElementById("btnGallery");
+
     const $btnOcr = document.getElementById("btnOcr");
     let lastOcrText = "";
-    let lastBase64 = "";
-
+    let ocrBusy = false;
+   
     const $imgWrap = document.getElementById("imgWrap");
     const $imgPreview = document.getElementById("imgPreview");
   
     let selectedFile = null;
     let previewUrl = null;
-    function fileToBase64(file){
+    function fileToPayload(file, maxW = 1400, quality = 0.85) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("FileReader error"));
-    reader.onload = () => {
-      const dataUrl = String(reader.result || "");
-      // data:image/jpeg;base64,AAAA... 에서 AAAA... 부분만 뽑기
-      const base64 = dataUrl.split(",")[1] || "";
-      resolve(base64);
+    if (!file) return reject(new Error("no file"));
+
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error("FileReader error"));
+    fr.onload = () => {
+      const dataUrl = String(fr.result || "");
+
+      const img = new Image();
+      img.onerror = () => reject(new Error("image decode error"));
+      img.onload = () => {
+        const w = img.naturalWidth || img.width || 1;
+        const h = img.naturalHeight || img.height || 1;
+
+        const scale = Math.min(1, maxW / w);
+        const tw = Math.max(1, Math.round(w * scale));
+        const th = Math.max(1, Math.round(h * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = tw;
+        canvas.height = th;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("canvas ctx error"));
+
+        ctx.drawImage(img, 0, 0, tw, th);
+
+        const outMime = "image/jpeg";
+        const outDataUrl = canvas.toDataURL(outMime, quality);
+        const base64 = outDataUrl.split(",")[1] || "";
+
+        resolve({
+          imageBase64: base64,
+          mimeType: outMime,
+          width: tw,
+          height: th,
+        });
+      };
+
+      img.src = dataUrl;
     };
-    reader.readAsDataURL(file);
+
+    fr.readAsDataURL(file);
   });
 }
 
   
-    $btnPhoto.addEventListener("click", () => {
-      $imageInput.click();
-    });
+    $btnCamera.addEventListener("click", () => { $imageCamera.value = ""; $imageCamera.click(); });
+    $btnGallery.addEventListener("click", () => { $imageGallery.value = ""; $imageGallery.click(); });
+
     function isLikelyIngredientsText(t) {
     if (!t) return false;
     const text = String(t).trim();
     if (text.length < 80) return false;
     
     const commaCount = (text.match(/,/g) || []).length;
+    const lineCount = (text.match(/\n/g) || []).length;
+    const dotCount  = (text.match(/·/g) || []).length;
+    const slashCount = (text.match(/\//g) || []).length;
     const hasKeyword = /(ingredients?|inci|전성분|성분)/i.test(text);
 
     if (commaCount >= 3) return true;
+    if (lineCount >= 6) return true;
+    if (dotCount >= 6) return true;
+    if (slashCount >= 6) return true;
     if (hasKeyword && text.length >= 120) return true;
  
     return false;
 }
-    $imageInput.addEventListener("change", () => {
-      const file = $imageInput.files && $imageInput.files[0];
-      selectedFile = file || null;
-      lastOcrText = "";
-      updateCount(); // 버튼 상태도 같이 재계산됨
 
-      // 🔴 이전 미리보기 URL 해제
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        previewUrl = null;
-      }
+function handleImagePicked(file){
+  selectedFile = file || null;
+  lastOcrText = "";
+  updateCount();
 
-      if (!selectedFile) {
-        $imgWrap.style.display = "none";
-        $imgPreview.removeAttribute("src");
-        $btnOcr.disabled = true;
-        return;
-      }
+  if (previewUrl) {
+    URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+  }
 
-  // 🔵 새 미리보기 URL 생성
-      previewUrl = URL.createObjectURL(selectedFile);
-      $imgPreview.src = previewUrl;
-
-      $imgWrap.style.display = "block";
-      $btnOcr.disabled = false;
-
-      setStatus("사진이 선택되었습니다. OCR을 누르세요.", "");
-    });
-
-  
-    $btnOcr.addEventListener("click", async () => {
   if (!selectedFile) {
-    setStatus("먼저 사진을 선택하세요.", "err");
+    $imgWrap.style.display = "none";
+    $imgPreview.removeAttribute("src");
+    $btnOcr.disabled = true;
     return;
   }
 
+  previewUrl = URL.createObjectURL(selectedFile);
+  $imgPreview.src = previewUrl;
+  $imgWrap.style.display = "block";
+  $btnOcr.disabled = false;
+
+  setStatus("사진이 선택되었습니다. 글자 읽기를 눌러주세요.", "");
+}
+  $imageCamera.addEventListener("change", () => {
+  handleImagePicked($imageCamera.files[0]);
+});
+
+  $imageGallery.addEventListener("change", () => {
+  handleImagePicked($imageGallery.files[0]);
+});
+
+  $btnOcr.addEventListener("click", async () => {
+    if (ocrBusy) return;
+
+    if (!selectedFile) {
+      setStatus("먼저 사진을 선택하세요.", "err");
+      return;
+  }
+
+  ocrBusy = true;
+
   try {
     $btnOcr.disabled = true;
-    setStatus("사진을 텍스트로 변환 준비 중...", "");
+    setStatus("글자를 읽을 준비 중…", "");
     
-    const base64 = await fileToBase64(selectedFile);
-    lastBase64 = base64; // OCR/분석 단계에서 재사용
-    setStatus("성분표 인식(OCR) 중...", "");
+    const payload = await fileToPayload(selectedFile, 1800, 0.9);
+    
+    setStatus("사진에서 글자를 읽는 중이에요…", "");
 
 const res = await fetch(API_BASE + "/ocr", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ imageBase64: base64 }),
+  body: JSON.stringify(payload),
 });
 
+const bodyText = await res.text().catch(() => "");
+
 if (!res.ok) {
-  throw new Error("OCR API 실패: " + res.status);
-}
-
-const data = await res.json();
-const text = (data && data.text) ? String(data.text) : "";
-lastOcrText = text;
-
-// OCR 품질 체크 후 분석 버튼 on/off
-if (isLikelyIngredientsText(text)) {
-  $input.value = text;
-  updateCount();
-  setStatus("성분표 인식 완료. 성분 분석을 진행할 수 있습니다.", "ok");
-} else {
+  setStatus("글자 읽기 요청 실패 (" + res.status + ")", "err");
+  $output.textContent = "서버 응답(실패):\n" + bodyText;
   lastOcrText = "";
   updateCount();
-  setStatus("성분표가 충분히 인식되지 않았습니다. 성분표 영역을 가까이, 빛 반사 없이 다시 촬영해주세요.", "err");
+  return;
 }
+
+let data = {};
+try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; }
+
+const ocrPayload = (data && (data.rawText || data.text)) ? String(data.rawText || data.text) : "";
+const raw = ocrPayload.trim();
+
+// 빈값이면 여기서 종료
+if (!raw) {
+  setStatus("사진에서 글자를 찾지 못했어요. 성분표 글자가 크게 보이게 다시 찍거나, 아래에 직접 붙여넣어 주세요.", "err");
+  $output.textContent = "서버 응답: " + JSON.stringify(data, null, 2);
+  lastOcrText = "";
+  updateCount();
+  return;
+}
+// 원문은 그대로 유지
+lastOcrText = raw;
+$input.value = raw;
+updateCount();
+
+// 품질 체크는 경고/안내만
+if (isLikelyIngredientsText(raw)) {
+  setStatus("성분표 인식 완료. 성분 분석을 진행할 수 있습니다.", "ok");
+} else {
+  setStatus("성분표 인식이 불완전할 수 있습니다. 그래도 인식된 텍스트는 그대로 표시합니다.", "err");
+}
+
+
 
     // 여기서부터 다음 단계: Workers /ocr로 보내면 됨
     // 지금은 확인용으로 textarea에 길이만 표시
@@ -346,6 +418,7 @@ if (isLikelyIngredientsText(text)) {
     setStatus("OCR 실패: " + String(e), "err");
   } finally {
     $btnOcr.disabled = false;
+    ocrBusy = false;
   }
 });
 
@@ -367,6 +440,7 @@ if (isLikelyIngredientsText(text)) {
     }
 
       $btnClear.disabled = false;
+      $btnAnalyze.disabled = false;
       $btnAnalyze.textContent = "성분 분석하기";
       updateCount();
     }
@@ -375,20 +449,21 @@ if (isLikelyIngredientsText(text)) {
       $input.value = "";
       $output.textContent = "";
       lastOcrText = "";
-      lastBase64 = "";
+      ocrBusy = false;
       clearStatus();
       updateCount();
-      $input.focus();
-            
-      // 사진 관련 초기화 추가
-  selectedFile = null;
+
+      $imageCamera.value = "";
+      $imageGallery.value = "";      
+      $imageCamera.type = "text"; $imageCamera.type = "file";
+      $imageGallery.type = "text"; $imageGallery.type = "file";
+      selectedFile = null;
   
   if (previewUrl) {
-  URL.revokeObjectURL(previewUrl);
-  previewUrl = null;
+    URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
 }
-
-  $imageInput.value = "";          // 같은 파일 재선택 가능하게
+     // 같은 파일 재선택 가능하게
   $imgWrap.style.display = "none";
   $imgPreview.removeAttribute("src");
   $btnOcr.disabled = true;
@@ -400,7 +475,7 @@ if (isLikelyIngredientsText(text)) {
   
       const typed = ($input.value || "").trim();
       const ocr = (lastOcrText || "").trim();
-      const canAnalyze = isLikelyIngredientsText(ocr) || typed.length > 0;
+      const canAnalyze = (ocr.length > 0) || (typed.length > 0);
 
       $btnAnalyze.disabled = !canAnalyze;     
     }
@@ -410,15 +485,15 @@ if (isLikelyIngredientsText(text)) {
     $endpointPill.textContent = "API: workers.dev";
   
     async function send() {
-    const typed = ($input.value || "").trim();
-    const ocr = (lastOcrText || "").trim();
-    const text = isLikelyIngredientsText(ocr) ? ocr : typed;
+      const typed = ($input.value || "").trim();
+      const ocr = (lastOcrText || "").trim();
+      const text = ocr || typed;
    
-    if (!text) {
-      setStatus("전성분을 입력하거나 OCR을 먼저 진행하세요.", "err");
-      $input.focus();
-    return;
-}
+      if (!text) {
+        setStatus("전성분을 입력하거나 OCR을 먼저 진행하세요.", "err");
+        $input.focus();
+        return;
+      }
   
       clearStatus();
       setLoading(true);
@@ -430,23 +505,25 @@ if (isLikelyIngredientsText(text)) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text }),
         });
-  
-        const data = await res.json().catch(() => ({}));
-  
+
+        const bodyText = await res.text().catch(() => "");
+        let data = {};
+        try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; }
+
         if (!res.ok) {
           const msg = data?.error || ("오류가 발생했습니다. (" + res.status + ")");
           setStatus(msg, "err");
-          $output.textContent = JSON.stringify(data, null, 2);
+          $output.textContent = bodyText || JSON.stringify(data, null, 2);
           return;
         }
-  
+
         const outText = data?.text || "";
         if (!outText) {
           setStatus("응답은 왔지만 결과 텍스트가 비어 있습니다.", "err");
-          $output.textContent = JSON.stringify(data, null, 2);
+          $output.textContent = bodyText || JSON.stringify(data, null, 2);
           return;
         }
-  
+
         setStatus("완료", "ok");
         $output.textContent = String(outText).replaceAll("\\n", "\n");
   
