@@ -215,7 +215,7 @@
 
   <script>
     const WORKER_ENDPOINT = "https://beauty-gemini-proxy.ohryee.workers.dev/analyze";
-
+  
     const $input = document.getElementById("input");
     const $output = document.getElementById("output");
     const $btnAnalyze = document.getElementById("btnAnalyze");
@@ -223,21 +223,43 @@
     const $status = document.getElementById("status");
     const $countPill = document.getElementById("countPill");
     const $endpointPill = document.getElementById("endpointPill");
-
+  
+    const $imageInput = document.getElementById("imageInput"); // ← 이게 빠져있었음(치명)
     const $btnPhoto = document.getElementById("btnPhoto");
     const $btnOcr = document.getElementById("btnOcr");
     const $imgWrap = document.getElementById("imgWrap");
     const $imgPreview = document.getElementById("imgPreview");
-
+  
     let selectedFile = null;
+    let previewUrl = null;
+    function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("FileReader error"));
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      // data:image/jpeg;base64,AAAA... 에서 AAAA... 부분만 뽑기
+      const base64 = dataUrl.split(",")[1] || "";
+      resolve(base64);
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
+  
     $btnPhoto.addEventListener("click", () => {
       $imageInput.click();
     });
-
+  
     $imageInput.addEventListener("change", () => {
       const file = $imageInput.files && $imageInput.files[0];
       selectedFile = file || null;
+
+      // 🔴 이전 미리보기 URL 해제
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+      }
 
       if (!selectedFile) {
         $imgWrap.style.display = "none";
@@ -246,22 +268,43 @@
         return;
       }
 
-      const url = URL.createObjectURL(selectedFile);
-      $imgPreview.src = url;
+  // 🔵 새 미리보기 URL 생성
+      previewUrl = URL.createObjectURL(selectedFile);
+      $imgPreview.src = previewUrl;
+
       $imgWrap.style.display = "block";
       $btnOcr.disabled = false;
 
       setStatus("사진이 선택되었습니다. OCR을 누르세요.", "");
     });
 
+  
     $btnOcr.addEventListener("click", async () => {
-      if (!selectedFile) {
-        setStatus("먼저 사진을 선택하세요.", "err");
-        return;
-      }
-      setStatus("OCR은 다음 단계에서 연결됩니다.", "ok");
-    });
+  if (!selectedFile) {
+    setStatus("먼저 사진을 선택하세요.", "err");
+    return;
+  }
 
+  try {
+    $btnOcr.disabled = true;
+    setStatus("사진을 텍스트로 변환 준비 중...", "");
+    
+    const base64 = await fileToBase64(selectedFile);
+
+    // 여기서부터 다음 단계: Workers /ocr로 보내면 됨
+    // 지금은 확인용으로 textarea에 길이만 표시
+    $input.value = "base64 길이: " + base64.length.toLocaleString() + " chars";
+    updateCount();
+    setStatus("base64 변환 완료. 이제 OCR API로 전송하면 됩니다.", "ok");
+
+  } catch (e) {
+    setStatus("base64 변환 실패: " + String(e), "err");
+  } finally {
+    $btnOcr.disabled = false;
+  }
+});
+
+  
     function setStatus(msg, type){
       $status.className = "status show" + (type ? (" " + type) : "");
       $status.textContent = msg;
@@ -281,16 +324,30 @@
       clearStatus();
       updateCount();
       $input.focus();
-    }
+
+      // 사진 관련 초기화 추가
+  selectedFile = null;
+  
+  if (previewUrl) {
+  URL.revokeObjectURL(previewUrl);
+  previewUrl = null;
+}
+
+  $imageInput.value = "";          // 같은 파일 재선택 가능하게
+  $imgWrap.style.display = "none";
+  $imgPreview.removeAttribute("src");
+  $btnOcr.disabled = true;
+}
+  
     function updateCount(){
       const n = ($input.value || "").length;
       $countPill.textContent = n.toLocaleString() + " 글자";
     }
-
+  
     $input.addEventListener("input", updateCount);
     updateCount();
     $endpointPill.textContent = "API: workers.dev";
-
+  
     async function send() {
       const text = ($input.value || "").trim();
       if (!text) {
@@ -298,48 +355,49 @@
         $input.focus();
         return;
       }
-
+  
       clearStatus();
       setLoading(true);
       $output.textContent = "";
-
+  
       try {
         const res = await fetch(WORKER_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text }),
         });
-
+  
         const data = await res.json().catch(() => ({}));
-
+  
         if (!res.ok) {
           const msg = data?.error || ("오류가 발생했습니다. (" + res.status + ")");
           setStatus(msg, "err");
           $output.textContent = JSON.stringify(data, null, 2);
           return;
         }
-
+  
         const outText = data?.text || "";
         if (!outText) {
           setStatus("응답은 왔지만 결과 텍스트가 비어 있습니다.", "err");
           $output.textContent = JSON.stringify(data, null, 2);
           return;
         }
-
+  
         setStatus("완료", "ok");
         $output.textContent = String(outText).replaceAll("\\n", "\n");
-
+  
       } catch (e) {
         setStatus("네트워크 오류: " + String(e), "err");
       } finally {
         setLoading(false);
       }
     }
+  
+    // inline onclick="send()" 때문에 전역에 노출 필요
+    window.send = send;
+    window.clearAll = clearAll;
   </script>
-  <script>
-    document.getElementById("btnPhoto").addEventListener("click", () => {
-      document.getElementById("imageInput").click();
-    });
-    </script>    
+  
+      
 </body>
 </html>
