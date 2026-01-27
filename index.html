@@ -194,6 +194,7 @@
       </div>
 
       <textarea id="input" rows="8" placeholder="예: Water, Glycerin, Niacinamide ..."></textarea>
+      <div id="paoButtons" class="row" style="display:none;"></div>
 
       <div id="status" class="status"></div>
 
@@ -219,7 +220,9 @@
   <script>
     const API_BASE = "https://skinguard.ohryee.workers.dev";
     const WORKER_ENDPOINT = API_BASE + "/freshness";
- 
+    const OCR_ENDPOINT = API_BASE + "/ocr-pao";
+    const FRESHNESS_ENDPOINT = API_BASE + "/freshness";
+
     const $input = document.getElementById("input");
     const $output = document.getElementById("output");
     const $btnAnalyze = document.getElementById("btnAnalyze");
@@ -443,6 +446,38 @@ if (isLikelyIngredientsText(raw)) {
       $btnAnalyze.disabled = false;
       $btnAnalyze.textContent = "성분 분석하기";
       updateCount();
+    }
+
+    function renderPaoButtons(months) {
+    const wrap = document.getElementById("paoButtons");
+      wrap.innerHTML = "";
+      wrap.style.display = "flex";
+
+    months.forEach(m => {
+    const btn = document.createElement("button");
+      btn.className = "btn-secondary";
+      btn.textContent = m + "M";
+      btn.onclick = () => runFreshness(m);
+      wrap.appendChild(btn);
+    });
+    }
+
+    async function runFreshness(paoMonths) {
+      setStatus("진단 중…", "");
+      $output.textContent = "";
+
+    const res = await fetch(FRESHNESS_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paoMonths }),
+    });
+
+    const data = await res.json();
+      setStatus(
+      data.status === "TOSS" ? "⚠️ 버리세요" : "사용 가능",
+      data.status === "TOSS" ? "err" : "ok"
+    );
+      $output.textContent = JSON.stringify(data, null, 2);
     }
     
     function clearAll(){
