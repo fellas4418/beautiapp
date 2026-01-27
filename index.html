@@ -282,7 +282,9 @@ $btnGallery.addEventListener("click", () => {
   $imageGallery.click();
 });
 
-function handleImagePicked(file){
+const wrap = document.getElementById("paoButtons");
+wrap.innerHTML = "";
+wrap.style.display = "none";
   selectedFile = file || null;
     
   if (previewUrl) {
@@ -302,7 +304,7 @@ function handleImagePicked(file){
   $imgWrap.style.display = "block";
   $btnOcr.disabled = false;
 
-  setStatus("Photo selected. Tap Detect PAO.", "");
+  runOcrAuto();
 }
   $imageCamera.addEventListener("change", () => {
   handleImagePicked($imageCamera.files[0]);
