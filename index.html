@@ -217,9 +217,9 @@
   </div>
 
   <script>
-    const API_BASE = "https://beauty-gemini-proxy.ohryee.workers.dev";
-    const WORKER_ENDPOINT = API_BASE + "/analyze";
-  
+    const API_BASE = "https://skinguard.ohryee.workers.dev";
+    const WORKER_ENDPOINT = API_BASE + "/freshness";
+ 
     const $input = document.getElementById("input");
     const $output = document.getElementById("output");
     const $btnAnalyze = document.getElementById("btnAnalyze");
@@ -503,7 +503,7 @@ if (isLikelyIngredientsText(raw)) {
         const res = await fetch(WORKER_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ paoMonths: 12 }),
         });
 
         const bodyText = await res.text().catch(() => "");
@@ -516,11 +516,8 @@ if (isLikelyIngredientsText(raw)) {
           $output.textContent = bodyText || JSON.stringify(data, null, 2);
           return;
         }
-
-        const outText = data?.text || "";
-        if (!outText) {
-          setStatus("응답은 왔지만 결과 텍스트가 비어 있습니다.", "err");
-          $output.textContent = bodyText || JSON.stringify(data, null, 2);
+          setStatus("완료", "ok");
+          $output.textContent = JSON.stringify(data, null, 2);
           return;
         }
 
