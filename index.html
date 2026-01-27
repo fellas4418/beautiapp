@@ -191,7 +191,8 @@
       </div>
       <div id="paoButtons" class="row" style="display:none;"></div>
       <div id="status" class="status"></div>
-      <div id="output" class="output"></div>
+      <div id="output" class="output" style="display:none;"></div>
+
     </div>
   </div>
 
@@ -283,8 +284,7 @@ $btnGallery.addEventListener("click", () => {
 
 function handleImagePicked(file){
   selectedFile = file || null;
-  lastOcrText = "";
-  
+    
   if (previewUrl) {
     URL.revokeObjectURL(previewUrl);
     previewUrl = null;
@@ -311,7 +311,7 @@ function handleImagePicked(file){
   $imageGallery.addEventListener("change", () => {
   handleImagePicked($imageGallery.files[0]);
 });
-async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatus("Please upload a photo first.", "err"); return; } ocrBusy = true; try { $btnOcr.disabled = true; setStatus("Scanning for PAO symbol…", ""); const payload = await fileToPayload(selectedFile, 1800, 0.9); const res = await fetch(OCR_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), }); const bodyText = await res.text().catch(() => ""); let data = {}; try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; } if (!res.ok) { setStatus("PAO scan failed (" + res.status + ")", "err"); $output.textContent = "Server response (error):\n" + bodyText; return; } const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : []; if (!pao.length) { setStatus("Couldn’t find a PAO symbol. Please choose one below.", "err"); $output.textContent = JSON.stringify(data, null, 2); renderPaoButtons([6, 12, 24]); return; } setStatus("Select the PAO (months after opening).", ""); $output.textContent = JSON.stringify(data, null, 2); renderPaoButtons(pao); } catch (e) { setStatus("Scan failed:" + String(e), "err"); } finally { $btnOcr.disabled = false; ocrBusy = false; } }
+async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatus("Please upload a photo first.", "err"); return; } ocrBusy = true; try { $btnOcr.disabled = true; setStatus("Scanning for PAO symbol…", ""); const payload = await fileToPayload(selectedFile, 1800, 0.9); const res = await fetch(OCR_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), }); const bodyText = await res.text().catch(() => ""); let data = {}; try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; } if (!res.ok) { setStatus("PAO scan failed (" + res.status + ")", "err"); $output.textContent = "Server response (error):\n" + bodyText; return; } const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : []; if (!pao.length) { setStatus("Couldn’t find a PAO symbol. Please choose one below.", "err"); renderPaoButtons([6, 12, 24]); return; } setStatus("Select the PAO (months after opening).", ""); renderPaoButtons(pao); } catch (e) { setStatus("Scan failed:" + String(e), "err"); } finally { $btnOcr.disabled = false; ocrBusy = false; } }
 
     const $status = document.getElementById("status");
     function setStatus(msg, type){
@@ -353,7 +353,7 @@ async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatu
       data.status === "TOSS" ? "⚠️ Toss It" : "Safe to Use",
       data.status === "TOSS" ? "err" : "ok"
     );
-      $output.textContent = JSON.stringify(data, null, 2);
+      //$output.textContent = JSON.stringify(data, null, 2);
     }
     // inline onclick="send()" 때문에 전역에 노출 필요
   </script>
