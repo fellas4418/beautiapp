@@ -294,8 +294,24 @@
 }
 
   
-    $btnCamera.addEventListener("click", () => { $imageCamera.value = ""; $imageCamera.click(); });
-    $btnGallery.addEventListener("click", () => { $imageGallery.value = ""; $imageGallery.click(); });
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// PC에서는 '사진 찍기'도 그냥 파일 선택으로 처리 (카메라 capture가 잘 안 먹어서)
+$btnCamera.addEventListener("click", () => {
+  if (isMobile) {
+    $imageCamera.value = "";
+    $imageCamera.click();
+  } else {
+    $imageGallery.value = "";
+    $imageGallery.click();
+  }
+});
+
+$btnGallery.addEventListener("click", () => {
+  $imageGallery.value = "";
+  $imageGallery.click();
+});
+
 
     function isLikelyIngredientsText(t) {
     if (!t) return false;
