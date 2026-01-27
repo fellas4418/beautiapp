@@ -394,13 +394,15 @@ function handleImagePicked(file){
 }
 
 setStatus("개봉 후 사용기간(PAO)을 선택하세요.", "");
+lastOcrText = "";
+$output.textContent = JSON.stringify(data, null, 2);
 renderPaoButtons(pao);
-}
     // 여기서부터 다음 단계: Workers /ocr로 보내면 됨
     // 지금은 확인용으로 textarea에 길이만 표시
     // base64 길이는 디버그용이므로 UI에 표시하지 않음
     // $input.value = "base64 길이: " + base64.length.toLocaleString() + " chars";
     // setStatus는 위 OCR 결과에 따라 이미 처리함
+  }
 
   } catch (e) {
     setStatus("OCR 실패: " + String(e), "err");
