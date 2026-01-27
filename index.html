@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beauty Analyzer</title>
+  <title>Check Cosmetic Freshness</title>
   <style>
     :root{
       --bg:#0b0c10;
@@ -169,51 +169,29 @@
 <body>
   <div class="wrap">
     <div class="header">
-      <h1 class="title">Beauty 분석</h1>
-      <p class="sub">전성분(INCI)을 붙여넣고 분석을 누르세요. 모바일에 맞춰 입력과 결과를 크게 보여줍니다.</p>
+      <h1 class="title">Check Your Cosmetic Freshness</h1>
+      <p class="sub">Take a photo and instantly check the product’s freshness after opening.</p>
     </div>
 
     <div class="card">
-      <label for="input">전성분 입력</label>
-     
+       
       <input id="imageCamera" type="file" accept="image/*" capture="environment" style="display:none" />
       <input id="imageGallery" type="file" accept="image/*" style="display:none" />
      
 
       <div class="row">
-        <button id="btnCamera" class="btn-secondary" type="button">사진 찍기</button>
-        <button id="btnGallery" class="btn-secondary" type="button">사진 불러오기</button>
-        <button id="btnOcr" class="btn-secondary" type="button" disabled>글자 읽기</button>
+        <button id="btnCamera" class="btn-secondary" type="button">Take Photo</button>
+        <button id="btnGallery" class="btn-secondary" type="button">Upload Photo</button>
+        <button id="btnOcr" class="btn-secondary" type="button" disabled>Detect PAO</button>
       </div>
       
       <div id="imgWrap" class="output" style="display:none; padding:12px;">
         <img id="imgPreview" alt="preview" style="max-width:100%; border-radius:12px; display:block;" />
-        <div class="footer" style="margin-top:8px;">
-          사진에서 글자 읽기: 성분표 글자가 크게 보이게 찍어주세요.
-        </div>
+        <div class="footer" style="margin-top:8px;">Detect PAO</div>
       </div>
-
-      <textarea id="input" rows="8" placeholder="예: Water, Glycerin, Niacinamide ..."></textarea>
       <div id="paoButtons" class="row" style="display:none;"></div>
-
       <div id="status" class="status"></div>
-
-      <div class="row">
-        <button id="btnAnalyze" class="btn-primary" onclick="send()">성분 분석하기</button>
-        <button id="btnClear" class="btn-secondary" onclick="clearAll()">지우기</button>
-      </div>
-
-      <div class="meta">
-        <div class="pill" id="countPill">0 글자</div>
-        <div class="pill" id="endpointPill">API 연결됨</div>
-      </div>
-
-      
       <div id="output" class="output"></div>
-
-      <div class="footer">
-        결과가 이상하면 전성분 텍스트를 전체 선택 후 다시 붙여넣고 재시도하세요.
-      </div>
     </div>
   </div>
 
@@ -223,20 +201,12 @@
     const OCR_ENDPOINT = API_BASE + "/ocr-pao";
     const FRESHNESS_ENDPOINT = API_BASE + "/freshness";
 
-    const $input = document.getElementById("input");
-    const $output = document.getElementById("output");
-    const $btnAnalyze = document.getElementById("btnAnalyze");
-    const $btnClear = document.getElementById("btnClear");
-    const $status = document.getElementById("status");
-    const $countPill = document.getElementById("countPill");
-    const $endpointPill = document.getElementById("endpointPill");
-  
     const $imageCamera = document.getElementById("imageCamera");
     const $imageGallery = document.getElementById("imageGallery");
     
     const $btnCamera = document.getElementById("btnCamera");
     const $btnGallery = document.getElementById("btnGallery");
-
+    const $output = document.getElementById("output");
     const $btnOcr = document.getElementById("btnOcr");
     let lastOcrText = "";
     let ocrBusy = false;
@@ -312,32 +282,10 @@ $btnGallery.addEventListener("click", () => {
   $imageGallery.click();
 });
 
-
-    function isLikelyIngredientsText(t) {
-    if (!t) return false;
-    const text = String(t).trim();
-    if (text.length < 80) return false;
-    
-    const commaCount = (text.match(/,/g) || []).length;
-    const lineCount = (text.match(/\n/g) || []).length;
-    const dotCount  = (text.match(/·/g) || []).length;
-    const slashCount = (text.match(/\//g) || []).length;
-    const hasKeyword = /(ingredients?|inci|전성분|성분)/i.test(text);
-
-    if (commaCount >= 3) return true;
-    if (lineCount >= 6) return true;
-    if (dotCount >= 6) return true;
-    if (slashCount >= 6) return true;
-    if (hasKeyword && text.length >= 120) return true;
- 
-    return false;
-}
-
 function handleImagePicked(file){
   selectedFile = file || null;
   lastOcrText = "";
-  updateCount();
-
+  
   if (previewUrl) {
     URL.revokeObjectURL(previewUrl);
     previewUrl = null;
@@ -355,7 +303,7 @@ function handleImagePicked(file){
   $imgWrap.style.display = "block";
   $btnOcr.disabled = false;
 
-  setStatus("사진에서 PAO를 찾는 중…", "");
+  setStatus("Scanning for PAO symbol…", "");
   runOcrAuto();
 }
   $imageCamera.addEventListener("change", () => {
@@ -365,8 +313,9 @@ function handleImagePicked(file){
   $imageGallery.addEventListener("change", () => {
   handleImagePicked($imageGallery.files[0]);
 });
-async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatus("먼저 사진을 선택하세요.", "err"); return; } ocrBusy = true; try { $btnOcr.disabled = true; setStatus("사진에서 PAO를 찾는 중…", ""); const payload = await fileToPayload(selectedFile, 1800, 0.9); const res = await fetch(OCR_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), }); const bodyText = await res.text().catch(() => ""); let data = {}; try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; } if (!res.ok) { setStatus("글자 읽기 요청 실패 (" + res.status + ")", "err"); $output.textContent = "서버 응답(실패):\n" + bodyText; return; } const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : []; if (!pao.length) { setStatus("PAO를 못 찾았어요. 아래에서 선택하세요.", "err"); $output.textContent = JSON.stringify(data, null, 2); renderPaoButtons([6, 12, 24]); return; } setStatus("개봉 후 사용기간(PAO)을 선택하세요.", ""); $output.textContent = JSON.stringify(data, null, 2); renderPaoButtons(pao); } catch (e) { setStatus("OCR 실패: " + String(e), "err"); } finally { $btnOcr.disabled = false; ocrBusy = false; } }
-  
+async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatus("Please upload a photo first.", "err"); return; } ocrBusy = true; try { $btnOcr.disabled = true; setStatus("Scanning for PAO symbol…", ""); const payload = await fileToPayload(selectedFile, 1800, 0.9); const res = await fetch(OCR_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), }); const bodyText = await res.text().catch(() => ""); let data = {}; try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; } if (!res.ok) { setStatus("PAO scan failed (" + res.status + ")", "err"); $output.textContent = "Server response (error):\n" + bodyText; return; } const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : []; if (!pao.length) { setStatus("Couldn’t find a PAO symbol. Please choose one below.", "err"); $output.textContent = JSON.stringify(data, null, 2); renderPaoButtons([6, 12, 24]); return; } setStatus("Select the PAO (months after opening).", ""); $output.textContent = JSON.stringify(data, null, 2); renderPaoButtons(pao); } catch (e) { setStatus("Scan failed:" + String(e), "err"); } finally { $btnOcr.disabled = false; ocrBusy = false; } }
+
+    const $status = document.getElementById("status");
     function setStatus(msg, type){
       $status.className = "status show" + (type ? (" " + type) : "");
       $status.textContent = msg;
@@ -375,24 +324,12 @@ async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatu
       $status.className = "status";
       $status.textContent = "";
     }
-    function setLoading(on) {
-    if (on) {
-      $btnAnalyze.disabled = true; 
-      $btnClear.disabled = true;
-      $btnAnalyze.textContent = "분석 중...";
-     return;
-    }
-
-      $btnClear.disabled = false;
-      $btnAnalyze.disabled = false;
-      $btnAnalyze.textContent = "성분 분석하기";
-      updateCount();
-    }
-
+    
     function renderPaoButtons(months) {
     const wrap = document.getElementById("paoButtons");
       wrap.innerHTML = "";
       wrap.style.display = "flex";
+      wrap.style.flexWrap = "wrap";
 
     months.forEach(m => {
     const btn = document.createElement("button");
@@ -404,7 +341,7 @@ async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatu
     }
 
     async function runFreshness(paoMonths) {
-      setStatus("진단 중…", "");
+      setStatus("Checking freshness…", "");
       $output.textContent = "";
 
     const res = await fetch(FRESHNESS_ENDPOINT, {
@@ -415,58 +352,12 @@ async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatu
 
     const data = await res.json();
       setStatus(
-      data.status === "TOSS" ? "⚠️ 버리세요" : "사용 가능",
+      data.status === "TOSS" ? "⚠️ Toss It" : "Safe to Use",
       data.status === "TOSS" ? "err" : "ok"
     );
       $output.textContent = JSON.stringify(data, null, 2);
     }
-    
-    function clearAll(){
-      $input.value = "";
-      $output.textContent = "";
-      lastOcrText = "";
-      ocrBusy = false;
-      clearStatus();
-      updateCount();
-
-      $imageCamera.value = "";
-      $imageGallery.value = "";      
-      $imageCamera.type = "text"; $imageCamera.type = "file";
-      $imageGallery.type = "text"; $imageGallery.type = "file";
-      selectedFile = null;
-  
-  if (previewUrl) {
-    URL.revokeObjectURL(previewUrl);
-    previewUrl = null;
-}
-     // 같은 파일 재선택 가능하게
-  $imgWrap.style.display = "none";
-  $imgPreview.removeAttribute("src");
-  $btnOcr.disabled = true;
-}
-  
-    function updateCount(){
-      const n = ($input.value || "").length;
-      $countPill.textContent = n.toLocaleString() + " 글자";
-  
-      const typed = ($input.value || "").trim();
-      const ocr = (lastOcrText || "").trim();
-      const canAnalyze = (ocr.length > 0) || (typed.length > 0);
-
-      $btnAnalyze.disabled = false;
-    }
-  
-    $input.addEventListener("input", updateCount);
-    updateCount();
-    $endpointPill.textContent = "API: workers.dev";
-  
-    async function send() {
-    setStatus("PAO를 먼저 선택하세요. (글자 읽기 → 6M/12M 클릭)", "err");
-    }
-  
     // inline onclick="send()" 때문에 전역에 노출 필요
-    window.send = send;
-    window.clearAll = clearAll;
   </script>
   
       
