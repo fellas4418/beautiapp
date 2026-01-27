@@ -367,49 +367,34 @@ function handleImagePicked(file){
     
     setStatus("사진에서 글자를 읽는 중이에요…", "");
 
-const res = await fetch(API_BASE + "/ocr", {
+    const res = await fetch(OCR_ENDPOINT, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(payload),
-});
+  });
 
-const bodyText = await res.text().catch(() => "");
+     const bodyText = await res.text().catch(() => "");
+     let data = {};
+     try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; }
 
-if (!res.ok) {
-  setStatus("글자 읽기 요청 실패 (" + res.status + ")", "err");
-  $output.textContent = "서버 응답(실패):\n" + bodyText;
-  lastOcrText = "";
-  updateCount();
-  return;
+     if (!res.ok) {
+       setStatus("글자 읽기 요청 실패 (" + res.status + ")", "err");
+       $output.textContent = "서버 응답(실패):\n" + bodyText;
+     lastOcrText = "";
+       updateCount();
+     return;
 }
 
-let data = {};
-try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; }
+    const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
 
-const ocrPayload = (data && (data.rawText || data.text)) ? String(data.rawText || data.text) : "";
-const raw = ocrPayload.trim();
-
-// 빈값이면 여기서 종료
-if (!raw) {
-  setStatus("사진에서 글자를 찾지 못했어요. 성분표 글자가 크게 보이게 다시 찍거나, 아래에 직접 붙여넣어 주세요.", "err");
-  $output.textContent = "서버 응답: " + JSON.stringify(data, null, 2);
-  lastOcrText = "";
-  updateCount();
-  return;
-}
-// 원문은 그대로 유지
-lastOcrText = raw;
-$input.value = raw;
-updateCount();
-
-// 품질 체크는 경고/안내만
-if (isLikelyIngredientsText(raw)) {
-  setStatus("성분표 인식 완료. 성분 분석을 진행할 수 있습니다.", "ok");
-} else {
-  setStatus("성분표 인식이 불완전할 수 있습니다. 그래도 인식된 텍스트는 그대로 표시합니다.", "err");
+    if (!pao.length) {
+       setStatus("PAO를 못 찾았어요. 아래에서 선택하세요.", "err");
+       renderPaoButtons([6, 12, 24]);
+    return;
 }
 
-
+setStatus("개봉 후 사용기간(PAO)을 선택하세요.", "");
+renderPaoButtons(pao);
 
     // 여기서부터 다음 단계: Workers /ocr로 보내면 됨
     // 지금은 확인용으로 textarea에 길이만 표시
@@ -512,7 +497,7 @@ if (isLikelyIngredientsText(raw)) {
       const ocr = (lastOcrText || "").trim();
       const canAnalyze = (ocr.length > 0) || (typed.length > 0);
 
-      $btnAnalyze.disabled = !canAnalyze;     
+      $btnAnalyze.disabled = false;
     }
   
     $input.addEventListener("input", updateCount);
@@ -520,16 +505,9 @@ if (isLikelyIngredientsText(raw)) {
     $endpointPill.textContent = "API: workers.dev";
   
     async function send() {
-      const typed = ($input.value || "").trim();
-      const ocr = (lastOcrText || "").trim();
-      const text = ocr || typed;
-   
-      if (!text) {
-        setStatus("전성분을 입력하거나 OCR을 먼저 진행하세요.", "err");
-        $input.focus();
-        return;
-      }
-  
+    setStatus("PAO를 먼저 선택하세요. (글자 읽기 → 6M/12M 클릭)", "err");
+    }
+
       clearStatus();
       setLoading(true);
       $output.textContent = "";
