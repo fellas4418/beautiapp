@@ -402,8 +402,6 @@ renderPaoButtons(pao);
     // base64 길이는 디버그용이므로 UI에 표시하지 않음
     // $input.value = "base64 길이: " + base64.length.toLocaleString() + " chars";
     // setStatus는 위 OCR 결과에 따라 이미 처리함
-  }
-
   } catch (e) {
     setStatus("OCR 실패: " + String(e), "err");
   } finally {
