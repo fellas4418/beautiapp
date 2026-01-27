@@ -197,7 +197,6 @@
 
   <script>
     const API_BASE = "https://skinguard.ohryee.workers.dev";
-    const WORKER_ENDPOINT = API_BASE + "/freshness";
     const OCR_ENDPOINT = API_BASE + "/ocr-pao";
     const FRESHNESS_ENDPOINT = API_BASE + "/freshness";
 
@@ -208,7 +207,7 @@
     const $btnGallery = document.getElementById("btnGallery");
     const $output = document.getElementById("output");
     const $btnOcr = document.getElementById("btnOcr");
-    let lastOcrText = "";
+    $btnOcr.addEventListener("click", runOcrAuto);
     let ocrBusy = false;
    
     const $imgWrap = document.getElementById("imgWrap");
@@ -303,7 +302,7 @@ function handleImagePicked(file){
   $imgWrap.style.display = "block";
   $btnOcr.disabled = false;
 
-  setStatus("Scanning for PAO symbol…", "");
+  setStatus("Photo selected. Tap Detect PAO.", "");
 }
   $imageCamera.addEventListener("change", () => {
   handleImagePicked($imageCamera.files[0]);
