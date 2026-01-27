@@ -356,6 +356,7 @@ function handleImagePicked(file){
   $btnOcr.disabled = false;
 
   setStatus("사진이 선택되었습니다. 글자 읽기를 눌러주세요.", "");
+  runOcrAuto();
 }
   $imageCamera.addEventListener("change", () => {
   handleImagePicked($imageCamera.files[0]);
@@ -364,68 +365,7 @@ function handleImagePicked(file){
   $imageGallery.addEventListener("change", () => {
   handleImagePicked($imageGallery.files[0]);
 });
-
-  $btnOcr.addEventListener("click", async () => {
-    if (ocrBusy) return;
-
-    if (!selectedFile) {
-      setStatus("먼저 사진을 선택하세요.", "err");
-      return;
-  }
-
-  ocrBusy = true;
-
-  try {
-    $btnOcr.disabled = true;
-    setStatus("글자를 읽을 준비 중…", "");
-    
-    const payload = await fileToPayload(selectedFile, 1800, 0.9);
-    
-    setStatus("사진에서 글자를 읽는 중이에요…", "");
-
-    const res = await fetch(OCR_ENDPOINT, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload),
-  });
-
-     const bodyText = await res.text().catch(() => "");
-     let data = {};
-     try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; }
-
-     if (!res.ok) {
-       setStatus("글자 읽기 요청 실패 (" + res.status + ")", "err");
-       $output.textContent = "서버 응답(실패):\n" + bodyText;
-     lastOcrText = "";
-       updateCount();
-     return;
-}
-
-    const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
-
-    if (!pao.length) {
-       setStatus("PAO를 못 찾았어요. 아래에서 선택하세요.", "err");
-       renderPaoButtons([6, 12, 24]);
-    return;
-}
-
-setStatus("개봉 후 사용기간(PAO)을 선택하세요.", "");
-lastOcrText = "";
-$output.textContent = JSON.stringify(data, null, 2);
-renderPaoButtons(pao);
-    // 여기서부터 다음 단계: Workers /ocr로 보내면 됨
-    // 지금은 확인용으로 textarea에 길이만 표시
-    // base64 길이는 디버그용이므로 UI에 표시하지 않음
-    // $input.value = "base64 길이: " + base64.length.toLocaleString() + " chars";
-    // setStatus는 위 OCR 결과에 따라 이미 처리함
-  } catch (e) {
-    setStatus("OCR 실패: " + String(e), "err");
-  } finally {
-    $btnOcr.disabled = false;
-    ocrBusy = false;
-  }
-});
-
+async function runOcrAuto() { if (ocrBusy) return; if (!selectedFile) { setStatus("먼저 사진을 선택하세요.", "err"); return; } ocrBusy = true; try { $btnOcr.disabled = true; setStatus("사진에서 PAO를 찾는 중…", ""); const payload = await fileToPayload(selectedFile, 1800, 0.9); const res = await fetch(OCR_ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), }); const bodyText = await res.text().catch(() => ""); let data = {}; try { data = bodyText ? JSON.parse(bodyText) : {}; } catch { data = {}; } if (!res.ok) { setStatus("글자 읽기 요청 실패 (" + res.status + ")", "err"); $output.textContent = "서버 응답(실패):\n" + bodyText; return; } const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : []; if (!pao.length) { setStatus("PAO를 못 찾았어요. 아래에서 선택하세요.", "err"); $output.textContent = JSON.stringify(data, null, 2); renderPaoButtons([6, 12, 24]); return; } setStatus("개봉 후 사용기간(PAO)을 선택하세요.", ""); $output.textContent = JSON.stringify(data, null, 2); renderPaoButtons(pao); } catch (e) { setStatus("OCR 실패: " + String(e), "err"); } finally { $btnOcr.disabled = false; ocrBusy = false; } }
   
     function setStatus(msg, type){
       $status.className = "status show" + (type ? (" " + type) : "");
