@@ -14,436 +14,518 @@
       --btn:#2b6cff;
       --btn2:#1f2430;
       --danger:#ff4d4f;
-      --ok:#20c997;
       --warn:#ffcc00;
+      --ok:#20c997;
     }
-    *{ box-sizing:border-box; }
+    *{box-sizing:border-box;}
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      text-rendering: optimizeLegibility;
+      background:var(--bg);
+      color:var(--text);
     }
-    .wrap{
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 16px;
-      padding-bottom: 40px;
-    }
-    .header{ padding: 12px 4px 6px; }
-    .title{ margin:0; font-size: 26px; line-height: 1.2; letter-spacing: -0.2px; }
-    .sub{ margin: 8px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .wrap{max-width:820px;margin:0 auto;padding:20px;}
     .card{
-      margin-top: 14px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      margin-bottom:14px;
     }
-    .row{
-      display:flex;
-      gap: 10px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-    button{
-      border: 0;
-      border-radius: 12px;
-      padding: 14px 14px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      min-height: 48px;
-    }
-    .btn-secondary{
-      background: var(--btn2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      flex: 1 1 160px;
-    }
-    button:disabled{
-      opacity: .55;
-      cursor: not-allowed;
-    }
-    .panel{
-      margin-top: 14px;
-      padding: 12px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-    }
-    .status{
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: rgba(17,19,24,.95);
-      border: 1px solid var(--border);
-      font-size: 14px;
-      display:none;
-      line-height: 1.45;
-    }
-    .status.show{ display:block; }
-    .status.ok{ color: var(--ok); border-color: rgba(32,201,151,.55); background: rgba(32,201,151,.10); }
-    .status.err{ color: var(--danger); border-color: rgba(255,77,79,.55); background: rgba(255,77,79,.10); }
-    .status.warn{ color: var(--warn); border-color: rgba(255,204,0,.55); background: rgba(255,204,0,.10); }
-    .metaRow{
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .pill b{
-      font-weight: 700;
-      color: var(--text);
-    }
-    #imgWrap{ display:none; }
-    #imgPreview{
-      max-width:100%;
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+    .grow{flex:1 1 auto;}
+    .btn{
+      background:var(--btn);
+      color:#fff;
+      border:none;
+      padding:12px 14px;
       border-radius:12px;
-      display:block;
+      cursor:pointer;
+      font-weight:600;
     }
-    .footer{
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.5;
-      text-align:center;
+    .btn.secondary{background:var(--btn2);color:var(--text);border:1px solid var(--border);}
+    .btn:disabled{opacity:.55;cursor:not-allowed;}
+    input[type="file"]{display:none;}
+    .labelbtn{
+      display:inline-flex;align-items:center;justify-content:center;
+      background:var(--btn2);border:1px solid var(--border);
+      padding:12px 14px;border-radius:12px;cursor:pointer;
+      font-weight:600;color:var(--text);
     }
-    #paoButtons{ display:none; }
-    @media (max-width: 420px){
-      .title{ font-size: 22px; }
-      .btn-secondary{ flex: 1 1 100%; }
+    .muted{color:var(--muted);font-size:13px;line-height:1.45}
+    .kv{display:grid;grid-template-columns:160px 1fr;gap:10px;font-size:14px;line-height:1.55}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.03);font-size:13px}
+    .status-ok{color:var(--ok)}
+    .status-warn{color:var(--warn)}
+    .status-bad{color:var(--danger)}
+    .sep{height:1px;background:var(--border);margin:14px 0}
+    .thumb{width:100%;max-height:320px;object-fit:contain;border-radius:12px;border:1px solid var(--border);background:#0a0b0f}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width:860px){.grid{grid-template-columns:1.1fr .9fr}}
+    .chips{display:flex;gap:10px;flex-wrap:wrap}
+    .chip{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:600;
     }
+    .chip.active{border-color:rgba(43,108,255,.8);box-shadow:0 0 0 2px rgba(43,108,255,.25) inset}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .item{
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.02);
+    }
+    .itemTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .itemTitle{font-weight:700}
+    .small{font-size:12px;color:var(--muted)}
+    .dangerLink{color:var(--danger);cursor:pointer;text-decoration:underline}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="header">
-      <h1 class="title">Check Your Cosmetic Freshness</h1>
-      <p class="sub">Take a photo and instantly check the product’s freshness after opening.</p>
+    <div class="card">
+      <div style="font-size:18px;font-weight:800;margin-bottom:6px;">Cosmetic Freshness Check</div>
+      <div class="muted">PAO(3M/6M/12M 등)를 감지한 뒤, 개봉일을 한 번만 선택하면 남은 기간과 권장 폐기 시점을 계산해 저장합니다.</div>
     </div>
 
-    <div class="card">
-      <input id="imageCamera" type="file" accept="image/*" capture="environment" style="display:none" />
-      <input id="imageGallery" type="file" accept="image/*" style="display:none" />
+    <div class="grid">
+      <div class="card">
+        <div class="row">
+          <label class="labelbtn" for="fileInput">사진 선택</label>
+          <input id="fileInput" type="file" accept="image/*" />
+          <button id="scanBtn" class="btn">스캔하기</button>
+          <button id="resetBtn" class="btn secondary">초기화</button>
+        </div>
 
-      <div class="row">
-        <button id="btnCamera" class="btn-secondary" type="button">Take Photo</button>
-        <button id="btnGallery" class="btn-secondary" type="button">Upload Photo</button>
-        <button id="btnOcr" class="btn-secondary" type="button" disabled>Detect PAO</button>
+        <div class="sep"></div>
+
+        <img id="preview" class="thumb" alt="preview" style="display:none;" />
+
+        <div id="msg" class="muted" style="margin-top:12px;"></div>
+
+        <div id="scanResult" style="display:none;margin-top:12px;">
+          <div class="kv">
+            <div class="muted">Detected PAO</div>
+            <div id="detectedPao" style="font-weight:800;"></div>
+
+            <div class="muted">Confidence</div>
+            <div id="confidence"></div>
+
+            <div class="muted">Status</div>
+            <div id="statusLine"></div>
+
+            <div class="muted">Expiry date</div>
+            <div id="expiryDate"></div>
+
+            <div class="muted">Days left</div>
+            <div id="daysLeft"></div>
+          </div>
+
+          <div id="openDateBox" style="margin-top:14px;">
+            <div class="muted" style="margin-bottom:10px;">개봉일을 선택하세요 (한 번만).</div>
+            <div class="chips">
+              <button class="chip" data-open="today">오늘</button>
+              <button class="chip" data-open="yesterday">어제</button>
+              <button class="chip" data-open="week">일주일 전쯤</button>
+              <button class="chip" data-open="month">한 달 전쯤</button>
+              <button class="chip" data-open="unknown">기억 안남</button>
+            </div>
+            <div class="muted" style="margin-top:10px;">
+              “기억 안남”을 선택하면 안전 쪽으로 보수적으로 추정해서 계산합니다.
+            </div>
+          </div>
+
+          <div id="saveBox" style="display:none;margin-top:14px;">
+            <div class="row">
+              <input id="nickname" class="grow" placeholder="(선택) 제품 별명 예: 파란 크림, 선크림" style="padding:12px;border-radius:12px;border:1px solid var(--border);background:#0a0b0f;color:var(--text);" />
+              <button id="saveBtn" class="btn">My Shelf에 저장</button>
+            </div>
+            <div class="muted" style="margin-top:8px;">저장은 이 기기(브라우저)에 저장됩니다. 로그인 없이도 테스트 가능.</div>
+          </div>
+        </div>
       </div>
 
-      <div id="imgWrap" class="panel">
-        <img id="imgPreview" alt="preview" />
-        <div class="footer">Selected Image</div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <div style="font-size:16px;font-weight:800;">My Shelf</div>
+            <div class="muted">스캔한 제품이 여기에 쌓입니다.</div>
+          </div>
+          <div class="dangerLink" id="clearShelf">전체 삭제</div>
+        </div>
+
+        <div class="sep"></div>
+        <div id="shelfList" class="list"></div>
+        <div id="emptyShelf" class="muted">아직 저장된 제품이 없습니다.</div>
       </div>
-
-      <div id="metaRow" class="metaRow" style="display:none;">
-        <div id="pDetected" class="pill" style="display:none;">
-          Detected PAO: <b id="detectedText">-</b>
-        </div>
-        <div id="pDays" class="pill" style="display:none;">
-          Days left: <b id="daysLeftText">-</b>
-        </div>
-        <div id="pToss" class="pill" style="display:none;">
-          Toss at: <b id="tossAtText">-</b>
-        </div>
-      </div>
-
-      <div id="status" class="status"></div>
-
-      <div id="paoButtons" class="row" style="margin-top: 12px;"></div>
     </div>
   </div>
 
   <script>
-    const API_BASE = "https://skinguard.ohryee.workers.dev";
-    const OCR_ENDPOINT = API_BASE + "/ocr-pao";
-    const FRESHNESS_ENDPOINT = API_BASE + "/freshness";
+    // 1) 너의 Worker 엔드포인트로 바꿔야 함
+    // 예: https://xxxxx.yourname.workers.dev/pao
+    const WORKER_ENDPOINT = "https://skinguard.ohryee.workers.dev/pao";
 
-    const $imageCamera = document.getElementById("imageCamera");
-    const $imageGallery = document.getElementById("imageGallery");
-    const $btnCamera = document.getElementById("btnCamera");
-    const $btnGallery = document.getElementById("btnGallery");
-    const $btnOcr = document.getElementById("btnOcr");
-    const $imgWrap = document.getElementById("imgWrap");
-    const $imgPreview = document.getElementById("imgPreview");
-    const $status = document.getElementById("status");
-    const $paoButtons = document.getElementById("paoButtons");
+    const fileInput = document.getElementById("fileInput");
+    const scanBtn = document.getElementById("scanBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const preview = document.getElementById("preview");
+    const msg = document.getElementById("msg");
 
-    const $metaRow = document.getElementById("metaRow");
-    const $pDetected = document.getElementById("pDetected");
-    const $detectedText = document.getElementById("detectedText");
-    const $pDays = document.getElementById("pDays");
-    const $daysLeftText = document.getElementById("daysLeftText");
-    const $pToss = document.getElementById("pToss");
-    const $tossAtText = document.getElementById("tossAtText");
+    const scanResult = document.getElementById("scanResult");
+    const detectedPao = document.getElementById("detectedPao");
+    const confidenceEl = document.getElementById("confidence");
+    const statusLine = document.getElementById("statusLine");
+    const expiryDateEl = document.getElementById("expiryDate");
+    const daysLeftEl = document.getElementById("daysLeft");
 
-    let selectedFile = null;
-    let previewUrl = null;
-    let ocrBusy = false;
+    const openDateBox = document.getElementById("openDateBox");
+    const saveBox = document.getElementById("saveBox");
+    const saveBtn = document.getElementById("saveBtn");
+    const nickname = document.getElementById("nickname");
 
-    function setStatus(msg, type){
-      $status.className = "status show" + (type ? (" " + type) : "");
-      $status.textContent = msg;
-    }
-    function hideStatus(){
-      $status.className = "status";
-      $status.textContent = "";
-    }
+    const shelfList = document.getElementById("shelfList");
+    const emptyShelf = document.getElementById("emptyShelf");
+    const clearShelf = document.getElementById("clearShelf");
 
-    function resetUiForNewScan(){
-      hideStatus();
-      $paoButtons.style.display = "none";
-      $paoButtons.innerHTML = "";
+    let current = {
+      imageDataUrl: "",
+      paoMonths: null,
+      paoRaw: "",
+      confidence: null,
+      openDateISO: null,
+      expiryISO: null,
+      daysLeft: null,
+      verdict: "NEEDS_OPEN_DATE", // SAFE / NEAR / TOSS / NEEDS_OPEN_DATE
+      debugText: ""
+    };
 
-      $metaRow.style.display = "none";
-      $pDetected.style.display = "none";
-      $pDays.style.display = "none";
-      $pToss.style.display = "none";
-      $detectedText.textContent = "-";
-      $daysLeftText.textContent = "-";
-      $tossAtText.textContent = "-";
+    function setMsg(text){ msg.textContent = text || ""; }
+
+    function isoDate(d){
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
     }
 
-    function showDetected(months){
-      $metaRow.style.display = "flex";
-      $pDetected.style.display = "inline-flex";
-      $detectedText.textContent = months + "M";
-    }
+    function addMonths(dateObj, months){
+      const d = new Date(dateObj);
+      const targetMonth = d.getMonth() + months;
+      d.setMonth(targetMonth);
 
-    function showFreshnessMeta(daysLeft, tossAtIso){
-      $metaRow.style.display = "flex";
-
-      if (Number.isFinite(daysLeft)){
-        $pDays.style.display = "inline-flex";
-        $daysLeftText.textContent = String(daysLeft);
+      // JS Date가 월 넘김 처리하면서 일자가 밀릴 수 있어서
+      // 원래 일이 사라지는 케이스(예: 1/31 +1M → 3/3 같은) 방지 로직
+      // 방법: 목표 월로 갔는데 월이 예상보다 더 밀렸으면 하루씩 당겨서 맞춤
+      while (d.getMonth() !== ((targetMonth % 12) + 12) % 12) {
+        d.setDate(d.getDate() - 1);
       }
+      return d;
+    }
 
-      if (tossAtIso){
-        const d = new Date(tossAtIso);
-        if (!Number.isNaN(d.getTime())){
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth()+1).padStart(2,"0");
-          const dd = String(d.getDate()).padStart(2,"0");
-          $pToss.style.display = "inline-flex";
-          $tossAtText.textContent = `${yyyy}-${mm}-${dd}`;
-        }
+    function computeVerdict(daysLeft){
+      // 기준은 너가 나중에 바꾸기 쉬운 형태로 둠
+      // Toss: 0 이하
+      // Near: 30일 이내
+      if (daysLeft <= 0) return "TOSS";
+      if (daysLeft <= 30) return "NEAR";
+      return "SAFE";
+    }
+
+    function verdictLabel(v){
+      if (v === "SAFE") return `<span class="pill"><span class="status-ok">Safe</span><span class="muted">사용 가능</span></span>`;
+      if (v === "NEAR") return `<span class="pill"><span class="status-warn">Near expiry</span><span class="muted">곧 만료</span></span>`;
+      if (v === "TOSS") return `<span class="pill"><span class="status-bad">Toss it</span><span class="muted">폐기 권장</span></span>`;
+      return `<span class="pill"><span class="muted">Needs open date</span></span>`;
+    }
+
+    function renderResult(){
+      scanResult.style.display = "block";
+      detectedPao.textContent = current.paoRaw || (current.paoMonths ? `${current.paoMonths}M` : "Not found");
+      confidenceEl.textContent = (current.confidence == null) ? "-" : `${Math.round(current.confidence * 100)}%`;
+
+      statusLine.innerHTML = verdictLabel(current.verdict);
+
+      expiryDateEl.textContent = current.expiryISO ? current.expiryISO : "-";
+      daysLeftEl.textContent = (current.daysLeft == null) ? "-" : `${current.daysLeft} days`;
+
+      if (!current.openDateISO) {
+        openDateBox.style.display = "block";
+        saveBox.style.display = "none";
+      } else {
+        openDateBox.style.display = "none";
+        saveBox.style.display = "block";
       }
     }
 
-    function fileToPayload(file, maxW = 1400, quality = 0.85) {
-      return new Promise((resolve, reject) => {
-        if (!file) return reject(new Error("no file"));
+    function resetAll(){
+      current = {
+        imageDataUrl: "",
+        paoMonths: null,
+        paoRaw: "",
+        confidence: null,
+        openDateISO: null,
+        expiryISO: null,
+        daysLeft: null,
+        verdict: "NEEDS_OPEN_DATE",
+        debugText: ""
+      };
+      preview.style.display = "none";
+      preview.src = "";
+      scanResult.style.display = "none";
+      nickname.value = "";
+      setMsg("");
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    }
 
-        const fr = new FileReader();
-        fr.onerror = () => reject(new Error("FileReader error"));
-        fr.onload = () => {
-          const dataUrl = String(fr.result || "");
-          const img = new Image();
-          img.onerror = () => reject(new Error("image decode error"));
-          img.onload = () => {
-            const w = img.naturalWidth || img.width || 1;
-            const h = img.naturalHeight || img.height || 1;
-            const scale = Math.min(1, maxW / w);
-            const tw = Math.max(1, Math.round(w * scale));
-            const th = Math.max(1, Math.round(h * scale));
+    function getShelf(){
+      try{
+        const raw = localStorage.getItem("shelf_v1");
+        return raw ? JSON.parse(raw) : [];
+      }catch(e){
+        return [];
+      }
+    }
 
-            const canvas = document.createElement("canvas");
-            canvas.width = tw;
-            canvas.height = th;
+    function setShelf(list){
+      localStorage.setItem("shelf_v1", JSON.stringify(list));
+    }
 
-            const ctx = canvas.getContext("2d");
-            if (!ctx) return reject(new Error("canvas ctx error"));
-            ctx.drawImage(img, 0, 0, tw, th);
+    function renderShelf(){
+      const list = getShelf();
+      shelfList.innerHTML = "";
+      emptyShelf.style.display = list.length ? "none" : "block";
 
-            const outMime = "image/jpeg";
-            const outDataUrl = canvas.toDataURL(outMime, quality);
-            const base64 = outDataUrl.split(",")[1] || "";
+      list
+        .slice()
+        .sort((a,b)=> (a.createdAt < b.createdAt ? 1 : -1))
+        .forEach(item=>{
+          const div = document.createElement("div");
+          div.className = "item";
+          const vHtml = verdictLabel(item.verdict);
+          div.innerHTML = `
+            <div class="itemTop">
+              <div>
+                <div class="itemTitle">${escapeHtml(item.nickname || "Unnamed product")}</div>
+                <div class="small">PAO: ${escapeHtml(item.paoRaw || (item.paoMonths ? item.paoMonths+"M" : "-"))} · Opened: ${escapeHtml(item.openDateISO || "-")}</div>
+                <div class="small">Expiry: ${escapeHtml(item.expiryISO || "-")} · Days left: ${item.daysLeft == null ? "-" : item.daysLeft}</div>
+              </div>
+              <div style="text-align:right">
+                <div>${vHtml}</div>
+                <div class="small" style="margin-top:8px;"><span class="dangerLink" data-del="${item.id}">삭제</span></div>
+              </div>
+            </div>
+          `;
+          shelfList.appendChild(div);
+        });
 
-            resolve({ imageBase64: base64, mimeType: outMime, width: tw, height: th });
-          };
-          img.src = dataUrl;
-        };
-        fr.readAsDataURL(file);
+      shelfList.querySelectorAll("[data-del]").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          const id = el.getAttribute("data-del");
+          const list = getShelf().filter(x => x.id !== id);
+          setShelf(list);
+          renderShelf();
+        });
       });
     }
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    function escapeHtml(s){
+      return String(s || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
 
-    $btnCamera.addEventListener("click", () => {
-      if (isMobile) {
-        $imageCamera.value = "";
-        $imageCamera.click();
-      } else {
-        $imageGallery.value = "";
-        $imageGallery.click();
+    async function fileToBase64(file){
+      return new Promise((resolve, reject)=>{
+        const reader = new FileReader();
+        reader.onload = ()=> resolve(String(reader.result || ""));
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function pickOpenDate(option){
+      const now = new Date();
+      let open = new Date(now);
+
+      if (option === "today") open = now;
+      if (option === "yesterday") { open.setDate(open.getDate()-1); }
+      if (option === "week") { open.setDate(open.getDate()-7); }
+      if (option === "month") { open.setDate(open.getDate()-30); }
+      if (option === "unknown") {
+        // 보수적 추정: “이미 꽤 썼을 가능성”을 반영해 60일 전으로 잡음
+        // 여기 숫자는 네가 원하는 성향(더 보수/더 관대)에 맞춰 바꾸면 됨
+        open.setDate(open.getDate()-60);
       }
-    });
+      current.openDateISO = isoDate(open);
 
-    $btnGallery.addEventListener("click", () => {
-      $imageGallery.value = "";
-      $imageGallery.click();
-    });
-
-    $imageCamera.addEventListener("change", (e) => handleImagePicked(e.target.files?.[0]));
-    $imageGallery.addEventListener("change", (e) => handleImagePicked(e.target.files?.[0]));
-
-    $btnOcr.addEventListener("click", () => {
-      // 수동 재시도용
-      runOcrAuto({ manual: true });
-    });
-
-    function handleImagePicked(file){
-      if (!file) return;
-      selectedFile = file;
-
-      resetUiForNewScan();
-
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      previewUrl = URL.createObjectURL(selectedFile);
-      $imgPreview.src = previewUrl;
-      $imgWrap.style.display = "block";
-
-      $btnOcr.disabled = false;
-
-      // 자동 스캔
-      runOcrAuto({ manual: false });
-    }
-
-    function humanScanErrorMessage(status){
-      // 사용자에게 "서버 에러"를 그대로 보여주지 않도록 문구를 바꿈
-      if (status === 429) return "Scanning is busy right now. Please try again in a moment, or choose PAO manually.";
-      if (status >= 500) return "Scanning service is temporarily unavailable. Please try again, or choose PAO manually.";
-      if (status === 400) return "Couldn’t read this image. Please retake the photo (closer, brighter) or choose PAO manually.";
-      return "Couldn’t scan the PAO. Please try again, or choose PAO manually.";
-    }
-
-    async function runOcrAuto({ manual } = { manual: false }){
-      if (ocrBusy) return;
-      if (!selectedFile){
-        setStatus("Please upload a photo first.", "err");
+      if (!current.paoMonths) {
+        // PAO가 없으면 날짜 계산을 못하니, 저장은 가능하게 하되 verdict는 NEEDS_OPEN_DATE 대신 NEEDS_PAO로 둘 수도 있는데
+        // 지금은 단순하게 "TOSS/Safe" 계산을 안 하고 저장만 허용하지 않음
+        // UX상 이 경우는 스캔 재시도 유도
+        current.openDateISO = null;
+        setMsg("PAO를 찾지 못했어요. 사진을 더 가까이, 더 선명하게 찍어서 다시 스캔해 주세요.");
+        renderResult();
         return;
       }
 
-      ocrBusy = true;
-      $btnOcr.disabled = true;
+      const openDate = new Date(current.openDateISO + "T00:00:00");
+      const exp = addMonths(openDate, current.paoMonths);
+      const expISO = isoDate(exp);
 
-      // 스캔 시작 문구는 여기서만
-      setStatus(manual ? "Rescanning for PAO symbol..." : "Scanning for PAO symbol...", "");
+      const today = new Date();
+      const today0 = new Date(isoDate(today) + "T00:00:00");
+      const diffMs = exp.getTime() - today0.getTime();
+      const diffDays = Math.floor(diffMs / (1000*60*60*24));
+
+      current.expiryISO = expISO;
+      current.daysLeft = diffDays;
+      current.verdict = computeVerdict(diffDays);
+
+      renderResult();
+    }
+
+    async function scan(){
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        setMsg("사진을 먼저 선택해 주세요.");
+        return;
+      }
+
+      scanBtn.disabled = true;
+      setMsg("스캔 중…");
+      resetScanComputedOnly();
 
       try{
-        const payload = await fileToPayload(selectedFile, 1800, 0.9);
+        const dataUrl = await fileToBase64(file);
+        current.imageDataUrl = dataUrl;
+        preview.src = dataUrl;
+        preview.style.display = "block";
 
-        const res = await fetch(OCR_ENDPOINT, {
+        const base64 = dataUrl.split(",")[1] || "";
+        const res = await fetch(WORKER_ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ imageBase64: base64 })
         });
 
-        if (!res.ok){
-          const msg = humanScanErrorMessage(res.status);
-          setStatus(msg, "warn");
-          renderPaoButtons([3, 6, 12, 24], { hint: true });
+        const isJson = (res.headers.get("content-type") || "").includes("application/json");
+        const payload = isJson ? await res.json().catch(()=> ({})) : {};
+
+        if (!res.ok) {
+          // “Server error (500)” 같은 내부 문구 그대로 노출하지 않기
+          const msgText = payload?.error || "스캔에 실패했어요. 사진을 더 선명하게 찍고 다시 시도해 주세요.";
+          setMsg(msgText);
+          scanBtn.disabled = false;
           return;
         }
 
-        const data = await res.json().catch(() => ({}));
-        const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
+        // 기대 응답: { paoMonths: number|null, paoRaw: "6M", confidence: 0~1, debugText?:string }
+        current.paoMonths = payload?.paoMonths ?? null;
+        current.paoRaw = payload?.paoRaw ?? (current.paoMonths ? `${current.paoMonths}M` : "");
+        current.confidence = (typeof payload?.confidence === "number") ? payload.confidence : null;
+        current.debugText = payload?.debugText || "";
 
-        if (pao.length === 1){
-          showDetected(pao[0]);
-          setStatus(`Detected ${pao[0]}M. Checking freshness...`, "ok");
-          await runFreshness(pao[0]);
+        if (!current.paoMonths) {
+          current.verdict = "NEEDS_OPEN_DATE";
+          setMsg("PAO(3M/6M/12M 등)를 찾지 못했어요. PAO 마크가 더 크게 나오게 다시 찍어 주세요.");
+          renderResult();
+          scanBtn.disabled = false;
           return;
         }
 
-        if (pao.length > 1){
-          setStatus("Multiple PAO symbols found. Please select one:", "");
-          renderPaoButtons(pao, { hint: false });
-          return;
-        }
-
-        setStatus("Couldn’t find a PAO symbol. Please choose one manually:", "warn");
-        renderPaoButtons([3, 6, 12, 24], { hint: true });
-      } catch(e){
-        setStatus("Couldn’t scan this photo. Please try again, or choose PAO manually.", "warn");
-        renderPaoButtons([3, 6, 12, 24], { hint: true });
-      } finally{
-        ocrBusy = false;
-        $btnOcr.disabled = false;
+        setMsg("PAO를 찾았어요. 이제 개봉일만 선택하면 남은 기간이 계산돼요.");
+        renderResult();
+      }catch(e){
+        setMsg("네트워크 문제로 스캔이 실패했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
+      }finally{
+        scanBtn.disabled = false;
       }
     }
 
-    function renderPaoButtons(months, { hint } = { hint: false }){
-      $paoButtons.innerHTML = "";
-      $paoButtons.style.display = "flex";
+    function resetScanComputedOnly(){
+      current.paoMonths = null;
+      current.paoRaw = "";
+      current.confidence = null;
+      current.openDateISO = null;
+      current.expiryISO = null;
+      current.daysLeft = null;
+      current.verdict = "NEEDS_OPEN_DATE";
+      current.debugText = "";
+      scanResult.style.display = "none";
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+    }
 
-      months.forEach(m => {
-        const btn = document.createElement("button");
-        btn.className = "btn-secondary";
-        btn.style.flex = "1 1 80px";
-        btn.textContent = m + "M";
-        btn.onclick = async () => {
-          showDetected(m);
-          setStatus(`Selected ${m}M. Checking freshness...`, "");
-          await runFreshness(m);
-        };
-        $paoButtons.appendChild(btn);
+    function saveToShelf(){
+      if (!current.paoMonths || !current.openDateISO || !current.expiryISO) {
+        setMsg("저장하려면 PAO 감지와 개봉일 선택이 필요해요.");
+        return;
+      }
+
+      const item = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2),
+        nickname: (nickname.value || "").trim(),
+        paoMonths: current.paoMonths,
+        paoRaw: current.paoRaw,
+        confidence: current.confidence,
+        openDateISO: current.openDateISO,
+        expiryISO: current.expiryISO,
+        daysLeft: current.daysLeft,
+        verdict: current.verdict,
+        createdAt: new Date().toISOString()
+      };
+
+      const list = getShelf();
+      list.push(item);
+      setShelf(list);
+      renderShelf();
+
+      setMsg("My Shelf에 저장했어요. 다음 제품도 바로 스캔할 수 있어요.");
+      // 다음 스캔을 유도하려면 초기화는 일부만:
+      nickname.value = "";
+    }
+
+    // events
+    fileInput.addEventListener("change", async ()=>{
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      const dataUrl = await fileToBase64(file);
+      preview.src = dataUrl;
+      preview.style.display = "block";
+      setMsg("스캔하기를 눌러 주세요.");
+      resetScanComputedOnly();
+    });
+
+    scanBtn.addEventListener("click", scan);
+    resetBtn.addEventListener("click", resetAll);
+    saveBtn.addEventListener("click", saveToShelf);
+
+    document.querySelectorAll(".chip").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        const opt = btn.getAttribute("data-open");
+        pickOpenDate(opt);
       });
+    });
 
-      if (hint){
-        // 선택 유도용으로 Detect PAO 버튼이 “재시도 버튼”이라는 걸 상태 문구로 설명
-        // (버튼 자체 문구는 그대로 두고 UX로 안내)
-        // 별도 UI 추가 없이 status로만 처리
-      }
-    }
+    clearShelf.addEventListener("click", ()=>{
+      localStorage.removeItem("shelf_v1");
+      renderShelf();
+      setMsg("My Shelf를 전체 삭제했어요.");
+    });
 
-    async function runFreshness(paoMonths){
-      try{
-        const res = await fetch(FRESHNESS_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paoMonths }),
-        });
-
-        if (!res.ok){
-          setStatus("Couldn’t check freshness right now. Please try again.", "warn");
-          return;
-        }
-
-        const data = await res.json().catch(() => ({}));
-
-        // 메타 표시: daysLeft, tossAt (Worker가 제공)
-        const daysLeft = Number.isFinite(Number(data?.daysLeft)) ? Number(data.daysLeft) : null;
-        const tossAt = typeof data?.tossAt === "string" ? data.tossAt : "";
-        showFreshnessMeta(daysLeft, tossAt);
-
-        if (data?.status === "TOSS"){
-          setStatus("⚠️ Toss It. This product is past the recommended period after opening.", "err");
-        } else if (data?.status === "WARN"){
-          setStatus("⚠️ Almost time to toss. Use soon or replace.", "warn");
-        } else {
-          setStatus("✅ Safe to Use. Product is within the recommended period.", "ok");
-        }
-      } catch(e){
-        setStatus("Freshness check failed. Please try again.", "warn");
-      }
-    }
+    // init
+    renderShelf();
+    setMsg("사진을 선택한 뒤 스캔하세요.");
   </script>
 </body>
 </html>
