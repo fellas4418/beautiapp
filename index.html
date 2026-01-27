@@ -209,7 +209,7 @@
     const $btnOcr = document.getElementById("btnOcr");
     $btnOcr.addEventListener("click", runOcrAuto);
     let ocrBusy = false;
-   
+    let lastOcrText = "";
     const $imgWrap = document.getElementById("imgWrap");
     const $imgPreview = document.getElementById("imgPreview");
   
