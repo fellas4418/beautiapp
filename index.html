@@ -37,7 +37,6 @@
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
-    a{ color:inherit; }
     .wrap{
       max-width: 760px;
       margin: 0 auto;
@@ -246,13 +245,6 @@
       font-size: 15px;
       outline: none;
     }
-
-    .split{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .split > *{ flex: 1 1 240px; }
 
     .center{
       text-align:center;
@@ -536,10 +528,9 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    // Configure your Worker endpoint here (optional).
-    // Expected to return JSON like: { detected: "6M" } or { text: "Detected 6M" }
-    // If empty, a local mock will be used.
-    const WORKER_OCR_ENDPOINT = ""; // example: "https://skinguard.ohryee.workers.dev/ocr"
+    // 너 워커 도메인만 정확히 넣어
+    // 예: https://skinguard.ohryee.workers.dev
+    const WORKER_BASE = "https://skinguard.ohryee.workers.dev";
 
     const Screen = {
       ENTRY: "ENTRY",
@@ -552,31 +543,26 @@
     const state = {
       screen: Screen.ENTRY,
 
-      // media
       stream: null,
       imageDataUrl: "",
 
-      // analysis
-      detectedPao: "",   // "3M" "6M" "12M"
-      status: "",        // "SAFE" "TOSS"
+      detectedPao: "",
+      paoCandidates: [],
+      productNameOCR: "",
+      status: "",
       analyzeError: "",
 
-      // save
       openedDate: "",
       productName: "",
 
-      // reminders
       notiOnOpenEnabled: false,
       noti7days: false,
       notiOnDay: true,
 
-      // shelf
       items: [],
 
-      // modal
       modal: null,
 
-      // transient
       autoAnalyze: false
     };
 
@@ -700,11 +686,10 @@
       document.getElementById("btnUpload").onclick = () => {
         state.autoAnalyze = true;
         setScreen(Screen.SCAN);
-        // In SCAN, file chooser will open
         setTimeout(() => {
           const input = document.getElementById("fileInput");
           if (input) input.click();
-        }, 50);
+        }, 60);
       };
 
       document.getElementById("btnGoShelf").onclick = () => setScreen(Screen.SHELF);
@@ -763,6 +748,7 @@
         if (!file) return;
         state.imageDataUrl = await fileToDataUrl(file);
         stopCamera();
+
         if (state.autoAnalyze) {
           setScreen(Screen.ANALYZE);
         } else {
@@ -784,7 +770,6 @@
 
       document.getElementById("btnAnalyze").onclick = () => setScreen(Screen.ANALYZE);
 
-      // Ensure camera starts on this screen if possible
       startCameraIfPossible();
     }
 
@@ -807,17 +792,25 @@
     async function runAnalyze() {
       state.analyzeError = "";
       state.detectedPao = "";
+      state.paoCandidates = [];
+      state.productNameOCR = "";
       state.status = "";
 
       try {
-        const detected = await detectPAO(state.imageDataUrl);
-        state.detectedPao = normalizePao(detected);
+        const meta = await detectMetaFromWorker(state.imageDataUrl);
+
+        state.detectedPao = normalizePao(meta.bestPao || meta.detectedPao || "");
+        state.paoCandidates = Array.isArray(meta.paoCandidates) ? meta.paoCandidates : [];
+        state.productNameOCR = safeString(meta.productName || "");
 
         if (!state.detectedPao) {
           throw new Error("No PAO detected");
         }
 
-        // Pre-compute status using openedDate default = today (user can edit later)
+        if (!state.productName && state.productNameOCR) {
+          state.productName = state.productNameOCR;
+        }
+
         const today = isoToday();
         if (!state.openedDate) state.openedDate = today;
 
@@ -828,9 +821,7 @@
           type: "RESULT_POPUP",
           pao: state.detectedPao,
           status: state.status,
-          tip: state.status === "SAFE"
-            ? pickTipSafe()
-            : pickTipToss()
+          tip: state.status === "SAFE" ? pickTipSafe() : pickTipToss()
         });
 
         setTimeout(() => {
@@ -849,12 +840,20 @@
       const today = isoToday();
       if (!state.openedDate) state.openedDate = today;
 
+      const candidatesText = (state.paoCandidates && state.paoCandidates.length)
+        ? ("Candidates: " + state.paoCandidates.map(n => n + "M").join(", "))
+        : "";
+
+      const nameHint = state.productNameOCR ? ("OCR: " + escapeHtml(state.productNameOCR)) : "";
+
       return `
         <div class="card">
           <div class="row">
             <div class="col">
               <div class="title">Save</div>
               <div class="sub">Detected: ${escapeHtml(state.detectedPao || "-")}</div>
+              ${candidatesText ? `<div class="sub" style="margin-top:4px;">${escapeHtml(candidatesText)}</div>` : ``}
+              ${nameHint ? `<div class="sub" style="margin-top:4px;">${nameHint}</div>` : ``}
             </div>
             <button id="btnBackToScan" class="btn small">Back</button>
           </div>
@@ -947,7 +946,7 @@
               <div class="title">My Shelf</div>
               <div class="sub">Your items, your freshness.</div>
             </div>
-            <button id="btnHome" class="btn small">Home</button>
+            <button id="btnBackToEntry" class="btn small">Back</button>
           </div>
 
           <div class="shelfTop" style="margin-top:12px;">
@@ -966,7 +965,7 @@
 
         <div class="card">
           <div class="gauge">
-            <div class="ring" id="ring" style="background: conic-gradient(var(--ok) ${ringDeg}deg, rgba(255,255,255,.10) 0deg);">
+            <div class="ring" style="background: conic-gradient(var(--ok) ${ringDeg}deg, rgba(255,255,255,.10) 0deg);">
               <div class="ringInner">
                 <div class="ringPct">${pct}%</div>
                 <div class="ringLbl">safe ratio</div>
@@ -999,12 +998,14 @@
     }
 
     function bindShelf() {
-      document.getElementById("btnHome").onclick = () => setScreen(Screen.ENTRY);
+      document.getElementById("btnBackToEntry").onclick = () => setScreen(Screen.ENTRY);
+
       document.getElementById("btnAdd").onclick = () => {
         state.autoAnalyze = false;
         setScreen(Screen.SCAN);
         startCameraIfPossible();
       };
+
       const clearBtn = document.getElementById("btnClearAll");
       if (clearBtn) {
         clearBtn.onclick = () => openModal({ type: "CLEAR_ALL_CONFIRM" });
@@ -1065,7 +1066,6 @@
         toast("Cleared.");
         render();
       };
-      // click outside to close
       $modal.firstElementChild.onclick = (e) => {
         if (e.target === $modal.firstElementChild) closeModal();
       };
@@ -1120,10 +1120,11 @@
 
       state.items.unshift(item);
 
-      // reset transient fields
       state.productName = "";
       state.imageDataUrl = "";
       state.detectedPao = "";
+      state.paoCandidates = [];
+      state.productNameOCR = "";
       state.status = "";
       state.autoAnalyze = false;
     }
@@ -1144,7 +1145,6 @@
     }
 
     function gaugeLabel(pct) {
-      // User's suggested buckets: 100-80 good, 80-60 ok, 60-40 bad, below 60 very bad
       if (pct >= 80) {
         return {
           title: "Good",
@@ -1193,36 +1193,21 @@
       return tips[Math.floor(Math.random() * tips.length)];
     }
 
-    async function detectPAO(imageDataUrl) {
-      if (!WORKER_OCR_ENDPOINT) {
-        // Local mock: tries to read obvious handwritten "6M"/"12M" is not possible; fallback
-        // We'll randomly pick 6M/12M to keep flow running for MVP.
-        return Math.random() < 0.55 ? "6M" : "12M";
-      }
+    async function detectMetaFromWorker(imageDataUrl) {
+      if (!WORKER_BASE) throw new Error("No worker base");
 
-      // Send base64 without prefix if needed
       const base64 = imageDataUrl.includes(",") ? imageDataUrl.split(",")[1] : imageDataUrl;
 
-      const res = await fetch(WORKER_OCR_ENDPOINT, {
+      const res = await fetch(WORKER_BASE.replace(/\/+$/, "") + "/ocr-meta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64 })
+        body: JSON.stringify({ imageBase64: base64, mimeType: "image/jpeg" })
       });
 
-      if (!res.ok) throw new Error("Worker error");
-
       const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data || data.ok === false) throw new Error("Worker error");
 
-      // Accept several shapes
-      if (data.detected) return String(data.detected);
-      if (data.pao) return String(data.pao);
-      if (data.text) {
-        const t = String(data.text);
-        const m = t.match(/(\b\d{1,2})\s*M\b/i);
-        if (m) return (m[1] + "M").toUpperCase();
-        return t;
-      }
-      return "";
+      return data;
     }
 
     function normalizePao(raw) {
@@ -1250,7 +1235,6 @@
     }
 
     function compareISO(a, b) {
-      // a,b are YYYY-MM-DD
       if (a === b) return 0;
       return a < b ? -1 : 1;
     }
@@ -1260,7 +1244,6 @@
       const dt = new Date(y, (m - 1), d);
       const targetMonth = dt.getMonth() + months;
 
-      // Move to first day of target month then clamp day to month length
       const temp = new Date(dt.getFullYear(), targetMonth, 1);
       const lastDay = new Date(temp.getFullYear(), temp.getMonth() + 1, 0).getDate();
       const day = Math.min(d, lastDay);
@@ -1293,13 +1276,11 @@
     }
 
     async function startCameraIfPossible() {
-      // Only start if we're on SCAN screen
       if (state.screen !== Screen.SCAN) return;
 
       const video = document.getElementById("video");
       if (!video) return;
 
-      // If already running, attach stream
       if (state.stream) {
         try { video.srcObject = state.stream; } catch {}
         return;
@@ -1314,17 +1295,13 @@
         try { video.srcObject = stream; } catch {}
         video.play().catch(() => {});
       } catch (e) {
-        // If camera fails, user can still upload
-        const prev = document.querySelector(".preview .badgeTag");
         toast("Camera blocked. Use Upload instead.", 2200);
       }
     }
 
     function stopCamera() {
       if (state.stream) {
-        try {
-          state.stream.getTracks().forEach(t => t.stop());
-        } catch {}
+        try { state.stream.getTracks().forEach(t => t.stop()); } catch {}
       }
       state.stream = null;
       const video = document.getElementById("video");
@@ -1334,11 +1311,14 @@
     }
 
     function cleanupScreenSideEffects() {
-      // Prevent hidden overlays from capturing clicks by removing camera stream when leaving SCAN
-      if (state.screen === Screen.SCAN) {
-        stopCamera();
-      }
+      if (state.screen === Screen.SCAN) stopCamera();
       closeModal();
+    }
+
+    function safeString(x, max=80) {
+      const s = String(x || "").replace(/\s+/g, " ").trim();
+      if (!s) return "";
+      return s.length > max ? s.slice(0, max).trim() : s;
     }
 
     function escapeHtml(s) {
@@ -1362,7 +1342,7 @@
       } catch {
         state.items = [];
       }
-      // backfill expires/status if missing
+
       const today = isoToday();
       state.items = state.items.map(it => {
         const opened = it.openedDate || today;
@@ -1391,13 +1371,12 @@
     }
 
     async function enableOnOpenNotifications() {
-      // Register service worker if not already
       if (!("serviceWorker" in navigator)) {
         toast("This browser does not support notifications.");
         return false;
       }
       try {
-        const reg = await navigator.serviceWorker.register("./sw.js");
+        await navigator.serviceWorker.register("./sw.js");
         await navigator.serviceWorker.ready;
 
         const perm = await Notification.requestPermission();
@@ -1460,14 +1439,10 @@
       return `${yyyy}-${mm}-${dd}`;
     }
 
-    // init
     loadItems();
     loadSettings();
 
-    // Decide initial screen: if shelf has items, stay on ENTRY but shelf is one tap away
     setScreen(Screen.ENTRY);
-
-    // On-open reminders
     setTimeout(() => maybeRunOnOpenReminders(false), 600);
   </script>
 </body>
