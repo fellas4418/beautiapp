@@ -2,1369 +2,1473 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Keep or Toss</title>
+  <meta name="theme-color" content="#0b0c10" />
   <style>
     :root{
       --bg:#0b0c10;
       --card:#111318;
-      --card2:#0f1116;
+      --card2:#141720;
       --text:#e8e8ea;
       --muted:#a8abb4;
       --border:rgba(255,255,255,.10);
+
       --btn:#2b6cff;
+      --btnText:#ffffff;
       --btn2:#1f2430;
+
       --ok:#20c997;
       --warn:#ffcc00;
-      --danger:#ff4d4f;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius: 18px;
+      --bad:#ff4d4f;
+
+      --shadow: 0 10px 28px rgba(0,0,0,.45);
+      --r:18px;
     }
-    *{box-sizing:border-box;}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      background: var(--bg);
+      background: radial-gradient(1200px 800px at 10% 5%, rgba(43,108,255,.18), transparent 55%),
+                  radial-gradient(900px 600px at 90% 10%, rgba(32,201,151,.14), transparent 50%),
+                  var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
+    a{ color:inherit; }
     .wrap{
-      max-width: 860px;
+      max-width: 760px;
       margin: 0 auto;
-      padding: 18px 14px 30px;
+      padding: 18px 14px 28px;
     }
     .topbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:10px;
-      padding: 6px 2px 10px;
+      gap:12px;
+      margin-bottom: 14px;
     }
     .brand{
       display:flex;
       align-items:center;
       gap:10px;
-      user-select:none;
+      min-width: 0;
     }
     .logo{
-      width:34px;height:34px;border-radius:12px;
-      background: linear-gradient(145deg, rgba(43,108,255,.95), rgba(32,201,151,.8));
-      box-shadow: 0 10px 26px rgba(43,108,255,.25);
+      width:34px;height:34px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(43,108,255,.9), rgba(32,201,151,.9));
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      flex: 0 0 auto;
     }
-    .brand .name{
-      font-weight: 700;
-      letter-spacing:.2px;
+    .brandText{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      line-height:1.15;
+    }
+    .brandTitle{
+      font-weight: 750;
+      letter-spacing: .2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brandSub{
+      color:var(--muted);
+      font-size: 12.5px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
     .pill{
-      font-size:12px;
-      padding: 6px 10px;
+      padding: 7px 10px;
       border: 1px solid var(--border);
-      border-radius: 999px;
-      color: var(--muted);
       background: rgba(255,255,255,.03);
-      user-select:none;
+      color: var(--muted);
+      border-radius: 999px;
+      font-size: 12.5px;
+      flex:0 0 auto;
     }
+
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      background: rgba(17,19,24,.82);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--r);
       box-shadow: var(--shadow);
       padding: 16px;
+      overflow:hidden;
+      backdrop-filter: blur(10px);
     }
-    .card + .card{ margin-top: 12px; }
-    .hero{
-      padding: 26px 18px;
-      border-radius: 26px;
-      background:
-        radial-gradient(600px 260px at 10% 0%, rgba(43,108,255,.18), transparent 60%),
-        radial-gradient(500px 220px at 100% 10%, rgba(32,201,151,.14), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-    }
-    .heroTitle{
-      font-size: 34px;
-      line-height: 1.12;
-      font-weight: 800;
-      margin: 0 0 10px;
-      letter-spacing: -0.2px;
-    }
-    .heroSub{
-      margin: 0 0 18px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-    }
+    .card + .card{ margin-top: 14px; }
+
     .row{
       display:flex;
-      gap:10px;
-      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
     }
+    .col{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
+    .title{
+      font-size: 20px;
+      font-weight: 780;
+      letter-spacing: .2px;
+    }
+    .sub{
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.4;
+    }
+
     .btn{
-      appearance:none;
-      border: 0;
-      background: var(--btn);
-      color: #fff;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
       padding: 12px 14px;
       border-radius: 14px;
-      font-weight: 700;
+      font-weight: 650;
+      letter-spacing: .2px;
       cursor: pointer;
-      box-shadow: 0 12px 26px rgba(43,108,255,.22);
-      flex: 1;
-      min-width: 190px;
-    }
-    .btn.secondary{
-      background: var(--btn2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      box-shadow: none;
-    }
-    .btn.danger{
-      background: rgba(255,77,79,.12);
-      color: #ffd6d6;
-      border: 1px solid rgba(255,77,79,.25);
-      box-shadow:none;
+      width: 100%;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
     }
     .btn:disabled{
-      opacity:.6;
+      opacity:.45;
       cursor:not-allowed;
     }
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(43,108,255,.95), rgba(43,108,255,.75));
+      border-color: rgba(43,108,255,.55);
+      color: var(--btnText);
     }
-    @media (min-width: 820px){
-      .grid.two{ grid-template-columns: 1.1fr .9fr; }
+    .btn.ghost{
+      background: rgba(31,36,48,.55);
     }
-    .muted{ color: var(--muted); }
-
-    .cameraBox{
-      overflow:hidden;
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.02);
+    .btn.danger{
+      background: rgba(255,77,79,.10);
+      border-color: rgba(255,77,79,.30);
+      color: #ffd7d7;
     }
-    video, canvas{
-      width:100%;
-      height:auto;
-      display:block;
-    }
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top: 10px;
-    }
-    .kv{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
+    .btn.small{
       padding: 10px 12px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.02);
-      border-radius: 14px;
-    }
-    .kv .k{ color: var(--muted); font-size: 12px; }
-    .kv .v{ font-weight: 700; }
-
-    .shelfHeader{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .bigCount{
-      font-size: 44px;
-      font-weight: 900;
-      letter-spacing: -0.4px;
-      margin: 0;
-      line-height: 1;
-    }
-    .bigLabel{
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .gaugeWrap{
-      display:grid;
-      grid-template-columns: 140px 1fr;
-      gap: 14px;
-      align-items:center;
-    }
-    .gauge{
-      width: 140px; height: 140px;
-      border-radius: 999px;
-      display:grid;
-      place-items:center;
-      background: rgba(255,255,255,.02);
-      border: 1px solid var(--border);
-      position:relative;
-      overflow:hidden;
-    }
-    .gaugeInner{
-      width: 108px; height:108px;
-      border-radius:999px;
-      background: var(--card2);
-      border: 1px solid var(--border);
-      display:grid;
-      place-items:center;
-      z-index:2;
-    }
-    .gaugePct{
-      font-size: 26px;
-      font-weight: 900;
-      letter-spacing:-0.2px;
-      margin:0;
-      line-height:1;
-    }
-    .gaugeSmall{
-      margin: 4px 0 0;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .gaugeFill{
-      position:absolute; inset:0;
-      background: conic-gradient(var(--ok) 0deg, rgba(255,255,255,.06) 0deg);
-      z-index:1;
-    }
-    .statusTitle{
-      margin:0;
-      font-size: 16px;
-      font-weight: 800;
-    }
-    .statusLine{
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .item{
-      padding: 14px;
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.02);
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-    }
-    .item h4{
-      margin:0;
-      font-size: 15px;
-      font-weight: 800;
-      line-height: 1.25;
-    }
-    .item .meta{
-      margin: 6px 0 0;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-    .tag{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.03);
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--muted);
-      user-select:none;
+      border-radius: 12px;
+      width: auto;
       white-space:nowrap;
     }
-    .tag.ok{ border-color: rgba(32,201,151,.28); color: #c9fff0; background: rgba(32,201,151,.10); }
-    .tag.warn{ border-color: rgba(255,204,0,.28); color: #fff3c2; background: rgba(255,204,0,.10); }
-    .tag.bad{ border-color: rgba(255,77,79,.28); color: #ffd6d6; background: rgba(255,77,79,.12); }
-    .miniBtn{
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 9px 10px;
-      border-radius: 12px;
-      cursor:pointer;
-      font-weight: 800;
+    .btnrow{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
     }
-    .miniBtn.danger{
-      border-color: rgba(255,77,79,.25);
-      color: #ffd6d6;
-      background: rgba(255,77,79,.10);
+    .btnrow .btn{ width: 100%; }
+
+    .hero{
+      padding: 18px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(43,108,255,.16), rgba(32,201,151,.10));
+    }
+    .heroBig{
+      font-size: 44px;
+      font-weight: 820;
+      letter-spacing: .3px;
+      margin: 4px 0 6px;
+    }
+    .heroText{
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+      margin: 0 0 14px;
     }
 
-    .overlay{
-      position: fixed;
-      inset: 0;
-      display:none;
+    .preview{
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+      position:relative;
+      margin-top: 12px;
+    }
+    .preview .empty{
+      padding: 18px;
+      color: var(--muted);
+      text-align:center;
+    }
+    .preview img, .preview video{
+      display:block;
+      width:100%;
+      height:auto;
+    }
+    .preview video{
+      background: #000;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+    }
+    .badgeTag{
+      position:absolute;
+      top:10px;
+      left:10px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.92);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      backdrop-filter: blur(8px);
+    }
+
+    .field{
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 12px;
+      background: rgba(255,255,255,.03);
+    }
+    .label{
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="date"]{
+      width:100%;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 12px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .split{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .split > *{ flex: 1 1 240px; }
+
+    .center{
+      text-align:center;
+      padding: 12px 0 2px;
+    }
+    .spinner{
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      margin: 14px auto 0;
+      border: 3px solid rgba(255,255,255,.18);
+      border-top-color: rgba(43,108,255,.95);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin{
+      to{ transform: rotate(360deg); }
+    }
+
+    .resultBig{
+      font-size: 66px;
+      font-weight: 860;
+      letter-spacing: .6px;
+      margin: 4px 0 0;
+    }
+    .resultMini{
+      color: var(--muted);
+      font-size: 14px;
+      margin: 6px 0 0;
+      line-height: 1.45;
+    }
+
+    .shelfTop{
+      display:flex;
+      align-items:stretch;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .shelfCount{
+      flex: 1 1 220px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,.03);
+    }
+    .shelfCount .num{
+      font-size: 56px;
+      font-weight: 850;
+      line-height:1;
+      margin-top: 2px;
+    }
+    .shelfCount .txt{
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .shelfActions{
+      display:flex;
+      gap:10px;
+      flex: 1 1 220px;
+      justify-content:flex-end;
+      align-items:flex-start;
+    }
+    .shelfActions .btn{ width:auto; }
+
+    .gauge{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .ring{
+      width: 150px;
+      height: 150px;
+      border-radius: 999px;
+      background: conic-gradient(var(--ok) 0deg, var(--ok) 0deg, rgba(255,255,255,.10) 0deg);
+      display:flex;
       align-items:center;
       justify-content:center;
-      padding: 18px;
-      background: rgba(0,0,0,.55);
-      z-index: 9999;
+      position:relative;
+      flex: 0 0 auto;
     }
-    .overlay.show{ display:flex; }
-    .modal{
-      width: min(520px, 100%);
-      border-radius: 22px;
+    .ring::after{
+      content:"";
+      width: 116px;
+      height: 116px;
+      border-radius: 999px;
+      background: rgba(17,19,24,.92);
+      border: 1px solid rgba(255,255,255,.10);
+      position:absolute;
+      inset: 0;
+      margin:auto;
+    }
+    .ringInner{
+      position:relative;
+      z-index:2;
+      text-align:center;
+      line-height:1.05;
+    }
+    .ringPct{
+      font-size: 38px;
+      font-weight: 850;
+    }
+    .ringLbl{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .gaugeText{
+      flex: 1 1 220px;
+      min-width: 220px;
+    }
+    .gaugeTitle{
+      font-size: 18px;
+      font-weight: 780;
+      margin-bottom: 4px;
+    }
+    .gaugeDesc{
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13.5px;
+      margin-bottom: 10px;
+    }
+    .gaugeMini{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .chip{
       border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      box-shadow: 0 18px 46px rgba(0,0,0,.55);
-      padding: 16px;
+      background: rgba(255,255,255,.03);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      color: var(--muted);
     }
-    .modalTop{
+
+    .list{
+      margin-top: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+    .item{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      border-radius: 18px;
+      padding: 14px;
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
-      gap:10px;
+      gap:12px;
     }
-    .modal h3{
-      margin:0;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing:-0.1px;
+    .itemLeft{ min-width:0; }
+    .itemName{
+      font-weight: 780;
+      font-size: 16px;
+      margin-bottom: 6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 48vw;
     }
-    .modal p{
-      margin: 8px 0 0;
+    .itemMeta{
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.4;
+    }
+    .itemRight{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:8px;
+      flex:0 0 auto;
+    }
+    .tag{
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 750;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+    }
+    .tag.safe{
+      border-color: rgba(32,201,151,.30);
+      background: rgba(32,201,151,.12);
+      color: rgba(200,255,240,.95);
+    }
+    .tag.toss{
+      border-color: rgba(255,77,79,.35);
+      background: rgba(255,77,79,.12);
+      color: rgba(255,220,220,.96);
+    }
+
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 20px 14px;
+      z-index: 9999;
+      backdrop-filter: blur(6px);
+    }
+    .modal{
+      width: min(520px, 100%);
+      background: rgba(17,19,24,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      padding: 16px;
+    }
+    .modalTitle{
+      font-size: 18px;
+      font-weight: 820;
+      margin-bottom: 6px;
+    }
+    .modalSub{
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.45;
     }
     .modalActions{
       display:flex;
       gap:10px;
-      justify-content:flex-end;
       margin-top: 14px;
-      flex-wrap:wrap;
     }
+    .modalActions .btn{ width: 100%; }
 
     .toast{
       position: fixed;
       left: 50%;
-      bottom: 18px;
       transform: translateX(-50%);
-      width: min(640px, calc(100% - 24px));
-      display:none;
-      z-index: 99999;
-    }
-    .toast.show{ display:block; }
-    .toastCard{
-      border-radius: 22px;
-      border: 1px solid var(--border);
-      box-shadow: 0 18px 46px rgba(0,0,0,.55);
-      padding: 14px;
-      background: rgba(17,19,24,.92);
-      backdrop-filter: blur(10px);
-    }
-    .toastCard.safe{ border-color: rgba(32,201,151,.35); background: rgba(10,28,22,.92); }
-    .toastCard.toss{ border-color: rgba(255,77,79,.35); background: rgba(32,10,10,.92); }
-    .toastTitle{
-      font-weight: 950;
-      font-size: 16px;
-      margin:0;
-      letter-spacing:-0.1px;
-    }
-    .toastDesc{
-      margin: 6px 0 0;
+      bottom: 18px;
+      z-index: 9998;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(17,19,24,.90);
+      box-shadow: 0 18px 40px rgba(0,0,0,.55);
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: rgba(255,255,255,.92);
       font-size: 13px;
-      color: var(--muted);
-      line-height: 1.45;
+      max-width: min(560px, calc(100% - 24px));
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events:none;
     }
-    .toastTip{
-      margin: 10px 0 0;
-      font-size: 12px;
-      color: rgba(232,232,234,.86);
-      line-height: 1.45;
-    }
-    .toastRow{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-top: 12px;
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
     }
 
-    .pickerOverlay{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 18px;
-      z-index: 10000;
+    @media (max-width: 420px){
+      .heroBig{ font-size: 38px; }
+      .ring{ width: 140px; height: 140px; }
+      .ring::after{ width: 110px; height: 110px; }
+      .itemName{ max-width: 56vw; }
     }
-    .pickerOverlay.show{ display:flex; }
-    .picker{
-      width: min(520px, 100%);
-      border-radius: 22px;
-      border: 1px solid var(--border);
-      background: rgba(17,19,24,.96);
-      box-shadow: 0 18px 46px rgba(0,0,0,.55);
-      padding: 14px;
-    }
-    .pickerTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .pickerTop .left{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-    }
-    .navBtn{
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-      width: 40px; height: 40px;
-      border-radius: 14px;
-      cursor:pointer;
-      font-weight: 900;
-    }
-    .yearBtn{
-      background: rgba(255,255,255,.03);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 14px;
-      cursor:pointer;
-      font-weight: 900;
-      letter-spacing:-0.1px;
-    }
-    .monthLabel{
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .grid7{
-      display:grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
-    }
-    .dow{
-      text-align:center;
-      font-size: 11px;
-      color: var(--muted);
-      padding: 6px 0;
-    }
-    .day{
-      text-align:center;
-      padding: 10px 0;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.05);
-      background: rgba(255,255,255,.02);
-      cursor:pointer;
-      user-select:none;
-      font-weight: 800;
-    }
-    .day.off{
-      opacity: .35;
-      cursor: default;
-    }
-    .day.sel{
-      outline: 2px solid rgba(43,108,255,.75);
-      background: rgba(43,108,255,.16);
-      border-color: rgba(43,108,255,.20);
-    }
-    .yearList{
-      display:none;
-      margin-top: 10px;
-      max-height: 320px;
-      overflow:auto;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: rgba(255,255,255,.02);
-      padding: 10px;
-    }
-    .yearList.show{ display:block; }
-    .yearItem{
-      padding: 10px 12px;
-      border-radius: 14px;
-      cursor:pointer;
-      font-weight: 900;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      border: 1px solid rgba(255,255,255,.06);
-      background: rgba(255,255,255,.02);
-      margin-bottom: 8px;
-    }
-    .yearItem:hover{ background: rgba(255,255,255,.04); }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <div class="name">Keep or Toss</div>
-          <div class="monthLabel" id="subline">Check your makeup before you use it</div>
+        <div class="logo"></div>
+        <div class="brandText">
+          <div class="brandTitle">Keep or Toss</div>
+          <div class="brandSub">Check your makeup before you use it.</div>
         </div>
       </div>
-      <div class="pill" id="topRight">Not saved</div>
+      <div id="savedPill" class="pill">Not saved</div>
     </div>
 
-    <div id="view"></div>
+    <div id="app"></div>
   </div>
 
-  <div class="overlay" id="confirmOverlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <div class="modalTop">
-        <div>
-          <h3 id="confirmTitle">Confirm</h3>
-          <p id="confirmDesc">Are you sure?</p>
-        </div>
-        <button class="navBtn" id="confirmClose" aria-label="Close">×</button>
-      </div>
-      <div class="modalActions">
-        <button class="btn secondary" id="confirmCancel">Cancel</button>
-        <button class="btn danger" id="confirmOk">Clear all</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast" id="resultToast" aria-live="polite" aria-atomic="true">
-    <div class="toastCard" id="toastCard">
-      <p class="toastTitle" id="toastTitle">SAFE TO USE</p>
-      <p class="toastDesc" id="toastDesc">Still fresh.</p>
-      <p class="toastTip" id="toastTip">Tip: Store away from heat and sunlight.</p>
-      <div class="toastRow">
-        <span class="pill" id="toastMeta">Detected 6M</span>
-        <button class="btn secondary" id="toastOk" style="min-width:auto; flex:0; padding:10px 14px;">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="pickerOverlay" id="dateOverlay" role="dialog" aria-modal="true">
-    <div class="picker">
-      <div class="pickerTop">
-        <div class="left">
-          <button class="navBtn" id="prevMonth" aria-label="Prev">‹</button>
-          <button class="navBtn" id="nextMonth" aria-label="Next">›</button>
-        </div>
-        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-          <button class="yearBtn" id="yearBtn">2026</button>
-          <div class="monthLabel" id="monthLabel">Jan</div>
-        </div>
-      </div>
-
-      <div class="grid7" id="dowRow"></div>
-      <div class="grid7" id="daysGrid" style="margin-top:8px;"></div>
-
-      <div class="yearList" id="yearList"></div>
-
-      <div class="modalActions" style="justify-content:space-between;">
-        <button class="btn secondary" id="dateCancel" style="min-width:auto; flex:0;">Cancel</button>
-        <button class="btn" id="dateOk" style="min-width:auto; flex:0;">Done</button>
-      </div>
-    </div>
-  </div>
+  <div id="modal-root"></div>
+  <div id="toast" class="toast"></div>
 
   <script>
-    // 설정: 네 Workers OCR 엔드포인트를 여기 넣어
-    // 예: const OCR_ENDPOINT = "https://xxxx.xxxx.workers.dev/ocr";
-    const OCR_ENDPOINT = ""; // 비워두면 데모 모드(랜덤 6M/12M)
+    // Configure your Worker endpoint here (optional).
+    // Expected to return JSON like: { detected: "6M" } or { text: "Detected 6M" }
+    // If empty, a local mock will be used.
+    const WORKER_OCR_ENDPOINT = ""; // example: "https://skinguard.ohryee.workers.dev/ocr"
 
-    const LS_KEY = "kot_shelf_v1";
-    const LS_PREF = "kot_prefs_v1";
-
-    const tips = {
-      safe: [
-        "Store away from heat and sunlight.",
-        "Keep the cap tightly closed.",
-        "Wipe the nozzle before closing.",
-        "Avoid humid bathroom shelves if possible.",
-        "Keep it cool and dry."
-      ],
-      toss: [
-        "Empty it before tossing to avoid leaks.",
-        "Don’t flush liquids down the sink.",
-        "Wipe the container if you plan to recycle it.",
-        "If it smells off, don’t risk it.",
-        "When in doubt, toss it."
-      ]
+    const Screen = {
+      ENTRY: "ENTRY",
+      SCAN: "SCAN",
+      ANALYZE: "ANALYZE",
+      SAVE: "SAVE",
+      SHELF: "SHELF",
     };
 
-    const viewEl = document.getElementById("view");
-    const topRight = document.getElementById("topRight");
+    const state = {
+      screen: Screen.ENTRY,
 
-    let shelf = loadShelf();
-    let prefs = loadPrefs();
+      // media
+      stream: null,
+      imageDataUrl: "",
 
-    let cameraStream = null;
-    let capturedDataUrl = "";
-    let pendingAnalysis = null; // { detectedMonths, openedDate, expiryDate, safe, nameGuess }
+      // analysis
+      detectedPao: "",   // "3M" "6M" "12M"
+      status: "",        // "SAFE" "TOSS"
+      analyzeError: "",
 
-    // ----- util
-    function loadShelf(){
-      try{
-        const raw = localStorage.getItem(LS_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-      }catch(e){ return []; }
+      // save
+      openedDate: "",
+      productName: "",
+
+      // reminders
+      notiOnOpenEnabled: false,
+      noti7days: false,
+      notiOnDay: true,
+
+      // shelf
+      items: [],
+
+      // modal
+      modal: null,
+
+      // transient
+      autoAnalyze: false
+    };
+
+    const $app = document.getElementById("app");
+    const $modal = document.getElementById("modal-root");
+    const $toast = document.getElementById("toast");
+    const $savedPill = document.getElementById("savedPill");
+
+    function setScreen(next) {
+      cleanupScreenSideEffects();
+      state.screen = next;
+      render();
     }
-    function saveShelf(){
-      localStorage.setItem(LS_KEY, JSON.stringify(shelf));
-      topRight.textContent = shelf.length ? (shelf.length + " saved") : "Not saved";
+
+    function openModal(obj) {
+      state.modal = obj;
+      renderModal();
     }
-    function loadPrefs(){
-      try{
-        const raw = localStorage.getItem(LS_PREF);
-        const p = raw ? JSON.parse(raw) : {};
-        return {
-          notify7: !!p.notify7,
-          notifyDay: (p.notifyDay !== false),
-          askedNotif: !!p.askedNotif
-        };
-      }catch(e){
-        return { notify7:false, notifyDay:true, askedNotif:false };
+
+    function closeModal() {
+      state.modal = null;
+      renderModal();
+    }
+
+    function toast(msg, ms=1700) {
+      $toast.textContent = msg;
+      $toast.classList.add("show");
+      setTimeout(() => $toast.classList.remove("show"), ms);
+    }
+
+    function render() {
+      updateSavedPill();
+
+      switch (state.screen) {
+        case Screen.ENTRY:
+          $app.innerHTML = viewEntry();
+          bindEntry();
+          break;
+
+        case Screen.SCAN:
+          $app.innerHTML = viewScan();
+          bindScan();
+          break;
+
+        case Screen.ANALYZE:
+          $app.innerHTML = viewAnalyze();
+          bindAnalyze();
+          break;
+
+        case Screen.SAVE:
+          $app.innerHTML = viewSave();
+          bindSave();
+          break;
+
+        case Screen.SHELF:
+          $app.innerHTML = viewShelf();
+          bindShelf();
+          break;
+      }
+      renderModal();
+    }
+
+    function renderModal() {
+      if (!state.modal) { $modal.innerHTML = ""; return; }
+
+      if (state.modal.type === "CLEAR_ALL_CONFIRM") {
+        $modal.innerHTML = modalClearAll();
+        bindModalClearAll();
+        return;
+      }
+
+      if (state.modal.type === "RESULT_POPUP") {
+        $modal.innerHTML = modalResult(state.modal);
+        bindModalResult();
+        return;
       }
     }
-    function savePrefs(){
-      localStorage.setItem(LS_PREF, JSON.stringify(prefs));
-    }
-    function fmtDate(d){
-      const dt = new Date(d);
-      if (Number.isNaN(dt.getTime())) return "-";
-      const y = dt.getFullYear();
-      const m = String(dt.getMonth()+1).padStart(2,"0");
-      const day = String(dt.getDate()).padStart(2,"0");
-      return y + "-" + m + "-" + day;
-    }
-    function addMonths(dateStr, months){
-      const d = new Date(dateStr);
-      const day = d.getDate();
-      d.setMonth(d.getMonth() + months);
-      // 월 말 보정
-      if (d.getDate() !== day) d.setDate(0);
-      return fmtDate(d);
-    }
-    function daysBetween(aStr, bStr){
-      const a = new Date(aStr);
-      const b = new Date(bStr);
-      const ms = b.getTime() - a.getTime();
-      return Math.floor(ms / (1000*60*60*24));
-    }
-    function todayStr(){
-      return fmtDate(new Date());
-    }
-    function uid(){
-      return Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+    function updateSavedPill() {
+      const n = state.items.length;
+      $savedPill.textContent = n ? (n === 1 ? "1 saved" : (n + " saved")) : "Not saved";
     }
 
-    function classifyGauge(safePct){
-      if (safePct >= 80) return { key:"good", title:"Good", color:"var(--ok)",
-        line:"Mostly clean. You’re managing well." };
-      if (safePct >= 60) return { key:"ok", title:"Okay", color:"var(--warn)",
-        line:"Still fine, but a quick check will help." };
-      if (safePct >= 40) return { key:"bad", title:"Not great", color:"var(--danger)",
-        line:"Time to tidy up. Some items look risky." };
-      return { key:"verybad", title:"Very bad", color:"var(--danger)",
-        line:"A reset is recommended. Recheck what you’re using." };
-    }
+    function viewEntry() {
+      return `
+        <div class="card">
+          <div class="hero">
+            <div class="heroBig">keep or toss?</div>
+            <p class="heroText">Take a photo of the PAO icon (like 6M, 12M) to check freshness.</p>
 
-    function pickTip(isSafe){
-      const pool = isSafe ? tips.safe : tips.toss;
-      return pool[Math.floor(Math.random()*pool.length)];
-    }
+            <div class="btnrow">
+              <button id="btnTakePhoto" class="btn primary">Take a photo</button>
+            </div>
+            <div class="btnrow">
+              <button id="btnUpload" class="btn ghost">Upload a photo</button>
+            </div>
 
-    // ----- views
-    function render(){
-      saveShelf();
-      if (!shelf.length){
-        renderHome();
-      }else{
-        renderShelf();
-      }
-      maybeNotifyOnOpen();
-    }
+            <div class="sub" style="margin-top:12px;">Your shelf starts the moment you save your first item.</div>
+          </div>
+        </div>
 
-    function renderHome(){
-      stopCamera();
-      viewEl.innerHTML = `
-        <div class="hero">
-          <div class="heroTitle">keep or toss?</div>
-          <div class="heroSub">Take a photo of the PAO icon (like 6M, 12M) to check freshness.</div>
+        <div class="card">
           <div class="row">
-            <button class="btn" id="goCamera">Take a photo</button>
-            <button class="btn secondary" id="goUpload">Upload a photo</button>
-          </div>
-          <div style="margin-top:12px;" class="muted">
-            Your shelf starts the moment you save your first item.
+            <div class="col">
+              <div class="title">My Shelf</div>
+              <div class="sub">See your overall freshness at a glance.</div>
+            </div>
+            <button id="btnGoShelf" class="btn small">Open</button>
           </div>
         </div>
       `;
-
-      document.getElementById("goCamera").onclick = () => renderCapture("camera");
-      document.getElementById("goUpload").onclick = () => renderCapture("upload");
     }
 
-    function renderCapture(mode){
-      pendingAnalysis = null;
-      capturedDataUrl = "";
-      stopCamera();
+    function bindEntry() {
+      document.getElementById("btnTakePhoto").onclick = () => {
+        state.autoAnalyze = false;
+        setScreen(Screen.SCAN);
+        startCameraIfPossible();
+      };
 
-      viewEl.innerHTML = `
-        <div class="grid two">
-          <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-              <div>
-                <div style="font-weight:900; font-size:18px;">Scan</div>
-                <div class="muted" style="font-size:13px; margin-top:4px;">Focus on the PAO icon (6M / 12M).</div>
-              </div>
-              <button class="miniBtn" id="backHome">Back</button>
+      document.getElementById("btnUpload").onclick = () => {
+        state.autoAnalyze = true;
+        setScreen(Screen.SCAN);
+        // In SCAN, file chooser will open
+        setTimeout(() => {
+          const input = document.getElementById("fileInput");
+          if (input) input.click();
+        }, 50);
+      };
+
+      document.getElementById("btnGoShelf").onclick = () => setScreen(Screen.SHELF);
+    }
+
+    function viewScan() {
+      const hasImage = !!state.imageDataUrl;
+      return `
+        <div class="card">
+          <div class="row">
+            <div class="col">
+              <div class="title">Scan</div>
+              <div class="sub">Focus on the PAO icon (6M / 12M).</div>
             </div>
-
-            <div style="margin-top:12px;" class="cameraBox">
-              <video id="video" playsinline autoplay style="display:${mode==="camera"?"block":"none"};"></video>
-              <canvas id="canvas" style="display:none;"></canvas>
-              <img id="preview" alt="preview" style="display:${mode==="upload"?"block":"none"}; width:100%; height:auto;" />
-            </div>
-
-            <div class="controls">
-              <button class="btn" id="captureBtn" style="display:${mode==="camera"?"inline-block":"none"};">Capture</button>
-              <label class="btn secondary" style="display:${mode==="upload"?"inline-flex":"none"}; align-items:center; justify-content:center;">
-                Choose image
-                <input type="file" id="fileInput" accept="image/*" style="display:none;">
-              </label>
-              <button class="btn secondary" id="analyzeBtn" disabled>Analyze</button>
-            </div>
-
-            <div style="margin-top:12px;" class="kv">
-              <div>
-                <div class="k">Opened date</div>
-                <div class="v" id="openedVal">${todayStr()}</div>
-              </div>
-              <button class="miniBtn" id="pickDate">Pick</button>
-            </div>
-
-            <div style="margin-top:10px;" class="kv">
-              <div>
-                <div class="k">Product name (optional)</div>
-                <div class="v" style="font-weight:800; color:var(--muted);" id="nameVal">Not set</div>
-              </div>
-              <button class="miniBtn" id="editName">Edit</button>
-            </div>
-
-            <div id="analyzeStatus" class="muted" style="margin-top:10px; font-size:13px; display:none;"></div>
+            <button id="btnBack" class="btn small">Back</button>
           </div>
 
-          <div class="card">
-            <div style="font-weight:900; font-size:18px;">Next</div>
-            <div class="muted" style="font-size:13px; margin-top:6px; line-height:1.5;">
-              After analysis, you’ll get a Safe/Toss pop-up, then you can save it to My Shelf.
-            </div>
+          <div class="preview" style="margin-top:12px;">
+            <div class="badgeTag">Camera</div>
+            <video id="video" playsinline autoplay muted></video>
+          </div>
 
-            <div style="margin-top:14px;" class="kv">
-              <div>
-                <div class="k">Notifications</div>
-                <div class="v" style="font-weight:800;">On-open reminders</div>
-              </div>
-              <button class="miniBtn" id="notifBtn">Enable</button>
-            </div>
+          <div class="btnrow">
+            <button id="btnCapture" class="btn primary">Capture</button>
+            <button id="btnSwitchToUpload" class="btn ghost">Choose image</button>
+          </div>
 
-            <div style="margin-top:10px;" class="kv">
-              <div>
-                <div class="k">7 days before</div>
-                <div class="v" style="font-weight:800;" id="p7">${prefs.notify7 ? "On" : "Off"}</div>
-              </div>
-              <button class="miniBtn" id="toggle7">${prefs.notify7 ? "Turn off" : "Turn on"}</button>
-            </div>
+          <div class="preview" style="margin-top:12px;">
+            <div class="badgeTag">Preview</div>
+            ${hasImage ? `<img id="previewImg" src="${state.imageDataUrl}" alt="preview" />` : `<div class="empty">No image yet</div>`}
+          </div>
 
-            <div style="margin-top:10px;" class="kv">
-              <div>
-                <div class="k">On the day</div>
-                <div class="v" style="font-weight:800;" id="pDay">${prefs.notifyDay ? "On" : "Off"}</div>
-              </div>
-              <button class="miniBtn" id="toggleDay">${prefs.notifyDay ? "Turn off" : "Turn on"}</button>
-            </div>
+          <input id="fileInput" type="file" accept="image/*" style="display:none" />
 
-            <div class="muted" style="margin-top:12px; font-size:12px; line-height:1.5;">
-              Note: true scheduled push (even when closed) needs server + subscriptions. This MVP shows reminders when you open the app.
-            </div>
+          <div class="btnrow">
+            <button id="btnAnalyze" class="btn" ${hasImage ? "" : "disabled"}>Analyze</button>
           </div>
         </div>
       `;
+    }
 
-      document.getElementById("backHome").onclick = () => render();
-      const openedVal = document.getElementById("openedVal");
-      const analyzeBtn = document.getElementById("analyzeBtn");
-      const analyzeStatus = document.getElementById("analyzeStatus");
-      const nameVal = document.getElementById("nameVal");
+    function bindScan() {
+      document.getElementById("btnBack").onclick = () => {
+        stopCamera();
+        setScreen(Screen.ENTRY);
+      };
 
-      let openedDate = todayStr();
-      let productName = "";
+      document.getElementById("btnSwitchToUpload").onclick = () => {
+        const input = document.getElementById("fileInput");
+        if (input) input.click();
+      };
 
-      document.getElementById("pickDate").onclick = async () => {
-        const picked = await openDatePicker(openedDate);
-        if (picked){
-          openedDate = picked;
-          openedVal.textContent = openedDate;
+      const input = document.getElementById("fileInput");
+      input.onchange = async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        state.imageDataUrl = await fileToDataUrl(file);
+        stopCamera();
+        if (state.autoAnalyze) {
+          setScreen(Screen.ANALYZE);
+        } else {
+          render();
         }
       };
 
-      document.getElementById("editName").onclick = () => {
-        const next = prompt("Product name (optional):", productName || "");
-        if (next !== null){
-          productName = next.trim();
-          nameVal.textContent = productName ? productName : "Not set";
-          nameVal.style.color = productName ? "var(--text)" : "var(--muted)";
-          analyzeBtn.disabled = !capturedDataUrl;
+      document.getElementById("btnCapture").onclick = async () => {
+        const video = document.getElementById("video");
+        const dataUrl = captureFromVideo(video);
+        if (!dataUrl) {
+          toast("Capture failed. Try again.");
+          return;
         }
+        state.imageDataUrl = dataUrl;
+        stopCamera();
+        setScreen(Screen.ANALYZE);
       };
 
-      document.getElementById("notifBtn").onclick = async () => {
-        await ensureNotifications();
+      document.getElementById("btnAnalyze").onclick = () => setScreen(Screen.ANALYZE);
+
+      // Ensure camera starts on this screen if possible
+      startCameraIfPossible();
+    }
+
+    function viewAnalyze() {
+      return `
+        <div class="card">
+          <div class="center">
+            <div class="title">Checking freshness…</div>
+            <div class="sub">Hold on a sec.</div>
+            <div class="spinner"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindAnalyze() {
+      runAnalyze();
+    }
+
+    async function runAnalyze() {
+      state.analyzeError = "";
+      state.detectedPao = "";
+      state.status = "";
+
+      try {
+        const detected = await detectPAO(state.imageDataUrl);
+        state.detectedPao = normalizePao(detected);
+
+        if (!state.detectedPao) {
+          throw new Error("No PAO detected");
+        }
+
+        // Pre-compute status using openedDate default = today (user can edit later)
+        const today = isoToday();
+        if (!state.openedDate) state.openedDate = today;
+
+        const exp = addMonthsISO(state.openedDate, monthsFromPao(state.detectedPao));
+        state.status = compareISO(today, exp) <= 0 ? "SAFE" : "TOSS";
+
+        openModal({
+          type: "RESULT_POPUP",
+          pao: state.detectedPao,
+          status: state.status,
+          tip: state.status === "SAFE"
+            ? pickTipSafe()
+            : pickTipToss()
+        });
+
+        setTimeout(() => {
+          closeModal();
+          setScreen(Screen.SAVE);
+        }, 2300);
+
+      } catch (err) {
+        state.analyzeError = "Scan failed. Try a clearer PAO photo.";
+        toast(state.analyzeError, 2300);
+        setScreen(Screen.SCAN);
+      }
+    }
+
+    function viewSave() {
+      const today = isoToday();
+      if (!state.openedDate) state.openedDate = today;
+
+      return `
+        <div class="card">
+          <div class="row">
+            <div class="col">
+              <div class="title">Save</div>
+              <div class="sub">Detected: ${escapeHtml(state.detectedPao || "-")}</div>
+            </div>
+            <button id="btnBackToScan" class="btn small">Back</button>
+          </div>
+
+          <div class="field">
+            <div class="label">Opened date</div>
+            <input id="openedDate" type="date" value="${state.openedDate}" />
+          </div>
+
+          <div class="field">
+            <div class="label">Product name (optional)</div>
+            <input id="productName" type="text" value="${escapeAttr(state.productName || "")}" placeholder="e.g., Cushion foundation" />
+          </div>
+
+          <div class="field">
+            <div class="label">Reminders</div>
+            <div class="sub" style="margin-top:2px;">
+              This MVP shows reminders when you open the app. True scheduled push needs server subscriptions.
+            </div>
+            <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+              <button id="btnEnableNoti" class="btn small">${state.notiOnOpenEnabled ? "Enabled" : "Enable"}</button>
+              <span class="chip">On the day: ${state.notiOnDay ? "On" : "Off"}</span>
+              <span class="chip">7 days before: ${state.noti7days ? "On" : "Off"}</span>
+            </div>
+            <div class="btnrow" style="margin-top:10px;">
+              <button id="toggle7" class="btn">${state.noti7days ? "Turn off 7 days before" : "Turn on 7 days before"}</button>
+              <button id="toggleDay" class="btn">${state.notiOnDay ? "Turn off on the day" : "Turn on on the day"}</button>
+            </div>
+          </div>
+
+          <div class="btnrow">
+            <button id="btnSave" class="btn primary">Save to My Shelf</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function bindSave() {
+      document.getElementById("btnBackToScan").onclick = () => setScreen(Screen.SCAN);
+
+      document.getElementById("openedDate").onchange = (e) => {
+        state.openedDate = e.target.value;
       };
+
+      document.getElementById("productName").oninput = (e) => {
+        state.productName = e.target.value;
+      };
+
       document.getElementById("toggle7").onclick = () => {
-        prefs.notify7 = !prefs.notify7;
-        savePrefs();
-        document.getElementById("p7").textContent = prefs.notify7 ? "On" : "Off";
-        document.getElementById("toggle7").textContent = prefs.notify7 ? "Turn off" : "Turn on";
+        state.noti7days = !state.noti7days;
+        saveSettings();
+        render();
       };
       document.getElementById("toggleDay").onclick = () => {
-        prefs.notifyDay = !prefs.notifyDay;
-        savePrefs();
-        document.getElementById("pDay").textContent = prefs.notifyDay ? "On" : "Off";
-        document.getElementById("toggleDay").textContent = prefs.notifyDay ? "Turn off" : "Turn on";
+        state.notiOnDay = !state.notiOnDay;
+        saveSettings();
+        render();
       };
 
-      if (mode === "camera"){
-        startCamera().then(() => {
-          const captureBtn = document.getElementById("captureBtn");
-          captureBtn.onclick = () => {
-            const video = document.getElementById("video");
-            const canvas = document.getElementById("canvas");
-            const ctx = canvas.getContext("2d");
-            canvas.width = video.videoWidth || 1280;
-            canvas.height = video.videoHeight || 720;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            capturedDataUrl = canvas.toDataURL("image/jpeg", 0.9);
-            analyzeBtn.disabled = false;
-            analyzeStatus.style.display = "block";
-            analyzeStatus.textContent = "Captured. Ready to analyze.";
-          };
-        }).catch(() => {
-          analyzeStatus.style.display = "block";
-          analyzeStatus.textContent = "Camera unavailable. Try Upload a photo.";
-        });
-      }else{
-        const fileInput = document.getElementById("fileInput");
-        const preview = document.getElementById("preview");
-        fileInput.onchange = async () => {
-          const f = fileInput.files && fileInput.files[0];
-          if (!f) return;
-          const dataUrl = await fileToDataUrl(f);
-          preview.src = dataUrl;
-          capturedDataUrl = dataUrl;
-          analyzeBtn.disabled = false;
-          analyzeStatus.style.display = "block";
-          analyzeStatus.textContent = "Image selected. Ready to analyze.";
-        };
-      }
-
-      analyzeBtn.onclick = async () => {
-        if (!capturedDataUrl) return;
-
-        analyzeBtn.disabled = true;
-        analyzeStatus.style.display = "block";
-        analyzeStatus.textContent = "Analyzing…";
-
-        try{
-          const detectedMonths = await detectPAO(capturedDataUrl);
-          const expiry = addMonths(openedDate, detectedMonths);
-          const safe = (daysBetween(todayStr(), expiry) >= 0);
-
-          pendingAnalysis = {
-            detectedMonths,
-            openedDate,
-            expiryDate: expiry,
-            safe,
-            nameGuess: productName
-          };
-
-          analyzeStatus.textContent = "Done.";
-          showResultToast(pendingAnalysis, async () => {
-            // Save to shelf then go shelf view
-            const item = {
-              id: uid(),
-              name: pendingAnalysis.nameGuess || "Untitled item",
-              openedDate: pendingAnalysis.openedDate,
-              detectedMonths: pendingAnalysis.detectedMonths,
-              expiryDate: pendingAnalysis.expiryDate,
-              createdAt: new Date().toISOString(),
-              status: pendingAnalysis.safe ? "safe" : "toss"
-            };
-            shelf.unshift(item);
-            saveShelf();
-            stopCamera();
-            renderShelf();
-          });
-
-        }catch(e){
-          analyzeStatus.textContent = "We couldn’t read the date. Try again.";
-        }finally{
-          analyzeBtn.disabled = false;
+      document.getElementById("btnEnableNoti").onclick = async () => {
+        const ok = await enableOnOpenNotifications();
+        if (ok) {
+          state.notiOnOpenEnabled = true;
+          saveSettings();
+          toast("Notifications enabled (on-open reminders).");
+          render();
         }
       };
+
+      document.getElementById("btnSave").onclick = () => {
+        addItemToShelf();
+        saveItems();
+        saveSettings();
+        setScreen(Screen.SHELF);
+        setTimeout(() => maybeRunOnOpenReminders(true), 250);
+      };
     }
 
-    function renderShelf(){
-      stopCamera();
+    function viewShelf() {
+      const stats = computeShelfStats(state.items);
+      const pct = stats.total ? Math.round((stats.safe / stats.total) * 100) : 100;
 
-      const total = shelf.length;
-      const safeCount = shelf.filter(x => x.status === "safe").length;
-      const safePct = total ? Math.round((safeCount / total) * 100) : 0;
-      const cls = classifyGauge(safePct);
+      const gauge = gaugeLabel(pct);
+      const ringDeg = Math.round((pct / 100) * 360);
 
-      const desc = total
-        ? `Safe ${safeCount} / ${total}.`
-        : "No items yet.";
-
-      viewEl.innerHTML = `
+      return `
         <div class="card">
-          <div class="shelfHeader">
-            <div>
-              <div style="font-weight:950; font-size:18px;">My Shelf</div>
-              <p class="bigCount">${total}</p>
-              <p class="bigLabel">items inside</p>
+          <div class="row">
+            <div class="col">
+              <div class="title">My Shelf</div>
+              <div class="sub">Your items, your freshness.</div>
             </div>
-            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-              <button class="btn secondary" id="addMore" style="min-width:auto; flex:0;">Add</button>
-              <button class="btn danger" id="clearAll" style="min-width:auto; flex:0;">Clear all</button>
+            <button id="btnHome" class="btn small">Home</button>
+          </div>
+
+          <div class="shelfTop" style="margin-top:12px;">
+            <div class="shelfCount">
+              <div class="sub">Items</div>
+              <div class="num">${stats.total}</div>
+              <div class="txt sub">items inside</div>
+            </div>
+
+            <div class="shelfActions">
+              <button id="btnAdd" class="btn small primary">Add</button>
+              <button id="btnClearAll" class="btn small danger" ${stats.total ? "" : "disabled"}>Clear all</button>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="gaugeWrap">
-            <div class="gauge">
-              <div class="gaugeFill" id="gaugeFill"></div>
-              <div class="gaugeInner">
-                <div style="text-align:center;">
-                  <p class="gaugePct">${safePct}%</p>
-                  <p class="gaugeSmall">safe ratio</p>
-                </div>
+          <div class="gauge">
+            <div class="ring" id="ring" style="background: conic-gradient(var(--ok) ${ringDeg}deg, rgba(255,255,255,.10) 0deg);">
+              <div class="ringInner">
+                <div class="ringPct">${pct}%</div>
+                <div class="ringLbl">safe ratio</div>
               </div>
             </div>
-            <div>
-              <p class="statusTitle">${cls.title}</p>
-              <p class="statusLine">${cls.line}</p>
-              <p class="statusLine" style="margin-top:8px;">${desc}</p>
-              <div class="controls" style="margin-top:10px;">
-                <button class="miniBtn" id="notifEnable">Notifications</button>
-                <span class="pill">Keep it simple. Keep it safe.</span>
+
+            <div class="gaugeText">
+              <div class="gaugeTitle">${escapeHtml(gauge.title)}</div>
+              <div class="gaugeDesc">${escapeHtml(gauge.desc)}</div>
+              <div class="gaugeMini">
+                <span class="chip">Safe ${stats.safe} / ${stats.total}</span>
+                <span class="chip">Toss ${stats.toss} / ${stats.total}</span>
+                <span class="chip">${gauge.mz}</span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-            <div style="font-weight:900; font-size:18px;">Items</div>
-            <div class="pill">Delete for one item • Clear all for everything</div>
+          <div class="row">
+            <div class="title">Items</div>
+            <div class="pill">Delete for one item · Clear all for everything</div>
           </div>
-          <div style="margin-top:12px;" id="items"></div>
+
+          <div class="list">
+            ${state.items.length ? state.items.map(renderItem).join("") : `<div class="sub" style="padding:8px 2px;">No items yet.</div>`}
+          </div>
         </div>
       `;
+    }
 
-      const deg = Math.max(0, Math.min(100, safePct)) * 3.6;
-      const gaugeFill = document.getElementById("gaugeFill");
-      gaugeFill.style.background = `conic-gradient(${cls.color} 0deg, ${cls.color} ${deg}deg, rgba(255,255,255,.06) ${deg}deg)`;
-
-      document.getElementById("addMore").onclick = () => renderCapture("camera");
-      document.getElementById("notifEnable").onclick = async () => ensureNotifications();
-
-      document.getElementById("clearAll").onclick = () => {
-        openConfirm(
-          "Clear all items?",
-          "This will permanently remove all products from your shelf.",
-          "Clear all",
-          () => {
-            shelf = [];
-            saveShelf();
-            render();
-          }
-        );
+    function bindShelf() {
+      document.getElementById("btnHome").onclick = () => setScreen(Screen.ENTRY);
+      document.getElementById("btnAdd").onclick = () => {
+        state.autoAnalyze = false;
+        setScreen(Screen.SCAN);
+        startCameraIfPossible();
       };
+      const clearBtn = document.getElementById("btnClearAll");
+      if (clearBtn) {
+        clearBtn.onclick = () => openModal({ type: "CLEAR_ALL_CONFIRM" });
+      }
 
-      const itemsEl = document.getElementById("items");
-      itemsEl.innerHTML = shelf.map(item => {
-        const t = tagForItem(item);
-        return `
-          <div class="item">
-            <div>
-              <h4>${escapeHtml(item.name || "Untitled item")}</h4>
-              <div class="meta">
-                Opened: ${escapeHtml(item.openedDate)}<br>
-                PAO: ${escapeHtml(String(item.detectedMonths))}M<br>
-                Expires: ${escapeHtml(item.expiryDate)}
-              </div>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
-              <span class="tag ${t.cls}">${t.label}</span>
-              <button class="miniBtn danger" data-del="${item.id}">Delete</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      itemsEl.querySelectorAll("[data-del]").forEach(btn => {
+      document.querySelectorAll("[data-del]").forEach(btn => {
         btn.onclick = () => {
           const id = btn.getAttribute("data-del");
-          shelf = shelf.filter(x => x.id !== id);
-          saveShelf();
-          if (!shelf.length) render();
-          else renderShelf();
+          state.items = state.items.filter(x => x.id !== id);
+          saveItems();
+          render();
         };
       });
-
-      maybeNotifyOnOpen();
     }
 
-    function tagForItem(item){
-      const daysLeft = daysBetween(todayStr(), item.expiryDate);
-      if (daysLeft < 0) return { cls:"bad", label:"Expired" };
-      if (daysLeft <= 7) return { cls:"warn", label:"Expiring soon" };
-      return { cls:"ok", label:"Safe" };
+    function renderItem(it) {
+      const tagClass = it.status === "TOSS" ? "toss" : "safe";
+      const exp = it.expires || computeExpires(it.openedDate, it.pao);
+      return `
+        <div class="item">
+          <div class="itemLeft">
+            <div class="itemName">${escapeHtml(it.name || "Untitled item")}</div>
+            <div class="itemMeta">
+              Opened: ${escapeHtml(it.openedDate)}<br/>
+              PAO: ${escapeHtml(it.pao)}<br/>
+              Expires: ${escapeHtml(exp)}
+            </div>
+          </div>
+          <div class="itemRight">
+            <span class="tag ${tagClass}">${it.status === "TOSS" ? "Toss" : "Safe"}</span>
+            <button class="btn small danger" data-del="${escapeAttr(it.id)}">Delete</button>
+          </div>
+        </div>
+      `;
     }
 
-    // ----- result toast (Safe/Toss popup)
-    let toastTimer = null;
-    function showResultToast(res, onSave){
-      const toast = document.getElementById("resultToast");
-      const card = document.getElementById("toastCard");
-      const title = document.getElementById("toastTitle");
-      const desc = document.getElementById("toastDesc");
-      const tip = document.getElementById("toastTip");
-      const meta = document.getElementById("toastMeta");
-      const okBtn = document.getElementById("toastOk");
+    function modalClearAll() {
+      return `
+        <div class="modal-backdrop" role="dialog" aria-modal="true">
+          <div class="modal">
+            <div class="modalTitle">Clear all items?</div>
+            <div class="modalSub">This will permanently remove all products from your shelf.</div>
+            <div class="modalActions">
+              <button id="mCancel" class="btn">Cancel</button>
+              <button id="mClear" class="btn danger">Clear all</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
-      const isSafe = !!res.safe;
-      card.className = "toastCard " + (isSafe ? "safe" : "toss");
-      title.textContent = isSafe ? "SAFE TO USE" : "TOSS IT";
-      desc.textContent = isSafe
-        ? `Still fresh. Expires on ${res.expiryDate}.`
-        : `Expired. Expires on ${res.expiryDate}.`;
-      tip.textContent = "Tip: " + pickTip(isSafe);
-      meta.textContent = `Detected ${res.detectedMonths}M`;
+    function bindModalClearAll() {
+      document.getElementById("mCancel").onclick = closeModal;
+      document.getElementById("mClear").onclick = () => {
+        state.items = [];
+        saveItems();
+        closeModal();
+        toast("Cleared.");
+        render();
+      };
+      // click outside to close
+      $modal.firstElementChild.onclick = (e) => {
+        if (e.target === $modal.firstElementChild) closeModal();
+      };
+    }
 
-      function close(){
-        toast.classList.remove("show");
-        if (toastTimer) clearTimeout(toastTimer);
-        toastTimer = null;
-      }
+    function modalResult({ pao, status, tip }) {
+      const isToss = status === "TOSS";
+      const ttl = isToss ? "TOSS IT" : "SAFE TO USE";
+      const sub = isToss
+        ? "Better to avoid irritation and breakouts."
+        : "Looks good. Keep it clean and steady.";
+      return `
+        <div class="modal-backdrop" role="dialog" aria-modal="true">
+          <div class="modal">
+            <div class="modalTitle">${ttl}</div>
+            <div class="modalSub">${sub}</div>
+            <div style="margin-top:10px; padding:12px; border-radius:16px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03);">
+              <div class="resultBig">${escapeHtml(pao)}</div>
+              <div class="resultMini">${escapeHtml(tip)}</div>
+            </div>
+            <div class="modalActions">
+              <button id="mOk" class="btn ${isToss ? "danger" : "primary"}">OK</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
-      okBtn.onclick = async () => {
-        close();
-        await onSave();
+    function bindModalResult() {
+      document.getElementById("mOk").onclick = closeModal;
+      $modal.firstElementChild.onclick = (e) => {
+        if (e.target === $modal.firstElementChild) closeModal();
+      };
+    }
+
+    function addItemToShelf() {
+      const today = isoToday();
+      const opened = state.openedDate || today;
+      const pao = state.detectedPao || "6M";
+      const expires = computeExpires(opened, pao);
+      const status = compareISO(today, expires) <= 0 ? "SAFE" : "TOSS";
+
+      const item = {
+        id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+        name: (state.productName || "").trim() || "Untitled item",
+        openedDate: opened,
+        pao,
+        expires,
+        status,
+        createdAt: Date.now()
       };
 
-      toast.classList.add("show");
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(async () => {
-        close();
-        await onSave();
-      }, 2800);
+      state.items.unshift(item);
+
+      // reset transient fields
+      state.productName = "";
+      state.imageDataUrl = "";
+      state.detectedPao = "";
+      state.status = "";
+      state.autoAnalyze = false;
     }
 
-    // ----- confirm modal
-    const confirmOverlay = document.getElementById("confirmOverlay");
-    const confirmTitle = document.getElementById("confirmTitle");
-    const confirmDesc = document.getElementById("confirmDesc");
-    const confirmOk = document.getElementById("confirmOk");
-    const confirmCancel = document.getElementById("confirmCancel");
-    const confirmClose = document.getElementById("confirmClose");
-    let confirmCb = null;
-
-    function openConfirm(title, desc, okText, onOk){
-      confirmTitle.textContent = title;
-      confirmDesc.textContent = desc;
-      confirmOk.textContent = okText;
-      confirmCb = onOk;
-
-      confirmOverlay.classList.add("show");
-    }
-    function closeConfirm(){
-      confirmOverlay.classList.remove("show");
-      confirmCb = null;
-    }
-    confirmCancel.onclick = closeConfirm;
-    confirmClose.onclick = closeConfirm;
-    confirmOk.onclick = () => {
-      const cb = confirmCb;
-      closeConfirm();
-      if (typeof cb === "function") cb();
-    };
-
-    // ----- date picker with year select
-    const dateOverlay = document.getElementById("dateOverlay");
-    const yearBtn = document.getElementById("yearBtn");
-    const monthLabel = document.getElementById("monthLabel");
-    const daysGrid = document.getElementById("daysGrid");
-    const dowRow = document.getElementById("dowRow");
-    const yearList = document.getElementById("yearList");
-    const dateCancel = document.getElementById("dateCancel");
-    const dateOk = document.getElementById("dateOk");
-    const prevMonth = document.getElementById("prevMonth");
-    const nextMonth = document.getElementById("nextMonth");
-
-    const dows = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
-    let dp = {
-      open:false,
-      y: new Date().getFullYear(),
-      m: new Date().getMonth(),
-      selected: todayStr(),
-      temp: todayStr(),
-      resolve: null
-    };
-
-    function openDatePicker(current){
-      return new Promise((resolve) => {
-        const base = current || todayStr();
-        const dt = new Date(base);
-        dp.y = dt.getFullYear();
-        dp.m = dt.getMonth();
-        dp.selected = fmtDate(dt);
-        dp.temp = dp.selected;
-        dp.resolve = resolve;
-
-        buildDow();
-        buildYears(dp.y);
-        renderCalendar();
-        yearList.classList.remove("show");
-        dateOverlay.classList.add("show");
-      });
+    function computeExpires(openedISO, pao) {
+      const m = monthsFromPao(pao);
+      return addMonthsISO(openedISO, m);
     }
 
-    function buildDow(){
-      dowRow.innerHTML = dows.map(x => `<div class="dow">${x}</div>`).join("");
+    function computeShelfStats(items) {
+      let safe = 0;
+      let toss = 0;
+      for (const it of items) {
+        if (it.status === "TOSS") toss++;
+        else safe++;
+      }
+      return { total: items.length, safe, toss };
     }
 
-    function buildYears(centerYear){
-      const start = centerYear - 25;
-      const end = centerYear + 25;
-      const years = [];
-      for (let y = start; y <= end; y++) years.push(y);
-      yearList.innerHTML = years.map(y => `
-        <div class="yearItem" data-year="${y}">
-          <span>${y}</span>
-          <span style="color:var(--muted); font-size:12px;">year</span>
-        </div>
-      `).join("");
-
-      yearList.querySelectorAll("[data-year]").forEach(el => {
-        el.onclick = () => {
-          const y = Number(el.getAttribute("data-year"));
-          dp.y = y;
-          yearList.classList.remove("show");
-          renderCalendar();
+    function gaugeLabel(pct) {
+      // User's suggested buckets: 100-80 good, 80-60 ok, 60-40 bad, below 60 very bad
+      if (pct >= 80) {
+        return {
+          title: "Good",
+          desc: "Mostly clean. You’re managing well.",
+          mz: "You’re in the clean zone."
         };
-      });
-    }
-
-    function renderCalendar(){
-      yearBtn.textContent = String(dp.y);
-      const mNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      monthLabel.textContent = mNames[dp.m];
-
-      const first = new Date(dp.y, dp.m, 1);
-      const startDay = first.getDay();
-      const daysInMonth = new Date(dp.y, dp.m+1, 0).getDate();
-      const prevDays = new Date(dp.y, dp.m, 0).getDate();
-
-      const cells = [];
-      for (let i=0; i<startDay; i++){
-        const d = prevDays - (startDay - 1 - i);
-        cells.push({ off:true, y: dp.m===0 ? dp.y-1 : dp.y, m: (dp.m+11)%12, d });
       }
-      for (let d=1; d<=daysInMonth; d++){
-        cells.push({ off:false, y: dp.y, m: dp.m, d });
-      }
-      while (cells.length % 7 !== 0){
-        const nextIndex = cells.length - (startDay + daysInMonth);
-        const d = nextIndex + 1;
-        cells.push({ off:true, y: dp.m===11 ? dp.y+1 : dp.y, m: (dp.m+1)%12, d });
-      }
-
-      daysGrid.innerHTML = cells.map(c => {
-        const ds = fmtDate(new Date(c.y, c.m, c.d));
-        const sel = (ds === dp.temp);
-        const cls = ["day", c.off ? "off" : "", sel ? "sel" : ""].filter(Boolean).join(" ");
-        return `<div class="${cls}" data-date="${ds}" data-off="${c.off ? "1":"0"}">${c.d}</div>`;
-      }).join("");
-
-      daysGrid.querySelectorAll("[data-date]").forEach(el => {
-        el.onclick = () => {
-          const off = el.getAttribute("data-off") === "1";
-          if (off) return;
-          dp.temp = el.getAttribute("data-date");
-          renderCalendar();
+      if (pct >= 60) {
+        return {
+          title: "Okay",
+          desc: "A few risky ones. Time for a quick cleanup.",
+          mz: "Not bad, but check the back row."
         };
-      });
-    }
-
-    yearBtn.onclick = () => {
-      const show = !yearList.classList.contains("show");
-      if (show) buildYears(dp.y);
-      yearList.classList.toggle("show");
-    };
-    prevMonth.onclick = () => {
-      dp.m -= 1;
-      if (dp.m < 0){ dp.m = 11; dp.y -= 1; }
-      renderCalendar();
-    };
-    nextMonth.onclick = () => {
-      dp.m += 1;
-      if (dp.m > 11){ dp.m = 0; dp.y += 1; }
-      renderCalendar();
-    };
-    dateCancel.onclick = () => {
-      dateOverlay.classList.remove("show");
-      if (dp.resolve) dp.resolve(null);
-      dp.resolve = null;
-    };
-    dateOk.onclick = () => {
-      dateOverlay.classList.remove("show");
-      const v = dp.temp;
-      if (dp.resolve) dp.resolve(v);
-      dp.resolve = null;
-    };
-
-    // ----- camera
-    async function startCamera(){
-      const video = document.getElementById("video");
-      if (!video) return;
-      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio:false });
-      video.srcObject = cameraStream;
-      await video.play();
-    }
-    function stopCamera(){
-      if (cameraStream){
-        cameraStream.getTracks().forEach(t => t.stop());
-        cameraStream = null;
       }
+      if (pct >= 40) {
+        return {
+          title: "Bad",
+          desc: "You’ve got too many expired items in rotation.",
+          mz: "Your shelf is side-eyeing you."
+        };
+      }
+      return {
+        title: "Very bad",
+        desc: "High risk. Toss the expired ones today.",
+        mz: "This shelf needs an intervention."
+      };
     }
-    async function fileToDataUrl(file){
+
+    function pickTipSafe() {
+      const tips = [
+        "Wipe the opening clean and keep the cap tight.",
+        "Store away from heat and direct sunlight.",
+        "If smell or texture changes, stop using it.",
+        "Keep applicators clean to avoid bacteria buildup."
+      ];
+      return tips[Math.floor(Math.random() * tips.length)];
+    }
+
+    function pickTipToss() {
+      const tips = [
+        "If it stings, smells off, or separates, toss it immediately.",
+        "Mascara and liquid liners are the fastest to go bad.",
+        "Don’t ‘revive’ old products with water or alcohol.",
+        "When in doubt, toss. Skin repairs cost more."
+      ];
+      return tips[Math.floor(Math.random() * tips.length)];
+    }
+
+    async function detectPAO(imageDataUrl) {
+      if (!WORKER_OCR_ENDPOINT) {
+        // Local mock: tries to read obvious handwritten "6M"/"12M" is not possible; fallback
+        // We'll randomly pick 6M/12M to keep flow running for MVP.
+        return Math.random() < 0.55 ? "6M" : "12M";
+      }
+
+      // Send base64 without prefix if needed
+      const base64 = imageDataUrl.includes(",") ? imageDataUrl.split(",")[1] : imageDataUrl;
+
+      const res = await fetch(WORKER_OCR_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64 })
+      });
+
+      if (!res.ok) throw new Error("Worker error");
+
+      const data = await res.json().catch(() => ({}));
+
+      // Accept several shapes
+      if (data.detected) return String(data.detected);
+      if (data.pao) return String(data.pao);
+      if (data.text) {
+        const t = String(data.text);
+        const m = t.match(/(\b\d{1,2})\s*M\b/i);
+        if (m) return (m[1] + "M").toUpperCase();
+        return t;
+      }
+      return "";
+    }
+
+    function normalizePao(raw) {
+      const s = String(raw || "").toUpperCase().replace(/\s+/g, "");
+      const m = s.match(/(\d{1,2})M/);
+      if (!m) return "";
+      const n = Number(m[1]);
+      if (!Number.isFinite(n)) return "";
+      if (n < 1 || n > 36) return "";
+      return n + "M";
+    }
+
+    function monthsFromPao(pao) {
+      const m = String(pao || "").toUpperCase().match(/(\d{1,2})M/);
+      const n = m ? Number(m[1]) : 0;
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function isoToday() {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function compareISO(a, b) {
+      // a,b are YYYY-MM-DD
+      if (a === b) return 0;
+      return a < b ? -1 : 1;
+    }
+
+    function addMonthsISO(iso, months) {
+      const [y, m, d] = iso.split("-").map(Number);
+      const dt = new Date(y, (m - 1), d);
+      const targetMonth = dt.getMonth() + months;
+
+      // Move to first day of target month then clamp day to month length
+      const temp = new Date(dt.getFullYear(), targetMonth, 1);
+      const lastDay = new Date(temp.getFullYear(), temp.getMonth() + 1, 0).getDate();
+      const day = Math.min(d, lastDay);
+      const out = new Date(temp.getFullYear(), temp.getMonth(), day);
+
+      const yyyy = out.getFullYear();
+      const mm = String(out.getMonth() + 1).padStart(2, "0");
+      const dd = String(out.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    async function fileToDataUrl(file) {
       return new Promise((resolve, reject) => {
         const r = new FileReader();
-        r.onload = () => resolve(String(r.result));
+        r.onload = () => resolve(r.result);
         r.onerror = reject;
         r.readAsDataURL(file);
       });
     }
 
-    // ----- OCR detect PAO
-    async function detectPAO(dataUrl){
-      // dataUrl: "data:image/jpeg;base64,..."
-      const base64 = dataUrl.split(",")[1] || "";
-      if (!base64) throw new Error("no image");
+    function captureFromVideo(video) {
+      if (!video || !video.videoWidth || !video.videoHeight) return "";
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return "";
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", 0.92);
+    }
 
-      if (!OCR_ENDPOINT){
-        // 데모 모드
-        const arr = [6, 12, 24];
-        return arr[Math.floor(Math.random()*arr.length)];
+    async function startCameraIfPossible() {
+      // Only start if we're on SCAN screen
+      if (state.screen !== Screen.SCAN) return;
+
+      const video = document.getElementById("video");
+      if (!video) return;
+
+      // If already running, attach stream
+      if (state.stream) {
+        try { video.srcObject = state.stream; } catch {}
+        return;
       }
 
-      const res = await fetch(OCR_ENDPOINT, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ imageBase64: base64 })
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false
+        });
+        state.stream = stream;
+        try { video.srcObject = stream; } catch {}
+        video.play().catch(() => {});
+      } catch (e) {
+        // If camera fails, user can still upload
+        const prev = document.querySelector(".preview .badgeTag");
+        toast("Camera blocked. Use Upload instead.", 2200);
+      }
+    }
+
+    function stopCamera() {
+      if (state.stream) {
+        try {
+          state.stream.getTracks().forEach(t => t.stop());
+        } catch {}
+      }
+      state.stream = null;
+      const video = document.getElementById("video");
+      if (video) {
+        try { video.srcObject = null; } catch {}
+      }
+    }
+
+    function cleanupScreenSideEffects() {
+      // Prevent hidden overlays from capturing clicks by removing camera stream when leaving SCAN
+      if (state.screen === Screen.SCAN) {
+        stopCamera();
+      }
+      closeModal();
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m]));
+    }
+    function escapeAttr(s) {
+      return escapeHtml(s).replace(/"/g, "&quot;");
+    }
+
+    function saveItems() {
+      localStorage.setItem("kot_shelf_items", JSON.stringify(state.items));
+      updateSavedPill();
+    }
+
+    function loadItems() {
+      try {
+        state.items = JSON.parse(localStorage.getItem("kot_shelf_items") || "[]");
+        if (!Array.isArray(state.items)) state.items = [];
+      } catch {
+        state.items = [];
+      }
+      // backfill expires/status if missing
+      const today = isoToday();
+      state.items = state.items.map(it => {
+        const opened = it.openedDate || today;
+        const pao = it.pao || "6M";
+        const exp = it.expires || computeExpires(opened, pao);
+        const st = it.status || (compareISO(today, exp) <= 0 ? "SAFE" : "TOSS");
+        return { ...it, openedDate: opened, pao, expires: exp, status: st };
       });
-      if (!res.ok) throw new Error("ocr failed");
-      const data = await res.json().catch(() => ({}));
-      const text = String(data.text || data.result || "").trim();
-      // 예: "Detected 6M" 또는 OCR 텍스트에 6M 포함
-      const m = text.match(/(\d{1,2})\s*M\b/i);
-      if (!m) throw new Error("no pao");
-      const months = Number(m[1]);
-      if (!months || months < 1 || months > 36) throw new Error("bad pao");
-      return months;
     }
 
-    // ----- notifications (MVP: show when app opens)
-    async function ensureNotifications(){
-      try{
-        if (!("Notification" in window)) return false;
+    function saveSettings() {
+      localStorage.setItem("kot_settings", JSON.stringify({
+        notiOnOpenEnabled: state.notiOnOpenEnabled,
+        noti7days: state.noti7days,
+        notiOnDay: state.notiOnDay
+      }));
+    }
 
-        if (Notification.permission === "granted") {
-          prefs.askedNotif = true;
-          savePrefs();
-          await registerSW();
-          new Notification("Keep or Toss", { body: "Notifications enabled (on-open reminders)." });
-          return true;
-        }
+    function loadSettings() {
+      try {
+        const s = JSON.parse(localStorage.getItem("kot_settings") || "{}");
+        state.notiOnOpenEnabled = !!s.notiOnOpenEnabled;
+        state.noti7days = !!s.noti7days;
+        state.notiOnDay = (s.notiOnDay === undefined) ? true : !!s.notiOnDay;
+      } catch {}
+    }
 
-        prefs.askedNotif = true;
-        savePrefs();
-        const perm = await Notification.requestPermission();
-        if (perm === "granted"){
-          await registerSW();
-          new Notification("Keep or Toss", { body: "Notifications enabled (on-open reminders)." });
-          return true;
-        }
+    async function enableOnOpenNotifications() {
+      // Register service worker if not already
+      if (!("serviceWorker" in navigator)) {
+        toast("This browser does not support notifications.");
         return false;
-      }catch(e){
+      }
+      try {
+        const reg = await navigator.serviceWorker.register("./sw.js");
+        await navigator.serviceWorker.ready;
+
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") {
+          toast("Notification permission not granted.", 2200);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        toast("Failed to enable notifications.", 2200);
         return false;
       }
     }
 
-    async function registerSW(){
-      try{
-        if (!("serviceWorker" in navigator)) return;
-        await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-      }catch(e){}
-    }
-
-    async function maybeNotifyOnOpen(){
-      if (!shelf.length) return;
+    async function notify(title, body) {
+      if (!("serviceWorker" in navigator)) return;
       if (!("Notification" in window)) return;
       if (Notification.permission !== "granted") return;
 
-      const today = todayStr();
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        reg.showNotification(title, { body });
+      } catch {}
+    }
 
-      const soon = [];
-      const due = [];
+    async function maybeRunOnOpenReminders(force=false) {
+      if (!state.notiOnOpenEnabled) return;
+      if (!force && !state.items.length) return;
 
-      for (const item of shelf){
-        const daysLeft = daysBetween(today, item.expiryDate);
-        if (daysLeft === 0 && prefs.notifyDay) due.push(item);
-        if (daysLeft === 7 && prefs.notify7) soon.push(item);
+      const today = isoToday();
+      let expToday = 0;
+      let expSoon = 0;
+
+      for (const it of state.items) {
+        const exp = it.expires || computeExpires(it.openedDate, it.pao);
+        if (exp === today) expToday++;
+
+        if (state.noti7days) {
+          const d7 = addDaysISO(today, 7);
+          if (compareISO(exp, today) >= 0 && compareISO(exp, d7) <= 0) {
+            expSoon++;
+          }
+        }
       }
 
-      if (due.length){
-        new Notification("Keep or Toss", {
-          body: `Today: ${due.length} item(s) expire. Recheck before use.`
-        });
-      }else if (soon.length){
-        new Notification("Keep or Toss", {
-          body: `Heads up: ${soon.length} item(s) expire in 7 days.`
-        });
+      if (state.notiOnDay && expToday > 0) {
+        await notify("Keep or Toss", expToday === 1 ? "1 item expires today." : (expToday + " items expire today."));
+      } else if (state.noti7days && expSoon > 0) {
+        await notify("Keep or Toss", expSoon === 1 ? "1 item expires within 7 days." : (expSoon + " items expire within 7 days."));
       }
     }
 
-    // ----- helpers
-    function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, (m) => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-      }[m]));
+    function addDaysISO(iso, days) {
+      const [y, m, d] = iso.split("-").map(Number);
+      const dt = new Date(y, m - 1, d);
+      dt.setDate(dt.getDate() + days);
+      const yyyy = dt.getFullYear();
+      const mm = String(dt.getMonth() + 1).padStart(2, "0");
+      const dd = String(dt.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
     }
 
     // init
-    (async function init(){
-      topRight.textContent = shelf.length ? (shelf.length + " saved") : "Not saved";
-      await registerSW();
-      render();
-    })();
+    loadItems();
+    loadSettings();
+
+    // Decide initial screen: if shelf has items, stay on ENTRY but shelf is one tap away
+    setScreen(Screen.ENTRY);
+
+    // On-open reminders
+    setTimeout(() => maybeRunOnOpenReminders(false), 600);
   </script>
 </body>
 </html>
