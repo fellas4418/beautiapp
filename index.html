@@ -1,47 +1,55 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmetic Scanner</title>
+    <title>BeautiApp PAO Scanner</title>
     <style>
-        :root { --bg: #000; --card: #111; --gold: #ffcc00; --text: #eee; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; -webkit-tap-highlight-color: transparent; }
+        :root { --bg: #0b0b0b; --card: #151515; --gold: #ffcc00; --text: #eee; --btn: #222; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; padding: 20px; text-align: center; }
         .container { max-width: 400px; margin: auto; }
         
-        /* 버튼 스타일 */
-        .btn-row { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-ui { flex: 1; padding: 15px; background: #222; border: 1px solid #333; border-radius: 10px; color: white; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: block; text-align: center; }
+        h2 { font-size: 1.2rem; margin: 10px 0; text-align: left; letter-spacing: -0.5px; }
+        .desc { font-size: 0.8rem; color: #666; margin-bottom: 25px; text-align: left; }
+
+        /* Navigation Buttons */
+        .nav-btns { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-ui { flex: 1; padding: 16px; background: var(--btn); color: white; border: 1px solid #333; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: block; }
         .btn-ui:active { background: #333; }
 
-        /* 미리보기 박스 */
-        .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border-radius: 15px; border: 1px solid #222; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+        /* Camera Viewer */
+        .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border-radius: 20px; border: 1px solid #222; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
         #preview { width: 100%; height: 100%; object-fit: contain; display: none; }
         
-        /* 로딩 화면 */
-        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        /* Analysis Spinner */
+        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .spinner { width: 35px; height: 35px; border: 4px solid #333; border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 결과창 */
-        #result-box { display: none; margin-top: 20px; padding: 25px; background: #1a1a1a; border-radius: 15px; border: 1px solid #333; }
-        .res-val { font-size: 3rem; font-weight: bold; color: var(--gold); margin: 10px 0; }
+        /* Result Area */
+        #result-area { display: none; margin-top: 20px; animation: slideUp 0.4s ease; }
+        .res-card { background: #1a1a1a; padding: 25px; border-radius: 18px; border: 1px solid #333; margin-bottom: 20px; }
+        .res-val { font-size: 3rem; font-weight: 800; color: var(--gold); margin: 5px 0; }
+        
+        /* Manual Options */
+        #manual-area { display: none; text-align: left; }
+        .manual-label { font-size: 0.8rem; color: #555; margin-bottom: 12px; display: block; }
+        .pao-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .pao-btn { padding: 14px 0; background: #111; border: 1px solid #333; color: #777; border-radius: 10px; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+        .pao-btn.active { border-color: var(--gold); color: var(--gold); background: #221f00; }
 
-        /* 수동 선택창 */
-        #manual-area { display: none; margin-top: 20px; }
-        .pao-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .pao-btn { padding: 15px; background: #111; border: 1px solid #333; color: #999; border-radius: 8px; font-weight: bold; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align: left; margin-bottom: 5px;">Cosmetic Freshness</h2>
-    <p style="text-align: left; color: #666; font-size: 0.8rem; margin-bottom: 25px;">손글씨나 마크를 촬영해 유통기한을 확인하세요.</p>
+    <h2>Scan PAO Mark</h2>
+    <p class="desc">Instantly detect the product's shelf life after opening.</p>
 
-    <div class="btn-row">
-        <label for="camInput" class="btn-ui">사진 촬영</label>
-        <label for="fileInput" class="btn-ui">앨범 선택</label>
+    <div class="nav-btns">
+        <label for="camInput" class="btn-ui">Take Photo</label>
+        <label for="fileInput" class="btn-ui">Upload</label>
     </div>
 
     <input type="file" id="camInput" accept="image/*" capture="environment" style="display:none">
@@ -50,60 +58,69 @@
     <div class="viewer">
         <div id="loader">
             <div class="spinner"></div>
-            <p style="margin-top: 15px; font-size: 0.9rem;">AI 분석 중...</p>
+            <div style="font-size:0.9rem; font-weight:500;">AI Scanning...</div>
         </div>
         <img id="preview">
-        <p id="placeholder" style="color:#444;">이미지가 여기에 표시됩니다</p>
+        <div id="placeholder" style="color:#333; font-size:0.9rem;">Preview Area</div>
     </div>
 
-    <div id="result-box">
-        <div style="font-size: 0.8rem; color: #888;">인식 결과</div>
-        <div id="pao-val" class="res-val">-</div>
-        <p style="font-size: 0.7rem; color: #555;">정확하지 않다면 아래에서 선택하세요.</p>
+    <div id="result-area">
+        <div class="res-card">
+            <div style="font-size:0.75rem; color:#888; text-transform:uppercase; letter-spacing:1px;">Detected Result</div>
+            <div id="pao-display" class="res-val">-</div>
+        </div>
     </div>
 
     <div id="manual-area">
-        <p style="color: var(--gold); font-size: 0.8rem; margin-bottom: 15px;">글자를 읽지 못했습니다. 직접 선택해주세요.</p>
-        <div class="pao-list">
-            <div class="pao-btn" onclick="setManual('3')">3M</div>
-            <div class="pao-btn" onclick="setManual('6')">6M</div>
-            <div class="pao-btn" onclick="setManual('12')">12M</div>
+        <span class="manual-label">Not accurate? Select manually:</span>
+        <div class="pao-grid">
+            <button class="pao-btn" onclick="applyManual('3')">3M</button>
+            <button class="pao-btn" onclick="applyManual('6')">6M</button>
+            <button class="pao-btn" onclick="applyManual('12')">12M</button>
+            <button class="pao-btn" onclick="applyManual('24')">24M</button>
         </div>
     </div>
 </div>
 
 <script>
-    // 워커 인라인화 (모바일 경로 문제 방지)
-    const workerBlob = new Blob([`
+    // Inline Worker to handle OCR and Noise Filtering
+    const workerCode = `
         importScripts('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
         let worker = null;
         self.onmessage = async (e) => {
-            const { img } = e.data;
             try {
                 if (!worker) {
                     worker = await Tesseract.createWorker('eng');
                     await worker.setParameters({ tessedit_char_whitelist: '0123456789M' });
                 }
-                const { data: { text } } = await worker.recognize(img);
+                const { data: { text } } = await worker.recognize(e.data.img);
                 const cleanText = text.toUpperCase().replace(/\\s/g, '');
+                
+                // Regex to find all numbers followed by 'M'
                 const matches = cleanText.match(/(\\d+)M/g);
-                // 가장 마지막에 등장하는 짧은 패턴(예: 6M)만 취함
-                const found = matches ? matches[matches.length - 1].replace('M', '') : null;
-                self.postMessage({ ok: true, pao: found });
+                let candidates = matches ? matches.map(m => m.replace('M', '')) : [];
+                
+                // Priority list for standard PAO values
+                const standards = ["3", "6", "12", "18", "24", "36"];
+                const result = candidates.find(c => standards.includes(c)) || (candidates.length > 0 ? candidates[candidates.length - 1] : null);
+
+                self.postMessage({ success: true, pao: result });
             } catch (err) {
-                self.postMessage({ ok: false });
+                self.postMessage({ success: false });
             }
         };
-    `], { type: 'application/javascript' });
+    `;
 
-    const worker = new Worker(URL.createObjectURL(workerBlob));
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const worker = new Worker(URL.createObjectURL(blob));
+
     const preview = document.getElementById('preview');
     const loader = document.getElementById('loader');
-    const resultBox = document.getElementById('result-box');
-    const paoVal = document.getElementById('pao-val');
+    const resultArea = document.getElementById('result-area');
     const manualArea = document.getElementById('manual-area');
+    const paoDisplay = document.getElementById('pao-display');
 
-    function handleImg(e) {
+    function handleFile(e) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -113,37 +130,44 @@
             preview.style.display = 'block';
             document.getElementById('placeholder').style.display = 'none';
             
-            // 상태 초기화
             loader.style.display = 'flex';
-            resultBox.style.display = 'none';
+            resultArea.style.display = 'none';
             manualArea.style.display = 'none';
-
-            // 이미지 분석 요청
             worker.postMessage({ img: ev.target.result });
         };
         reader.readAsDataURL(file);
     }
 
-    document.getElementById('camInput').onchange = handleImg;
-    document.getElementById('fileInput').onchange = handleImg;
+    document.getElementById('camInput').onchange = handleFile;
+    document.getElementById('fileInput').onchange = handleFile;
 
     worker.onmessage = (e) => {
         loader.style.display = 'none';
-        const { ok, pao } = e.data;
-
-        // 2자리 이하의 숫자(6, 12 등)만 정상으로 인정
-        if (ok && pao && pao.length <= 2) {
-            paoVal.innerText = pao + "M";
-            resultBox.style.display = 'block';
+        
+        // Validation: Only accept numbers up to 2 digits to filter out noise like '1225...'
+        const detected = e.data.pao;
+        if (e.data.success && detected && detected.length <= 2) {
+            showResult(detected);
         } else {
+            // If failed, show manual selection clearly
+            paoDisplay.innerText = "?";
+            resultArea.style.display = 'block';
             manualArea.style.display = 'block';
         }
     };
 
-    function setManual(val) {
-        paoVal.innerText = val + "M";
-        resultBox.style.display = 'block';
-        manualArea.style.display = 'none';
+    function showResult(val) {
+        paoDisplay.innerText = val + "M";
+        resultArea.style.display = 'block';
+        manualArea.style.display = 'block'; // Always show for easy correction
+        
+        document.querySelectorAll('.pao-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText === val + "M");
+        });
+    }
+
+    function applyManual(val) {
+        showResult(val);
     }
 </script>
 </body>
