@@ -64,6 +64,7 @@
       flex: 1 1 160px;
     }
     button:disabled{ opacity:.55; cursor:not-allowed; }
+
     .panel{
       margin-top: 14px;
       padding: 12px;
@@ -80,11 +81,13 @@
       font-size: 14px;
       display:none;
       line-height: 1.45;
+      word-break: break-word;
     }
     .status.show{ display:block; }
     .status.ok{ color: var(--ok); border-color: rgba(32,201,151,.55); background: rgba(32,201,151,.10); }
     .status.err{ color: var(--danger); border-color: rgba(255,77,79,.55); background: rgba(255,77,79,.10); }
     .status.warn{ color: var(--warn); border-color: rgba(255,204,0,.55); background: rgba(255,204,0,.10); }
+
     .metaRow{
       display:flex;
       gap: 10px;
@@ -103,6 +106,7 @@
       font-size: 13px;
     }
     .pill b{ font-weight:700; color: var(--text); }
+
     #imgWrap{ display:none; }
     #imgPreview{ max-width:100%; border-radius:12px; display:block; }
     .footer{
@@ -112,7 +116,9 @@
       line-height: 1.5;
       text-align:center;
     }
+
     #paoButtons{ display:none; }
+
     @media (max-width: 420px){
       .title{ font-size: 22px; }
       .btn-secondary{ flex: 1 1 100%; }
@@ -197,8 +203,6 @@
 
     function resetUiForNewScan(){
       hideStatus();
-
-      // 수동 버튼은 기본 숨김(성공 시에는 안 보이게)
       $paoButtons.style.display = "none";
       $paoButtons.innerHTML = "";
 
@@ -315,18 +319,18 @@
     }
 
     function humanScanErrorMessage(status){
-      if (status === 429) return "Too many requests right now. Please try again in a moment, or choose PAO manually.";
+      if (status === 429) return "Too many requests right now. Please try again, or choose PAO manually.";
       if (status >= 500) return "Service is temporarily unavailable. Please try again, or choose PAO manually.";
-      if (status === 400) return "Couldn’t read this image. Please retake the photo (closer, brighter) or choose PAO manually.";
-      return "Couldn’t detect the PAO mark. Please try again, or choose PAO manually.";
+      if (status === 413) return "Photo is too large. Please retake closer, or choose PAO manually.";
+      if (status === 400) return "Couldn’t read this photo. Please retake (closer, brighter) or choose PAO manually.";
+      return "Couldn’t analyze this photo. Please try again, or choose PAO manually.";
     }
 
-    async function fetchWithTimeout(url, options, timeoutMs = 15000){
+    async function fetchWithTimeout(url, options, timeoutMs = 20000){
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeoutMs);
       try{
-        const res = await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
-        return res;
+        return await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
       } finally {
         clearTimeout(id);
       }
@@ -345,28 +349,27 @@
       setStatus(manual ? "Rechecking PAO mark..." : "Checking PAO mark...", "");
 
       try{
-        const payload = await fileToPayload(selectedFile, 1800, 0.9);
+        const payload = await fileToPayload(selectedFile, 1400, 0.85);
 
         const res = await fetchWithTimeout(OCR_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }, 20000);
+        }, 25000);
 
         if (!res.ok){
-  let detail = {};
-  try { detail = await res.json(); } catch(e) {}
+          let detail = {};
+          try { detail = await res.json(); } catch(e) {}
 
-  const extra =
-    (detail?.error ? ` [${detail.error}]` : "") +
-    (detail?.upstreamStatus ? ` (upstream ${detail.upstreamStatus})` : "") +
-    (detail?.upstreamText ? ` - ${detail.upstreamText}` : "");
+          const extra =
+            (detail?.error ? ` [${detail.error}]` : "") +
+            (detail?.upstreamStatus ? ` (upstream ${detail.upstreamStatus})` : "") +
+            (detail?.usingModel ? ` (model ${detail.usingModel})` : "");
 
-  setStatus(humanScanErrorMessage(res.status) + extra, "warn");
-  renderPaoButtons([3, 6, 12, 24]);
-  return;
-}
-
+          setStatus(humanScanErrorMessage(res.status) + extra, "warn");
+          renderPaoButtons([3, 6, 12, 24]);
+          return;
+        }
 
         const data = await res.json().catch(() => ({}));
         const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
@@ -374,14 +377,12 @@
         if (pao.length === 1){
           showDetected(pao[0]);
           setStatus(`Detected ${pao[0]}M. Checking freshness...`, "ok");
-          // 성공이면 수동 버튼 숨김 유지(어제처럼)
           await runFreshness(pao[0]);
           return;
         }
 
         if (pao.length > 1){
           setStatus("Multiple PAO marks found. Please select one:", "");
-          // 복수일 때만 후보 버튼 노출
           renderPaoButtons(pao);
           return;
         }
@@ -389,7 +390,7 @@
         setStatus("Couldn’t find a PAO mark. Please choose one:", "warn");
         renderPaoButtons([3, 6, 12, 24]);
       } catch(e){
-        setStatus("Couldn’t detect the PAO mark. Please try again, or choose PAO manually.", "warn");
+        setStatus("Couldn’t analyze this photo. Please try again, or choose PAO manually.", "warn");
         renderPaoButtons([3, 6, 12, 24]);
       } finally{
         ocrBusy = false;
