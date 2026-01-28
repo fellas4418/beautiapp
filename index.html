@@ -273,9 +273,11 @@
 
             const outMime = "image/jpeg";
             const outDataUrl = canvas.toDataURL(outMime, quality);
-            const base64 = outDataUrl.split(",")[1] || "";
 
-            resolve({ imageBase64: base64, mimeType: outMime, width: tw, height: th });
+            // 워커스는 base64만 받아도 되고, dataURL이어도 처리함
+            const base64Only = outDataUrl.split(",")[1] || "";
+
+            resolve({ imageBase64: base64Only, mimeType: outMime, width: tw, height: th });
           };
           img.src = dataUrl;
         };
@@ -304,7 +306,6 @@
     $imageGallery.addEventListener("change", (e) => handleImagePicked(e.target.files?.[0]));
 
     $btnOcr.addEventListener("click", () => {
-      // 수동 재시도용
       runOcrAuto({ manual: true });
     });
 
@@ -321,12 +322,10 @@
 
       $btnOcr.disabled = false;
 
-      // 자동 스캔
       runOcrAuto({ manual: false });
     }
 
     function humanScanErrorMessage(status){
-      // 사용자에게 "서버 에러"를 그대로 보여주지 않도록 문구를 바꿈
       if (status === 429) return "Scanning is busy right now. Please try again in a moment, or choose PAO manually.";
       if (status >= 500) return "Scanning service is temporarily unavailable. Please try again, or choose PAO manually.";
       if (status === 400) return "Couldn’t read this image. Please retake the photo (closer, brighter) or choose PAO manually.";
@@ -343,7 +342,6 @@
       ocrBusy = true;
       $btnOcr.disabled = true;
 
-      // 스캔 시작 문구는 여기서만
       setStatus(manual ? "Rescanning for PAO symbol..." : "Scanning for PAO symbol...", "");
 
       try{
@@ -356,8 +354,7 @@
         });
 
         if (!res.ok){
-          const msg = humanScanErrorMessage(res.status);
-          setStatus(msg, "warn");
+          setStatus(humanScanErrorMessage(res.status), "warn");
           renderPaoButtons([3, 6, 12, 24], { hint: true });
           return;
         }
@@ -378,10 +375,10 @@
           return;
         }
 
-        setStatus("Couldn’t find a PAO symbol. Please choose one manually:", "warn");
+        setStatus("We couldn’t confidently detect the PAO from this photo. Please select it manually below:", "warn");
         renderPaoButtons([3, 6, 12, 24], { hint: true });
       } catch(e){
-        setStatus("Couldn’t scan this photo. Please try again, or choose PAO manually.", "warn");
+        setStatus("We couldn’t confidently detect the PAO from this photo. Please try again, or choose PAO manually.", "warn");
         renderPaoButtons([3, 6, 12, 24], { hint: true });
       } finally{
         ocrBusy = false;
@@ -405,12 +402,6 @@
         };
         $paoButtons.appendChild(btn);
       });
-
-      if (hint){
-        // 선택 유도용으로 Detect PAO 버튼이 “재시도 버튼”이라는 걸 상태 문구로 설명
-        // (버튼 자체 문구는 그대로 두고 UX로 안내)
-        // 별도 UI 추가 없이 status로만 처리
-      }
     }
 
     async function runFreshness(paoMonths){
@@ -428,7 +419,6 @@
 
         const data = await res.json().catch(() => ({}));
 
-        // 메타 표시: daysLeft, tossAt (Worker가 제공)
         const daysLeft = Number.isFinite(Number(data?.daysLeft)) ? Number(data.daysLeft) : null;
         const tossAt = typeof data?.tossAt === "string" ? data.tossAt : "";
         showFreshnessMeta(daysLeft, tossAt);
