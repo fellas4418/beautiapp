@@ -40,7 +40,6 @@
       position: relative;
     }
 
-    /* 모바일에서 label -> file input이 확실히 열리게: input을 화면 안(0,0)에 숨김 */
     .fileInput{
       position: fixed;
       left: 0;
@@ -79,7 +78,7 @@
 
     .dateRow{ display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; }
     .sel{
-      flex: 1 1 120px; min-width: 120px;
+      flex: 1 1 100%;
       background: rgba(255,255,255,.03);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -88,7 +87,7 @@
       font-size: 14px;
     }
     .sel label{ display:block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
-    select{
+    .dateInput{
       width:100%;
       background: transparent;
       color: var(--text);
@@ -96,7 +95,11 @@
       outline: none;
       font-size: 15px;
       font-weight: 900;
-      appearance: none;
+    }
+    .dowLine{
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
     }
 
     .panel{
@@ -111,7 +114,6 @@
     #imgPreview{ max-width:100%; border-radius:12px; display:block; }
     .footer{ margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.5; text-align:center; }
 
-    /* 오버레이가 떠도 클릭을 절대 막지 않게 */
     .overlay{
       position:absolute; inset:0;
       display:none;
@@ -348,16 +350,9 @@
 
       <div class="dateRow">
         <div class="sel">
-          <label>Opened (Year)</label>
-          <select id="openedYear"></select>
-        </div>
-        <div class="sel">
-          <label>Month</label>
-          <select id="openedMonth"></select>
-        </div>
-        <div class="sel">
-          <label>Day</label>
-          <select id="openedDay"></select>
+          <label>Opened date</label>
+          <input id="openedDate" class="dateInput" type="date" />
+          <div id="openedDow" class="dowLine"></div>
         </div>
       </div>
 
@@ -402,7 +397,7 @@
         </div>
 
         <div class="shelfControls">
-          <input id="productName" class="input" placeholder="Product name (optional)" />
+          <input id="productName" class="input" placeholder="Product name (auto-filled from photo if possible)" />
           <button id="btnAddShelf" class="miniBtn" type="button">Add to My Shelf</button>
           <button id="btnClearShelf" class="miniBtn" type="button">Clear</button>
         </div>
@@ -416,10 +411,11 @@
 
   <script>
     const API_BASE = "https://skinguard.ohryee.workers.dev";
-    const OCR_ENDPOINT = API_BASE + "/ocr-pao";
+    const OCR_META_ENDPOINT = API_BASE + "/ocr-meta";
 
     const PAO_OPTIONS = [3, 6, 9, 12, 18, 24, 36];
     const STORAGE_KEY = "skinguard_shelf_v1";
+    const LAST_NAME_KEY = "skinguard_last_name";
 
     const $imageCamera = document.getElementById("imageCamera");
     const $imageGallery = document.getElementById("imageGallery");
@@ -430,9 +426,8 @@
     const $overlay = document.getElementById("overlay");
     const $statusLine = document.getElementById("statusLine");
 
-    const $openedYear = document.getElementById("openedYear");
-    const $openedMonth = document.getElementById("openedMonth");
-    const $openedDay = document.getElementById("openedDay");
+    const $openedDate = document.getElementById("openedDate");
+    const $openedDow = document.getElementById("openedDow");
 
     const $paoGrid = document.getElementById("paoGrid");
 
@@ -483,15 +478,22 @@
       return `${yyyy}-${mm}-${dd}`;
     }
 
-    function daysInMonth(year, monthIndex){
-      return new Date(year, monthIndex+1, 0).getDate();
+    function getOpenedDate(){
+      const v = String($openedDate.value || "").trim(); // "YYYY-MM-DD"
+      if (!v) return new Date();
+      const d = new Date(v + "T12:00:00");
+      return Number.isNaN(d.getTime()) ? new Date() : d;
     }
 
-    function getOpenedDate(){
-      const y = Number($openedYear.value);
-      const m = Number($openedMonth.value);
-      const d = Number($openedDay.value);
-      return new Date(y, m-1, d, 12, 0, 0);
+    function updateOpenedDow(){
+      const d = getOpenedDate();
+      const fmt = new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      $openedDow.textContent = fmt.format(d);
     }
 
     function addMonths(date, months){
@@ -609,6 +611,20 @@
       }
     }
 
+    function maybeFillProductName(name){
+      const clean = String(name || "").trim();
+      if (!clean) return;
+
+      // 자동 채움은 "비어있거나, 마지막 자동값과 동일"일 때 우선 적용
+      const current = String($productName.value || "").trim();
+      if (!current || current === localStorage.getItem(LAST_NAME_KEY)) {
+        $productName.value = clean;
+      }
+
+      localStorage.setItem(LAST_NAME_KEY, clean);
+      toast("Product name filled");
+    }
+
     async function runOcr(){
       if (ocrBusy) return;
       if (!selectedFile){
@@ -619,24 +635,29 @@
       ocrBusy = true;
       $btnAnalyze.disabled = true;
       showOverlay(true);
-      setStatus("Analyzing photo to detect PAO...", "");
+      setStatus("Analyzing photo to detect PAO and product name...", "");
 
       try{
         const payload = await fileToPayload(selectedFile, 1600, 0.85);
 
-        const res = await fetchWithTimeout(OCR_ENDPOINT, {
+        const res = await fetchWithTimeout(OCR_META_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }, 12000);
+        }, 15000);
 
         if (!res.ok){
-          setStatus("Couldn’t find a PAO mark. Tap a PAO button below.", "warn");
+          setStatus("Couldn’t analyze this photo. Tap a PAO button below.", "warn");
           return;
         }
 
         const data = await res.json().catch(() => ({}));
         const candidates = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
+        const productName = String(data?.productName || "").trim();
+
+        if (productName) {
+          maybeFillProductName(productName);
+        }
 
         if (candidates.length >= 1){
           const m = Number(candidates[0]);
@@ -650,7 +671,7 @@
           }
         }
 
-        setStatus("Couldn’t find a PAO mark. Tap a PAO button below.", "warn");
+        setStatus("PAO not found. Tap a PAO button below.", "warn");
       } catch(e){
         setStatus("Photo analysis failed. Tap a PAO button below.", "warn");
       } finally{
@@ -673,44 +694,6 @@
 
       // 자동 분석
       runOcr();
-    }
-
-    function initDateSelectors(){
-      const now = new Date();
-      const thisYear = now.getFullYear();
-
-      let yhtml = "";
-      for (let y = thisYear - 10; y <= thisYear + 1; y++){
-        yhtml += `<option value="${y}">${y}</option>`;
-      }
-      $openedYear.innerHTML = yhtml;
-
-      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      $openedMonth.innerHTML = monthNames.map((name, idx) => `<option value="${idx+1}">${name}</option>`).join("");
-
-      $openedYear.value = String(thisYear);
-      $openedMonth.value = String(now.getMonth()+1);
-
-      function syncDays(){
-        const y = Number($openedYear.value);
-        const m = Number($openedMonth.value);
-        const max = daysInMonth(y, m-1);
-        const cur = Number($openedDay.value) || 1;
-
-        let opts = "";
-        for (let d=1; d<=max; d++){
-          opts += `<option value="${d}">${d}</option>`;
-        }
-        $openedDay.innerHTML = opts;
-        $openedDay.value = String(Math.min(cur, max));
-      }
-
-      syncDays();
-      $openedDay.value = String(now.getDate());
-
-      $openedYear.addEventListener("change", () => { syncDays(); if (selectedPao) computeFreshness(); });
-      $openedMonth.addEventListener("change", () => { syncDays(); if (selectedPao) computeFreshness(); });
-      $openedDay.addEventListener("change", () => { if (selectedPao) computeFreshness(); });
     }
 
     function loadShelf(){
@@ -770,7 +753,6 @@
         const badge = document.createElement("span");
         badge.className = "badge " + (st === "TOSS" ? "err" : st === "WARN" ? "warn" : "ok");
         badge.textContent = (st === "TOSS" ? "TOSS" : st === "WARN" ? "SOON" : "SAFE");
-
         badges.appendChild(badge);
 
         const meta = document.createElement("div");
@@ -809,6 +791,8 @@
       }
 
       const name = ($productName.value || "").trim();
+      if (name) localStorage.setItem(LAST_NAME_KEY, name);
+
       const opened = getOpenedDate();
 
       const item = {
@@ -827,7 +811,23 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      initDateSelectors();
+      // opened date default = today
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth()+1).padStart(2,"0");
+      const dd = String(now.getDate()).padStart(2,"0");
+      $openedDate.value = `${yyyy}-${mm}-${dd}`;
+      updateOpenedDow();
+
+      $openedDate.addEventListener("change", () => {
+        updateOpenedDow();
+        if (selectedPao) computeFreshness();
+      });
+
+      // product name default = last used
+      const lastName = localStorage.getItem(LAST_NAME_KEY) || "";
+      if (lastName) $productName.value = lastName;
+
       renderPaoButtons();
       renderShelf();
       hideStatus();
