@@ -5,33 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cosmetic Scanner</title>
     <style>
-        :root { --bg: #000000; --card: #111; --accent: #222; --text: #eee; --gold: #ffcc00; }
+        :root { --bg: #0b0b0b; --card: #151515; --btn-bg: #222; --text: #eee; --gold: #ffcc00; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
         .container { max-width: 400px; margin: auto; }
         
-        h2 { font-size: 1.2rem; margin-bottom: 5px; }
-        .desc { font-size: 0.8rem; color: #777; margin-bottom: 20px; }
+        /* 헤더 스타일 */
+        h2 { font-size: 1.1rem; margin: 10px 0; }
+        .desc { font-size: 0.8rem; color: #666; margin-bottom: 20px; }
 
-        .nav-btns { display: flex; gap: 10px; margin-bottom: 15px; }
-        button { flex: 1; padding: 12px; background: var(--accent); color: white; border: 1px solid #333; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+        .nav-btns { display: flex; gap: 8px; margin-bottom: 15px; }
+        .nav-btns button { flex: 1; padding: 12px; background: var(--btn-bg); color: white; border: 1px solid #333; border-radius: 8px; font-size: 0.8rem; }
 
-        /* 이미지 박스 */
+        /* 중앙 뷰어 */
         .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border: 1px solid #222; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
         #preview { width: 100%; height: 100%; object-fit: contain; display: none; }
         
-        /* 분석 중 레이어 */
-        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 5; }
-        .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: #eee; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        /* 분석 중 (로딩) */
+        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 결과창 및 수동 선택 */
-        #result-area { margin-top: 20px; display: none; }
-        .result-box { background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; }
-        .result-val { font-size: 2rem; font-weight: bold; color: var(--gold); }
+        /* 결과 창: 성공 시에만 등장 */
+        #result-box { display: none; margin-top: 20px; padding: 25px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
+        .res-label { font-size: 0.75rem; color: #888; margin-bottom: 8px; }
+        .res-val { font-size: 2.5rem; font-weight: bold; color: var(--gold); }
+
+        /* 수동 선택: 실패 시에만 등장 */
+        #manual-area { display: none; margin-top: 20px; animation: fadeIn 0.5s; }
+        .manual-msg { color: var(--gold); font-size: 0.8rem; margin-bottom: 15px; }
+        .pao-list { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .pao-btn { padding: 15px; background: #111; border: 1px solid #333; color: #ccc; border-radius: 8px; cursor: pointer; }
         
-        .manual-area { display: none; margin-top: 15px; }
-        .pao-list { display: flex; flex-direction: column; gap: 8px; }
-        .pao-btn { width: 100%; padding: 12px; background: #111; border: 1px solid #333; color: #999; border-radius: 8px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -48,25 +53,23 @@
     <div class="viewer">
         <div id="loader">
             <div class="spinner"></div>
-            <div>분석 중...</div>
+            <div style="font-size: 0.9rem;">분석 중...</div>
         </div>
         <img id="preview">
-        <div id="placeholder" style="color:#444">이미지를 업로드하세요</div>
+        <div id="placeholder" style="color:#444; font-size:0.9rem;">이미지를 업로드하세요</div>
     </div>
 
-    <div id="result-area">
-        <div class="result-box">
-            <div style="font-size:0.8rem; color:#888; margin-bottom:5px;">인식된 유통기한</div>
-            <div id="pao-result" class="result-val">-</div>
-        </div>
+    <div id="result-box">
+        <div class="res-label">Detected PAO</div>
+        <div id="pao-val" class="res-val">-</div>
     </div>
 
-    <div id="manual-area" class="manual-area">
-        <p style="font-size:0.8rem; color:var(--gold);">글자를 읽지 못했습니다. 직접 선택해주세요.</p>
+    <div id="manual-area">
+        <div class="manual-msg">글자를 읽지 못했습니다. 수동으로 선택해주세요.</div>
         <div class="pao-list">
-            <button onclick="setManual('3')">3M</button>
-            <button onclick="setManual('6')">6M</button>
-            <button onclick="setManual('12')">12M</button>
+            <div class="pao-btn" onclick="applyManual('3')">3M</div>
+            <div class="pao-btn" onclick="applyManual('6')">6M</div>
+            <div class="pao-btn" onclick="applyManual('12')">12M</div>
         </div>
     </div>
 
@@ -77,11 +80,19 @@
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
     const loader = document.getElementById('loader');
-    const resultArea = document.getElementById('result-area');
-    const paoResult = document.getElementById('pao-result');
+    const resultBox = document.getElementById('result-box');
+    const paoVal = document.getElementById('pao-val');
     const manualArea = document.getElementById('manual-area');
+    const placeholder = document.getElementById('placeholder');
 
-    const worker = new Worker('worker.js', { type: 'module' });
+    // 워커 생성 (에러 방지를 위해 옵션 없이 생성 시도)
+    let worker;
+    try {
+        worker = new Worker('worker.js');
+    } catch(e) {
+        // 일부 환경 호환성 대응
+        worker = new Worker('worker.js', { type: 'module' });
+    }
 
     function pickFile(mode) {
         if(mode) fileInput.setAttribute('capture', mode);
@@ -97,10 +108,10 @@
         reader.onload = (ev) => {
             preview.src = ev.target.result;
             preview.style.display = 'block';
-            document.getElementById('placeholder').style.display = 'none';
+            placeholder.style.display = 'none';
             
-            // 초기화 후 분석 시작
-            resultArea.style.display = 'none';
+            // 상태 초기화
+            resultBox.style.display = 'none';
             manualArea.style.display = 'none';
             loader.style.display = 'flex';
             
@@ -114,20 +125,21 @@
         const { success, pao } = e.data;
 
         if (success && pao) {
-            resultArea.style.display = 'block';
-            paoResult.innerText = pao + "M";
-            manualArea.style.display = 'none';
+            showResult(pao);
         } else {
-            // 인식 실패 시 수동 버튼 등장
-            resultArea.style.display = 'none';
             manualArea.style.display = 'block';
+            resultBox.style.display = 'none';
         }
     };
 
-    function setManual(val) {
-        resultArea.style.display = 'block';
-        paoResult.innerText = val + "M";
+    function showResult(val) {
+        paoVal.innerText = val + "M";
+        resultBox.style.display = 'block';
         manualArea.style.display = 'none';
+    }
+
+    function applyManual(val) {
+        showResult(val);
     }
 </script>
 </body>
