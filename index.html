@@ -354,11 +354,19 @@
         }, 20000);
 
         if (!res.ok){
-          setStatus(humanScanErrorMessage(res.status), "warn");
-          // 실패일 때만 수동 선택 버튼 노출
-          renderPaoButtons([3, 6, 12, 24]);
-          return;
-        }
+  let detail = {};
+  try { detail = await res.json(); } catch(e) {}
+
+  const extra =
+    (detail?.error ? ` [${detail.error}]` : "") +
+    (detail?.upstreamStatus ? ` (upstream ${detail.upstreamStatus})` : "") +
+    (detail?.upstreamText ? ` - ${detail.upstreamText}` : "");
+
+  setStatus(humanScanErrorMessage(res.status) + extra, "warn");
+  renderPaoButtons([3, 6, 12, 24]);
+  return;
+}
+
 
         const data = await res.json().catch(() => ({}));
         const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
