@@ -91,7 +91,7 @@
     .fieldBtn .value{
       font-size: 15px;
       color: var(--text);
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: -0.2px;
     }
     .fieldBtn .chev{
@@ -137,6 +137,32 @@
       font-size: 12px;
       line-height: 1.5;
       text-align:center;
+    }
+
+    /* BIG DECISION */
+    .decision{
+      display:none;
+      margin-top: 12px;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      text-align:center;
+      font-weight: 950;
+      letter-spacing: -0.6px;
+      line-height: 1.05;
+      font-size: 34px;
+    }
+    .decision.show{ display:block; }
+    .decision.ok{
+      border-color: rgba(32,201,151,.55);
+      background: rgba(32,201,151,.10);
+      color: var(--ok);
+    }
+    .decision.err{
+      border-color: rgba(255,77,79,.55);
+      background: rgba(255,77,79,.10);
+      color: var(--danger);
     }
 
     .triplet{
@@ -196,7 +222,7 @@
     }
 
     .status{
-      margin-top: 12px;
+      margin-top: 10px;
       padding: 10px 12px;
       border-radius: 12px;
       background: rgba(17,19,24,.95);
@@ -214,10 +240,12 @@
     @media (max-width: 520px){
       .triplet{ grid-template-columns: 1fr; }
       .bigCard .v{ font-size: 34px; }
+      .decision{ font-size: 32px; }
     }
     @media (max-width: 420px){
       .title{ font-size: 22px; }
       .btn-secondary{ flex: 1 1 100%; }
+      .decision{ font-size: 30px; }
     }
 
     /* Date picker modal */
@@ -394,7 +422,7 @@
       <div class="row">
         <button id="btnCamera" class="btn-secondary" type="button">Take Photo</button>
         <button id="btnGallery" class="btn-secondary" type="button">Upload Photo</button>
-        <button id="btnOcr" class="btn-secondary" type="button" disabled>Detect PAO</button>
+        <button id="btnOcr" class="btn-secondary" type="button" disabled>Detect PAO (Retry)</button>
       </div>
 
       <div id="openedBtn" class="fieldBtn" role="button" aria-label="Opened date">
@@ -412,6 +440,8 @@
         </div>
         <div class="footer">Photo (optional)</div>
       </div>
+
+      <div id="decision" class="decision"></div>
 
       <div id="triplet" class="triplet">
         <div class="bigCard">
@@ -454,7 +484,6 @@
       <div class="modalBody">
         <div id="dpDow" class="dow"></div>
         <div id="dpGrid" class="grid"></div>
-
         <div id="dpYearGrid" class="yearGrid"></div>
       </div>
 
@@ -485,6 +514,7 @@
     const $imgPreview = document.getElementById("imgPreview");
     const $imgPlaceholder = document.getElementById("imgPlaceholder");
 
+    const $decision = document.getElementById("decision");
     const $triplet = document.getElementById("triplet");
     const $vPao = document.getElementById("vPao");
     const $vDays = document.getElementById("vDays");
@@ -514,15 +544,13 @@
     let ocrBusy = false;
     let selectedPao = null;
 
-    // opened date state (YYYY-MM-DD)
     let openedDate = "";
 
-    // date picker state
     let dpMode = "day"; // "day" | "year"
     let dpViewYear = 0;
     let dpViewMonth = 0; // 0-11
-    let dpSelected = ""; // YYYY-MM-DD (temp selection)
-    let dpYearPageStart = 0; // first year shown in year grid
+    let dpSelected = ""; // YYYY-MM-DD
+    let dpYearPageStart = 0;
 
     function pad2(n){ return String(n).padStart(2,"0"); }
 
@@ -538,6 +566,19 @@
     function hideStatus(){
       $status.className = "status";
       $status.textContent = "";
+    }
+
+    function hideDecision(){
+      $decision.className = "decision";
+      $decision.textContent = "";
+    }
+    function setDecisionSafe(){
+      $decision.className = "decision show ok";
+      $decision.textContent = "SAFE TO USE";
+    }
+    function setDecisionToss(){
+      $decision.className = "decision show err";
+      $decision.textContent = "TOSS IT";
     }
 
     function showTriplet(){
@@ -627,6 +668,7 @@
         btn.dataset.m = String(m);
         btn.addEventListener("click", async () => {
           hideStatus();
+          hideDecision();
           showSelected(m);
           setStatus(`Selected ${m}M. Checking freshness...`, "");
           await runFreshness(m);
@@ -654,6 +696,7 @@
         }, 15000);
 
         if (!res.ok){
+          hideDecision();
           setStatus("Couldn’t check freshness right now. Please try again.", "warn");
           return;
         }
@@ -665,13 +708,17 @@
         setFreshnessValues(daysLeft, tossAt);
 
         if (data?.status === "TOSS"){
+          setDecisionToss();
           setStatus("Toss it. This product is past the recommended period after opening.", "err");
         } else if (data?.status === "WARN"){
+          setDecisionSafe();
           setStatus("Almost time to toss. Use soon or replace.", "warn");
         } else {
+          setDecisionSafe();
           setStatus("Safe to use. Product is within the recommended period.", "ok");
         }
       } catch(e){
+        hideDecision();
         setStatus("Freshness check failed. Please try again.", "warn");
       }
     }
@@ -685,6 +732,7 @@
 
       ocrBusy = true;
       $btnOcr.disabled = true;
+      hideDecision();
       setStatus("Reading PAO mark from photo...", "");
 
       try{
@@ -705,6 +753,7 @@
             (detail?.upstreamStatus ? ` (upstream ${detail.upstreamStatus})` : "") +
             (detail?.usingModel ? ` (model ${detail.usingModel})` : "");
 
+          hideDecision();
           setStatus(humanScanErrorMessage(res.status) + extra + " Tap a PAO button below.", "warn");
           return;
         }
@@ -721,12 +770,15 @@
         }
 
         if (pao.length > 1){
+          hideDecision();
           setStatus(`Multiple candidates detected (${pao.join(", ")}). Tap the correct one below.`, "warn");
           return;
         }
 
+        hideDecision();
         setStatus("Couldn’t find a PAO mark. Tap a PAO button below.", "warn");
       } catch(e){
+        hideDecision();
         setStatus("Couldn’t analyze this photo. Tap a PAO button below.", "warn");
       } finally{
         ocrBusy = false;
@@ -751,22 +803,23 @@
       $imageGallery.click();
     });
 
-    $imageCamera.addEventListener("change", (e) => {
-      const f = e.target.files?.[0];
+    function onPickedFile(f){
       if (!f) return;
       selectedFile = f;
       setPhotoPreview(f);
       $btnOcr.disabled = false;
-    });
 
-    $imageGallery.addEventListener("change", (e) => {
-      const f = e.target.files?.[0];
-      if (!f) return;
-      selectedFile = f;
-      setPhotoPreview(f);
-      $btnOcr.disabled = false;
-    });
+      hideDecision();
+      hideStatus();
 
+      // 핵심: 사진 선택 즉시 자동 OCR 실행
+      runOcr();
+    }
+
+    $imageCamera.addEventListener("change", (e) => onPickedFile(e.target.files?.[0]));
+    $imageGallery.addEventListener("change", (e) => onPickedFile(e.target.files?.[0]));
+
+    // Detect button is now retry
     $btnOcr.addEventListener("click", runOcr);
 
     /* Custom date picker logic */
@@ -835,13 +888,12 @@
       $dpGrid.innerHTML = "";
 
       const first = new Date(dpViewYear, dpViewMonth, 1);
-      const startDow = first.getDay(); // 0 Sun
+      const startDow = first.getDay();
       const dim = daysInMonth(dpViewYear, dpViewMonth);
 
       const sel = parseYYYYMMDD(dpSelected);
       const selKey = sel ? `${sel.y}-${pad2(sel.mo)}-${pad2(sel.d)}` : "";
 
-      // blank cells
       for (let i=0; i<startDow; i++){
         const cell = document.createElement("div");
         cell.className = "dayCell mute";
@@ -861,7 +913,6 @@
         $dpGrid.appendChild(cell);
       }
 
-      // pad to full weeks (optional)
       const totalCells = startDow + dim;
       const pad = (7 - (totalCells % 7)) % 7;
       for (let i=0; i<pad; i++){
@@ -876,7 +927,7 @@
       $dpYearGrid.innerHTML = "";
 
       const start = dpYearPageStart;
-      const count = 12; // 12 years page
+      const count = 12;
       for (let i=0; i<count; i++){
         const y = start + i;
         const cell = document.createElement("div");
@@ -928,6 +979,23 @@
       closeDatePicker();
     });
 
+    function applyOpenedDateAndRecalc(){
+      openedDate = dpSelected || todayLocalYYYYMMDD();
+      $openedValue.textContent = openedDate;
+      closeDatePicker();
+
+      // 이미 PAO가 선택/감지된 상태면 즉시 재계산
+      if (selectedPao){
+        hideStatus();
+        setStatus("Updating freshness...", "");
+        runFreshness(selectedPao);
+      } else if (selectedFile) {
+        // PAO가 아직 없고 사진은 있으면, 날짜 바뀐 김에 다시 자동 감지(원하면)
+        // 원치 않으면 이 줄 지우면 됨
+        // runOcr();
+      }
+    }
+
     $dpToday.addEventListener("click", () => {
       dpSelected = todayLocalYYYYMMDD();
       const p = parseYYYYMMDD(dpSelected);
@@ -935,41 +1003,20 @@
       dpViewMonth = p.mo - 1;
       dpMode = "day";
       renderDatePicker();
-
-      // apply immediately
-      openedDate = dpSelected;
-      $openedValue.textContent = openedDate;
-      closeDatePicker();
-
-      if (selectedPao){
-        hideStatus();
-        setStatus("Updating freshness...", "");
-        runFreshness(selectedPao);
-      }
+      applyOpenedDateAndRecalc();
     });
 
     $dpSet.addEventListener("click", () => {
       if (!parseYYYYMMDD(dpSelected)){
-        // fallback
         dpSelected = todayLocalYYYYMMDD();
       }
-      openedDate = dpSelected;
-      $openedValue.textContent = openedDate;
-      closeDatePicker();
-
-      if (selectedPao){
-        hideStatus();
-        setStatus("Updating freshness...", "");
-        runFreshness(selectedPao);
-      }
+      applyOpenedDateAndRecalc();
     });
 
-    // tap outside modal closes
     $dpBack.addEventListener("click", (e) => {
       if (e.target === $dpBack) closeDatePicker();
     });
 
-    // opened date button opens picker
     $openedBtn.addEventListener("click", openDatePicker);
 
     // init
