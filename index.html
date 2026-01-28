@@ -72,6 +72,53 @@
       border: 1px solid var(--border);
       border-radius: 12px;
     }
+
+    .field{
+      margin-top: 10px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .field label{
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .field input[type="date"]{
+      flex: 1;
+      min-width: 140px;
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .hero{
+      display:none;
+      margin-top: 12px;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+    }
+    .hero .k{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .hero .v{
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
     .status{
       margin-top: 12px;
       padding: 10px 12px;
@@ -122,6 +169,7 @@
     @media (max-width: 420px){
       .title{ font-size: 22px; }
       .btn-secondary{ flex: 1 1 100%; }
+      .hero .v{ font-size: 40px; }
     }
   </style>
 </head>
@@ -145,12 +193,19 @@
       <div id="imgWrap" class="panel">
         <img id="imgPreview" alt="preview" />
         <div class="footer">Selected Image</div>
+
+        <div class="field">
+          <label for="openedDate">Opened date</label>
+          <input id="openedDate" type="date" />
+        </div>
+
+        <div id="heroPao" class="hero">
+          <div class="k">Detected PAO</div>
+          <div id="heroPaoValue" class="v">-</div>
+        </div>
       </div>
 
       <div id="metaRow" class="metaRow" style="display:none;">
-        <div id="pDetected" class="pill" style="display:none;">
-          Detected PAO: <b id="detectedText">-</b>
-        </div>
         <div id="pDays" class="pill" style="display:none;">
           Days left: <b id="daysLeftText">-</b>
         </div>
@@ -180,9 +235,12 @@
     const $status = document.getElementById("status");
     const $paoButtons = document.getElementById("paoButtons");
 
+    const $openedDate = document.getElementById("openedDate");
+
+    const $heroPao = document.getElementById("heroPao");
+    const $heroPaoValue = document.getElementById("heroPaoValue");
+
     const $metaRow = document.getElementById("metaRow");
-    const $pDetected = document.getElementById("pDetected");
-    const $detectedText = document.getElementById("detectedText");
     const $pDays = document.getElementById("pDays");
     const $daysLeftText = document.getElementById("daysLeftText");
     const $pToss = document.getElementById("pToss");
@@ -191,6 +249,14 @@
     let selectedFile = null;
     let previewUrl = null;
     let ocrBusy = false;
+
+    function todayLocalYYYYMMDD(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const day = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${day}`;
+    }
 
     function setStatus(msg, type){
       $status.className = "status show" + (type ? (" " + type) : "");
@@ -207,21 +273,21 @@
       $paoButtons.innerHTML = "";
 
       $metaRow.style.display = "none";
-      $pDetected.style.display = "none";
       $pDays.style.display = "none";
       $pToss.style.display = "none";
-      $detectedText.textContent = "-";
       $daysLeftText.textContent = "-";
       $tossAtText.textContent = "-";
+
+      $heroPao.style.display = "none";
+      $heroPaoValue.textContent = "-";
     }
 
     function showDetected(months){
-      $metaRow.style.display = "flex";
-      $pDetected.style.display = "inline-flex";
-      $detectedText.textContent = months + "M";
+      $heroPao.style.display = "block";
+      $heroPaoValue.textContent = months + "M";
     }
 
-    function showFreshnessMeta(daysLeft, tossAtIso){
+    function showFreshnessMeta(daysLeft, tossAt){
       $metaRow.style.display = "flex";
 
       if (Number.isFinite(daysLeft)){
@@ -229,15 +295,9 @@
         $daysLeftText.textContent = String(daysLeft);
       }
 
-      if (tossAtIso){
-        const d = new Date(tossAtIso);
-        if (!Number.isNaN(d.getTime())){
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth()+1).padStart(2,"0");
-          const dd = String(d.getDate()).padStart(2,"0");
-          $pToss.style.display = "inline-flex";
-          $tossAtText.textContent = `${yyyy}-${mm}-${dd}`;
-        }
+      if (tossAt){
+        $pToss.style.display = "inline-flex";
+        $tossAtText.textContent = String(tossAt);
       }
     }
 
@@ -278,6 +338,24 @@
       });
     }
 
+    function humanScanErrorMessage(status){
+      if (status === 429) return "Too many requests right now. Please try again, or choose PAO manually.";
+      if (status >= 500) return "Service is temporarily unavailable. Please try again, or choose PAO manually.";
+      if (status === 413) return "Photo is too large. Please retake closer, or choose PAO manually.";
+      if (status === 400) return "Couldn’t read this photo. Please retake (closer, brighter) or choose PAO manually.";
+      return "Couldn’t analyze this photo. Please try again, or choose PAO manually.";
+    }
+
+    async function fetchWithTimeout(url, options, timeoutMs = 20000){
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try{
+        return await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
+      } finally {
+        clearTimeout(id);
+      }
+    }
+
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     $btnCamera.addEventListener("click", () => {
@@ -313,27 +391,11 @@
       $imgPreview.src = previewUrl;
       $imgWrap.style.display = "block";
 
+      if (!$openedDate.value) $openedDate.value = todayLocalYYYYMMDD();
+
       $btnOcr.disabled = false;
 
       runOcrAuto({ manual: false });
-    }
-
-    function humanScanErrorMessage(status){
-      if (status === 429) return "Too many requests right now. Please try again, or choose PAO manually.";
-      if (status >= 500) return "Service is temporarily unavailable. Please try again, or choose PAO manually.";
-      if (status === 413) return "Photo is too large. Please retake closer, or choose PAO manually.";
-      if (status === 400) return "Couldn’t read this photo. Please retake (closer, brighter) or choose PAO manually.";
-      return "Couldn’t analyze this photo. Please try again, or choose PAO manually.";
-    }
-
-    async function fetchWithTimeout(url, options, timeoutMs = 20000){
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeoutMs);
-      try{
-        return await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
-      } finally {
-        clearTimeout(id);
-      }
     }
 
     async function runOcrAuto({ manual } = { manual: false }){
@@ -417,11 +479,13 @@
     }
 
     async function runFreshness(paoMonths){
+      const openedDate = ($openedDate.value || "").trim() || todayLocalYYYYMMDD();
+
       try{
         const res = await fetchWithTimeout(FRESHNESS_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paoMonths }),
+          body: JSON.stringify({ paoMonths, openedDate }),
         }, 15000);
 
         if (!res.ok){
