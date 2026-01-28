@@ -3,79 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmetic Freshness</title>
+    <title>Cosmetic Scanner</title>
     <style>
-        :root { --bg-color: #121212; --card-bg: #1e1e1e; --accent: #4a4a4a; --text: #e0e0e0; }
-        body { background: var(--bg-color); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; padding: 20px; }
-        .app-container { max-width: 400px; margin: 0 auto; }
+        :root { --bg: #000000; --card: #111; --accent: #222; --text: #eee; --gold: #ffcc00; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 400px; margin: auto; }
         
-        /* 헤더 스타일 */
-        h2 { font-size: 1.2rem; margin-bottom: 5px; text-align: left; }
-        p.desc { font-size: 0.8rem; color: #888; margin-bottom: 20px; text-align: left; }
+        h2 { font-size: 1.2rem; margin-bottom: 5px; }
+        .desc { font-size: 0.8rem; color: #777; margin-bottom: 20px; }
 
-        /* 상단 버튼 그룹 */
-        .top-nav { display: flex; gap: 8px; margin-bottom: 15px; }
-        .top-nav button { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #333; background: var(--card-bg); color: white; font-size: 0.8rem; }
+        .nav-btns { display: flex; gap: 10px; margin-bottom: 15px; }
+        button { flex: 1; padding: 12px; background: var(--accent); color: white; border: 1px solid #333; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
 
-        /* 미리보기 영역 */
-        .viewer-card { background: var(--card-bg); border-radius: 12px; padding: 15px; min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #333; position: relative; }
-        #preview { width: 100%; border-radius: 8px; display: none; }
-        .placeholder-text { color: #555; }
+        /* 이미지 박스 */
+        .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border: 1px solid #222; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+        #preview { width: 100%; height: 100%; object-fit: contain; display: none; }
+        
+        /* 분석 중 레이어 */
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 5; }
+        .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: #eee; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 상태 알림창 (노란색 경고창 스타일) */
-        #status-bar { width: 100%; padding: 10px; border-radius: 6px; font-size: 0.8rem; margin-top: 15px; display: none; }
-        .status-warning { background: #332b00; color: #ffcc00; border: 1px solid #665500; }
-        .status-success { background: #1a2e1a; color: #4caf50; border: 1px solid #2e4d2e; }
-
-        /* PAO 버튼 그룹 */
-        .pao-grid { display: grid; grid-template-columns: repeat(4, 1  fr); gap: 8px; margin-top: 15px; }
-        .pao-item { padding: 12px 0; background: var(--card-bg); border: 1px solid #333; border-radius: 6px; font-size: 0.9rem; cursor: pointer; text-align: center; }
-        .pao-item.active { background: #444; border-color: #888; font-weight: bold; color: white; }
-
-        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; border-radius: 12px; }
+        /* 결과창 및 수동 선택 */
+        #result-area { margin-top: 20px; display: none; }
+        .result-box { background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 15px; }
+        .result-val { font-size: 2rem; font-weight: bold; color: var(--gold); }
+        
+        .manual-area { display: none; margin-top: 15px; }
+        .pao-list { display: flex; flex-direction: column; gap: 8px; }
+        .pao-btn { width: 100%; padding: 12px; background: #111; border: 1px solid #333; color: #999; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
+<div class="container">
     <h2>Check Your Cosmetic Freshness</h2>
     <p class="desc">Take a photo and instantly check the product's freshness.</p>
 
-    <div class="top-nav">
-        <button onclick="triggerInput('environment')">Take Photo</button>
-        <button onclick="triggerInput()">Upload Photo</button>
+    <div class="nav-btns">
+        <button onclick="pickFile('environment')">Take Photo</button>
+        <button onclick="pickFile()">Upload Photo</button>
     </div>
 
-    <div class="viewer-card">
-        <img id="preview" alt="Selected Image">
-        <div id="placeholder" class="placeholder-text">이미지를 업로드하세요</div>
-        <div id="loading-overlay">분석 중...</div>
+    <div class="viewer">
+        <div id="loader">
+            <div class="spinner"></div>
+            <div>분석 중...</div>
+        </div>
+        <img id="preview">
+        <div id="placeholder" style="color:#444">이미지를 업로드하세요</div>
     </div>
 
-    <div id="status-bar"></div>
+    <div id="result-area">
+        <div class="result-box">
+            <div style="font-size:0.8rem; color:#888; margin-bottom:5px;">인식된 유통기한</div>
+            <div id="pao-result" class="result-val">-</div>
+        </div>
+    </div>
 
-    <div class="pao-grid" id="paoOptions">
-        <div class="pao-item" onclick="selectPAO('3')">3M</div>
-        <div class="pao-item" onclick="selectPAO('6')">6M</div>
-        <div class="pao-item" onclick="selectPAO('12')">12M</div>
-        <div class="pao-item" onclick="selectPAO('24')">24M</div>
+    <div id="manual-area" class="manual-area">
+        <p style="font-size:0.8rem; color:var(--gold);">글자를 읽지 못했습니다. 직접 선택해주세요.</p>
+        <div class="pao-list">
+            <button onclick="setManual('3')">3M</button>
+            <button onclick="setManual('6')">6M</button>
+            <button onclick="setManual('12')">12M</button>
+        </div>
     </div>
 
     <input type="file" id="fileInput" accept="image/*" style="display:none">
-    <canvas id="hiddenCanvas" style="display:none"></canvas>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
-    const status = document.getElementById('status-bar');
-    const loader = document.getElementById('loading-overlay');
-    const canvas = document.getElementById('hiddenCanvas');
-    const ctx = canvas.getContext('2d');
+    const loader = document.getElementById('loader');
+    const resultArea = document.getElementById('result-area');
+    const paoResult = document.getElementById('pao-result');
+    const manualArea = document.getElementById('manual-area');
 
     const worker = new Worker('worker.js', { type: 'module' });
 
-    function triggerInput(mode) {
+    function pickFile(mode) {
         if(mode) fileInput.setAttribute('capture', mode);
         else fileInput.removeAttribute('capture');
         fileInput.click();
@@ -90,53 +98,37 @@
             preview.src = ev.target.result;
             preview.style.display = 'block';
             document.getElementById('placeholder').style.display = 'none';
-            analyzeImage(ev.target.result);
+            
+            // 초기화 후 분석 시작
+            resultArea.style.display = 'none';
+            manualArea.style.display = 'none';
+            loader.style.display = 'flex';
+            
+            worker.postMessage({ imageData: ev.target.result });
         };
         reader.readAsDataURL(file);
     };
 
-    function analyzeImage(src) {
-        loader.style.display = 'flex';
-        status.style.display = 'none';
-
-        const img = new Image();
-        img.onload = () => {
-            // 전처리: 대비 높이기
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.filter = 'grayscale(100%) contrast(1.5) brightness(1.1)';
-            ctx.drawImage(img, 0, 0);
-            
-            worker.postMessage({ imageData: canvas.toDataURL('image/jpeg', 0.9) });
-        };
-        img.src = src;
-    }
-
     worker.onmessage = (e) => {
         loader.style.display = 'none';
-        const { success, pao, rawText } = e.data;
+        const { success, pao } = e.data;
 
         if (success && pao) {
-            selectPAO(pao);
-            showStatus(`인식 성공: ${pao}M`, 'success');
+            resultArea.style.display = 'block';
+            paoResult.innerText = pao + "M";
+            manualArea.style.display = 'none';
         } else {
-            showStatus(`인식 실패. 원본: "${rawText || '없음'}" - 수동 선택해주세요.`, 'warning');
+            // 인식 실패 시 수동 버튼 등장
+            resultArea.style.display = 'none';
+            manualArea.style.display = 'block';
         }
     };
 
-    function selectPAO(val) {
-        document.querySelectorAll('.pao-item').forEach(el => {
-            el.classList.toggle('active', el.innerText === val + 'M');
-        });
-    }
-
-    function showStatus(msg, type) {
-        status.innerText = msg;
-        status.className = type === 'success' ? 'status-success' : 'status-warning';
-        status.style.display = 'block';
-        status.classList.add(type === 'success' ? 'status-success' : 'status-warning');
+    function setManual(val) {
+        resultArea.style.display = 'block';
+        paoResult.innerText = val + "M";
+        manualArea.style.display = 'none';
     }
 </script>
-
 </body>
 </html>
