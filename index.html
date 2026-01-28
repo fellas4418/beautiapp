@@ -42,6 +42,7 @@
       padding: 14px;
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
     }
+
     .row{
       display:flex;
       gap: 10px;
@@ -71,6 +72,37 @@
       background: rgba(255,255,255,.03);
       border: 1px solid var(--border);
       border-radius: 12px;
+    }
+    .photoBox{
+      position: relative;
+      min-height: 220px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.06);
+      overflow: hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    #imgPreview{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display:none;
+    }
+    #imgPlaceholder{
+      color: rgba(255,255,255,.25);
+      font-size: 13px;
+      padding: 12px;
+      text-align:center;
+      line-height: 1.4;
+    }
+    .footer{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      text-align:center;
     }
 
     .field{
@@ -113,10 +145,39 @@
       margin-bottom: 6px;
     }
     .hero .v{
-      font-size: 44px;
-      font-weight: 800;
+      font-size: 46px;
+      font-weight: 900;
       letter-spacing: -1px;
       line-height: 1;
+    }
+
+    .paoArea{
+      margin-top: 12px;
+    }
+    .paoHint{
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 8px 2px;
+    }
+    .paoGrid{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .paoBtn{
+      background: rgba(255,255,255,.02);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 0;
+      font-size: 15px;
+      font-weight: 800;
+      min-height: 48px;
+    }
+    .paoBtn.active{
+      border-color: rgba(32,201,151,.65);
+      background: rgba(32,201,151,.10);
+      color: var(--ok);
     }
 
     .status{
@@ -154,22 +215,10 @@
     }
     .pill b{ font-weight:700; color: var(--text); }
 
-    #imgWrap{ display:none; }
-    #imgPreview{ max-width:100%; border-radius:12px; display:block; }
-    .footer{
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.5;
-      text-align:center;
-    }
-
-    #paoButtons{ display:none; }
-
     @media (max-width: 420px){
       .title{ font-size: 22px; }
       .btn-secondary{ flex: 1 1 100%; }
-      .hero .v{ font-size: 40px; }
+      .hero .v{ font-size: 42px; }
     }
   </style>
 </head>
@@ -177,7 +226,7 @@
   <div class="wrap">
     <div class="header">
       <h1 class="title">Check Your Cosmetic Freshness</h1>
-      <p class="sub">Take a photo and check freshness after opening.</p>
+      <p class="sub">사진은 옵션. 그냥 PAO(개월) 버튼만 눌러도 바로 계산.</p>
     </div>
 
     <div class="card">
@@ -190,9 +239,12 @@
         <button id="btnOcr" class="btn-secondary" type="button" disabled>Detect PAO</button>
       </div>
 
-      <div id="imgWrap" class="panel">
-        <img id="imgPreview" alt="preview" />
-        <div class="footer">Selected Image</div>
+      <div class="panel">
+        <div class="photoBox">
+          <img id="imgPreview" alt="preview" />
+          <div id="imgPlaceholder">No photo selected (optional)</div>
+        </div>
+        <div class="footer">Photo (optional)</div>
 
         <div class="field">
           <label for="openedDate">Opened date</label>
@@ -200,8 +252,13 @@
         </div>
 
         <div id="heroPao" class="hero">
-          <div class="k">Detected PAO</div>
+          <div class="k">Selected PAO</div>
           <div id="heroPaoValue" class="v">-</div>
+        </div>
+
+        <div class="paoArea">
+          <p class="paoHint">Choose PAO (months after opening)</p>
+          <div id="paoGrid" class="paoGrid"></div>
         </div>
       </div>
 
@@ -215,8 +272,6 @@
       </div>
 
       <div id="status" class="status"></div>
-
-      <div id="paoButtons" class="row" style="margin-top: 12px;"></div>
     </div>
   </div>
 
@@ -225,15 +280,16 @@
     const OCR_ENDPOINT = API_BASE + "/ocr-pao";
     const FRESHNESS_ENDPOINT = API_BASE + "/freshness";
 
+    const PAO_CHOICES = [3, 6, 9, 12, 18, 24, 36];
+
     const $imageCamera = document.getElementById("imageCamera");
     const $imageGallery = document.getElementById("imageGallery");
     const $btnCamera = document.getElementById("btnCamera");
     const $btnGallery = document.getElementById("btnGallery");
     const $btnOcr = document.getElementById("btnOcr");
-    const $imgWrap = document.getElementById("imgWrap");
+
     const $imgPreview = document.getElementById("imgPreview");
-    const $status = document.getElementById("status");
-    const $paoButtons = document.getElementById("paoButtons");
+    const $imgPlaceholder = document.getElementById("imgPlaceholder");
 
     const $openedDate = document.getElementById("openedDate");
 
@@ -246,9 +302,13 @@
     const $pToss = document.getElementById("pToss");
     const $tossAtText = document.getElementById("tossAtText");
 
+    const $status = document.getElementById("status");
+    const $paoGrid = document.getElementById("paoGrid");
+
     let selectedFile = null;
     let previewUrl = null;
     let ocrBusy = false;
+    let selectedPao = null;
 
     function todayLocalYYYYMMDD(){
       const d = new Date();
@@ -267,24 +327,25 @@
       $status.textContent = "";
     }
 
-    function resetUiForNewScan(){
+    function resetUi(){
       hideStatus();
-      $paoButtons.style.display = "none";
-      $paoButtons.innerHTML = "";
-
       $metaRow.style.display = "none";
       $pDays.style.display = "none";
       $pToss.style.display = "none";
       $daysLeftText.textContent = "-";
       $tossAtText.textContent = "-";
-
-      $heroPao.style.display = "none";
-      $heroPaoValue.textContent = "-";
     }
 
-    function showDetected(months){
+    function showSelected(months){
+      selectedPao = months;
       $heroPao.style.display = "block";
       $heroPaoValue.textContent = months + "M";
+
+      // 버튼 active 표시
+      document.querySelectorAll(".paoBtn").forEach(btn => {
+        const m = Number(btn.dataset.m);
+        btn.classList.toggle("active", m === months);
+      });
     }
 
     function showFreshnessMeta(daysLeft, tossAt){
@@ -298,6 +359,16 @@
       if (tossAt){
         $pToss.style.display = "inline-flex";
         $tossAtText.textContent = String(tossAt);
+      }
+    }
+
+    async function fetchWithTimeout(url, options, timeoutMs = 20000){
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try{
+        return await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
+      } finally {
+        clearTimeout(id);
       }
     }
 
@@ -339,143 +410,36 @@
     }
 
     function humanScanErrorMessage(status){
-      if (status === 429) return "Too many requests right now. Please try again, or choose PAO manually.";
-      if (status >= 500) return "Service is temporarily unavailable. Please try again, or choose PAO manually.";
-      if (status === 413) return "Photo is too large. Please retake closer, or choose PAO manually.";
-      if (status === 400) return "Couldn’t read this photo. Please retake (closer, brighter) or choose PAO manually.";
-      return "Couldn’t analyze this photo. Please try again, or choose PAO manually.";
+      if (status === 429) return "Too many requests right now. Please try again.";
+      if (status >= 500) return "Service is temporarily unavailable. Please try again.";
+      if (status === 413) return "Photo is too large. Please retake closer.";
+      if (status === 400) return "Couldn’t read this photo. Please retake (closer, brighter).";
+      return "Couldn’t analyze this photo. Please try again.";
     }
 
-    async function fetchWithTimeout(url, options, timeoutMs = 20000){
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeoutMs);
-      try{
-        return await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
-      } finally {
-        clearTimeout(id);
-      }
-    }
-
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    $btnCamera.addEventListener("click", () => {
-      if (isMobile) {
-        $imageCamera.value = "";
-        $imageCamera.click();
-      } else {
-        $imageGallery.value = "";
-        $imageGallery.click();
-      }
-    });
-
-    $btnGallery.addEventListener("click", () => {
-      $imageGallery.value = "";
-      $imageGallery.click();
-    });
-
-    $imageCamera.addEventListener("change", (e) => handleImagePicked(e.target.files?.[0]));
-    $imageGallery.addEventListener("change", (e) => handleImagePicked(e.target.files?.[0]));
-
-    $btnOcr.addEventListener("click", () => {
-      runOcrAuto({ manual: true });
-    });
-
-    function handleImagePicked(file){
-      if (!file) return;
-      selectedFile = file;
-
-      resetUiForNewScan();
-
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      previewUrl = URL.createObjectURL(selectedFile);
-      $imgPreview.src = previewUrl;
-      $imgWrap.style.display = "block";
-
-      if (!$openedDate.value) $openedDate.value = todayLocalYYYYMMDD();
-
-      $btnOcr.disabled = false;
-
-      runOcrAuto({ manual: false });
-    }
-
-    async function runOcrAuto({ manual } = { manual: false }){
-      if (ocrBusy) return;
-      if (!selectedFile){
-        setStatus("Please upload a photo first.", "err");
-        return;
-      }
-
-      ocrBusy = true;
-      $btnOcr.disabled = true;
-
-      setStatus(manual ? "Rechecking PAO mark..." : "Checking PAO mark...", "");
-
-      try{
-        const payload = await fileToPayload(selectedFile, 1400, 0.85);
-
-        const res = await fetchWithTimeout(OCR_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }, 25000);
-
-        if (!res.ok){
-          let detail = {};
-          try { detail = await res.json(); } catch(e) {}
-
-          const extra =
-            (detail?.error ? ` [${detail.error}]` : "") +
-            (detail?.upstreamStatus ? ` (upstream ${detail.upstreamStatus})` : "") +
-            (detail?.usingModel ? ` (model ${detail.usingModel})` : "");
-
-          setStatus(humanScanErrorMessage(res.status) + extra, "warn");
-          renderPaoButtons([3, 6, 12, 24]);
-          return;
-        }
-
-        const data = await res.json().catch(() => ({}));
-        const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
-
-        if (pao.length === 1){
-          showDetected(pao[0]);
-          setStatus(`Detected ${pao[0]}M. Checking freshness...`, "ok");
-          await runFreshness(pao[0]);
-          return;
-        }
-
-        if (pao.length > 1){
-          setStatus("Multiple PAO marks found. Please select one:", "");
-          renderPaoButtons(pao);
-          return;
-        }
-
-        setStatus("Couldn’t find a PAO mark. Please choose one:", "warn");
-        renderPaoButtons([3, 6, 12, 24]);
-      } catch(e){
-        setStatus("Couldn’t analyze this photo. Please try again, or choose PAO manually.", "warn");
-        renderPaoButtons([3, 6, 12, 24]);
-      } finally{
-        ocrBusy = false;
-        $btnOcr.disabled = false;
-      }
-    }
-
-    function renderPaoButtons(months){
-      $paoButtons.innerHTML = "";
-      $paoButtons.style.display = "flex";
-
-      months.forEach(m => {
+    function buildPaoButtons(){
+      $paoGrid.innerHTML = "";
+      PAO_CHOICES.forEach(m => {
         const btn = document.createElement("button");
-        btn.className = "btn-secondary";
-        btn.style.flex = "1 1 80px";
-        btn.textContent = m + "M";
-        btn.onclick = async () => {
-          showDetected(m);
+        btn.className = "paoBtn";
+        btn.textContent = `${m}M`;
+        btn.dataset.m = String(m);
+        btn.addEventListener("click", async () => {
+          resetUi();
+          showSelected(m);
           setStatus(`Selected ${m}M. Checking freshness...`, "");
           await runFreshness(m);
-        };
-        $paoButtons.appendChild(btn);
+        });
+        $paoGrid.appendChild(btn);
       });
+    }
+
+    function setPhotoPreview(file){
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(file);
+      $imgPreview.src = previewUrl;
+      $imgPreview.style.display = "block";
+      $imgPlaceholder.style.display = "none";
     }
 
     async function runFreshness(paoMonths){
@@ -510,6 +474,103 @@
         setStatus("Freshness check failed. Please try again.", "warn");
       }
     }
+
+    async function runOcr(){
+      if (ocrBusy) return;
+      if (!selectedFile){
+        setStatus("No photo selected. Just tap a PAO button below.", "warn");
+        return;
+      }
+
+      ocrBusy = true;
+      $btnOcr.disabled = true;
+      resetUi();
+      setStatus("Checking PAO mark from photo...", "");
+
+      try{
+        const payload = await fileToPayload(selectedFile, 1400, 0.85);
+
+        const res = await fetchWithTimeout(OCR_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }, 25000);
+
+        if (!res.ok){
+          let detail = {};
+          try { detail = await res.json(); } catch(e) {}
+
+          const extra =
+            (detail?.error ? ` [${detail.error}]` : "") +
+            (detail?.upstreamStatus ? ` (upstream ${detail.upstreamStatus})` : "") +
+            (detail?.usingModel ? ` (model ${detail.usingModel})` : "");
+
+          setStatus(humanScanErrorMessage(res.status) + extra + " You can tap a PAO button below.", "warn");
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
+
+        if (pao.length === 1){
+          showSelected(Number(pao[0]));
+          setStatus(`Detected ${pao[0]}M. Checking freshness...`, "ok");
+          await runFreshness(Number(pao[0]));
+          return;
+        }
+
+        if (pao.length > 1){
+          setStatus(`Multiple candidates detected (${pao.join(", ")}). Tap the correct one below.`, "warn");
+          return;
+        }
+
+        setStatus("Couldn’t find a PAO mark. Tap a PAO button below.", "warn");
+      } catch(e){
+        setStatus("Couldn’t analyze this photo. Tap a PAO button below.", "warn");
+      } finally{
+        ocrBusy = false;
+        $btnOcr.disabled = !selectedFile;
+      }
+    }
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    $btnCamera.addEventListener("click", () => {
+      if (isMobile) {
+        $imageCamera.value = "";
+        $imageCamera.click();
+      } else {
+        $imageGallery.value = "";
+        $imageGallery.click();
+      }
+    });
+
+    $btnGallery.addEventListener("click", () => {
+      $imageGallery.value = "";
+      $imageGallery.click();
+    });
+
+    $imageCamera.addEventListener("change", (e) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      selectedFile = f;
+      setPhotoPreview(f);
+      $btnOcr.disabled = false;
+    });
+
+    $imageGallery.addEventListener("change", (e) => {
+      const f = e.target.files?.[0];
+      if (!f) return;
+      selectedFile = f;
+      setPhotoPreview(f);
+      $btnOcr.disabled = false;
+    });
+
+    $btnOcr.addEventListener("click", runOcr);
+
+    // init
+    if (!$openedDate.value) $openedDate.value = todayLocalYYYYMMDD();
+    buildPaoButtons();
   </script>
 </body>
 </html>
