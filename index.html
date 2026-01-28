@@ -367,9 +367,12 @@
       return n;
     }
 
-    async function postWithFallback(base64){
+    async function postWithFallback(dataUrlOrBase64){
       const paths = ["/pao", "/ocr", "/analyze", "/detect"];
       let lastStatus = null;
+
+      // dataUrl이면 워커로 그대로 보내도 워커가 처리(=안전)
+      const payload = { imageBase64: dataUrlOrBase64 };
 
       for (const p of paths){
         const url = WORKER_BASE.replace(/\/+$/,"") + p;
@@ -377,20 +380,20 @@
           const res = await fetch(url, {
             method: "POST",
             headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({ imageBase64: base64 })
+            body: JSON.stringify(payload)
           });
 
           lastStatus = res.status;
 
           const isJson = (res.headers.get("content-type") || "").includes("application/json");
-          const payload = isJson ? await res.json().catch(()=> ({})) : {};
+          const out = isJson ? await res.json().catch(()=> ({})) : {};
 
           if (!res.ok) {
             if (res.status === 404) continue;
-            return { ok:false, status: res.status, path: p, payload };
+            return { ok:false, status: res.status, path: p, payload: out };
           }
 
-          return { ok:true, status: res.status, path: p, payload };
+          return { ok:true, status: res.status, path: p, payload: out };
         }catch(e){
           return { ok:false, status: 0, path: p, payload: { error: "network" } };
         }
@@ -399,20 +402,41 @@
       return { ok:false, status: lastStatus ?? 404, path: "(all)", payload: { error: "not_found" } };
     }
 
+    async function downscaleToJpegDataUrl(dataUrl, maxSide = 1280, quality = 0.85) {
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+
+      let w = img.naturalWidth || img.width;
+      let h = img.naturalHeight || img.height;
+
+      const scale = Math.min(1, maxSide / Math.max(w, h));
+      w = Math.max(1, Math.round(w * scale));
+      h = Math.max(1, Math.round(h * scale));
+
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+
+      return c.toDataURL("image/jpeg", quality);
+    }
+
     async function recognizeFromDataUrl(dataUrl){
       resetAll();
-      current.imageDataUrl = dataUrl;
-      preview.src = dataUrl;
+
+      // 핵심: 크기 줄여서 인식 성공률 올림
+      const smallUrl = await downscaleToJpegDataUrl(dataUrl, 1280, 0.85);
+
+      current.imageDataUrl = smallUrl;
+      preview.src = smallUrl;
       preview.style.display = "block";
 
-      const base64 = (dataUrl.split(",")[1] || "").trim();
-      if (!base64) {
-        setMsg("이미지 처리에 실패했어요. 다시 촬영하거나 다른 사진을 선택해 주세요.");
-        return;
-      }
-
       setMsg("인식 중…");
-      const r = await postWithFallback(base64);
+
+      // 워커가 dataURL도 처리하도록 만들었으니, dataURL을 그대로 보냄(안전 + 단순)
+      const r = await postWithFallback(smallUrl);
 
       if (!r.ok) {
         setMsg("인식에 실패했어요. 사진을 더 선명하게 찍고 다시 시도해 주세요.");
@@ -421,14 +445,10 @@
       }
 
       const payload = r.payload || {};
-
-      // 여기부터가 핵심 수정: 문자열로 와도 처리
       let paoMonths = toNumberMaybe(payload.paoMonths);
 
-      // paoRaw만 있는 워커도 많음 (예: "6M")
       if (!paoMonths) paoMonths = monthsFromRaw(payload.paoRaw);
 
-      // text 기반 추출도 유지
       if (!paoMonths) {
         const text = normalizeTextFromPayload(payload);
         paoMonths = extractPAOFromText(text);
