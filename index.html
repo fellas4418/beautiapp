@@ -66,8 +66,38 @@
     }
     button:disabled{ opacity:.55; cursor:not-allowed; }
 
+    .field{
+      margin-top: 12px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .field label{
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .field input[type="date"]{
+      flex: 1;
+      min-width: 150px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 10px 12px;
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline: none;
+      font-size: 14px;
+      color-scheme: dark;
+      -webkit-text-fill-color: var(--text);
+    }
+
     .panel{
-      margin-top: 14px;
+      margin-top: 12px;
       padding: 12px;
       background: rgba(255,255,255,.03);
       border: 1px solid var(--border);
@@ -105,50 +135,31 @@
       text-align:center;
     }
 
-    .field{
-      margin-top: 10px;
-      display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px 12px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-    }
-    .field label{
-      font-size: 13px;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-    .field input[type="date"]{
-      flex: 1;
-      min-width: 140px;
-      background: transparent;
-      border: 0;
-      color: var(--text);
-      font-size: 14px;
-      outline: none;
-    }
-
-    .hero{
+    .triplet{
       display:none;
       margin-top: 12px;
+      gap: 10px;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .bigCard{
       padding: 14px 14px;
       border-radius: 14px;
       border: 1px solid var(--border);
       background: rgba(255,255,255,.03);
+      min-height: 92px;
     }
-    .hero .k{
+    .bigCard .k{
       font-size: 12px;
       color: var(--muted);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
-    .hero .v{
-      font-size: 46px;
+    .bigCard .v{
+      font-size: 36px;
       font-weight: 900;
-      letter-spacing: -1px;
-      line-height: 1;
+      letter-spacing: -0.8px;
+      line-height: 1.05;
+      word-break: break-word;
     }
 
     .paoArea{
@@ -196,29 +207,13 @@
     .status.err{ color: var(--danger); border-color: rgba(255,77,79,.55); background: rgba(255,77,79,.10); }
     .status.warn{ color: var(--warn); border-color: rgba(255,204,0,.55); background: rgba(255,204,0,.10); }
 
-    .metaRow{
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 10px;
+    @media (max-width: 520px){
+      .triplet{ grid-template-columns: 1fr; }
+      .bigCard .v{ font-size: 34px; }
     }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap: 8px;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255,255,255,.03);
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .pill b{ font-weight:700; color: var(--text); }
-
     @media (max-width: 420px){
       .title{ font-size: 22px; }
       .btn-secondary{ flex: 1 1 100%; }
-      .hero .v{ font-size: 42px; }
     }
   </style>
 </head>
@@ -226,7 +221,7 @@
   <div class="wrap">
     <div class="header">
       <h1 class="title">Check Your Cosmetic Freshness</h1>
-      <p class="sub">사진은 옵션. 그냥 PAO(개월) 버튼만 눌러도 바로 계산.</p>
+      <p class="sub">사진은 옵션. 아래 PAO 버튼을 바로 눌러도 계산됩니다.</p>
     </div>
 
     <div class="card">
@@ -239,36 +234,37 @@
         <button id="btnOcr" class="btn-secondary" type="button" disabled>Detect PAO</button>
       </div>
 
+      <div class="field">
+        <label for="openedDate">Opened date</label>
+        <input id="openedDate" type="date" />
+      </div>
+
       <div class="panel">
         <div class="photoBox">
           <img id="imgPreview" alt="preview" />
           <div id="imgPlaceholder">No photo selected (optional)</div>
         </div>
         <div class="footer">Photo (optional)</div>
+      </div>
 
-        <div class="field">
-          <label for="openedDate">Opened date</label>
-          <input id="openedDate" type="date" />
+      <div id="triplet" class="triplet">
+        <div class="bigCard">
+          <div class="k">PAO</div>
+          <div id="vPao" class="v">-</div>
         </div>
-
-        <div id="heroPao" class="hero">
-          <div class="k">Selected PAO</div>
-          <div id="heroPaoValue" class="v">-</div>
+        <div class="bigCard">
+          <div class="k">Days left</div>
+          <div id="vDays" class="v">-</div>
         </div>
-
-        <div class="paoArea">
-          <p class="paoHint">Choose PAO (months after opening)</p>
-          <div id="paoGrid" class="paoGrid"></div>
+        <div class="bigCard">
+          <div class="k">Toss at</div>
+          <div id="vToss" class="v">-</div>
         </div>
       </div>
 
-      <div id="metaRow" class="metaRow" style="display:none;">
-        <div id="pDays" class="pill" style="display:none;">
-          Days left: <b id="daysLeftText">-</b>
-        </div>
-        <div id="pToss" class="pill" style="display:none;">
-          Toss at: <b id="tossAtText">-</b>
-        </div>
+      <div class="paoArea">
+        <p class="paoHint">Choose PAO (months after opening)</p>
+        <div id="paoGrid" class="paoGrid"></div>
       </div>
 
       <div id="status" class="status"></div>
@@ -288,19 +284,15 @@
     const $btnGallery = document.getElementById("btnGallery");
     const $btnOcr = document.getElementById("btnOcr");
 
+    const $openedDate = document.getElementById("openedDate");
+
     const $imgPreview = document.getElementById("imgPreview");
     const $imgPlaceholder = document.getElementById("imgPlaceholder");
 
-    const $openedDate = document.getElementById("openedDate");
-
-    const $heroPao = document.getElementById("heroPao");
-    const $heroPaoValue = document.getElementById("heroPaoValue");
-
-    const $metaRow = document.getElementById("metaRow");
-    const $pDays = document.getElementById("pDays");
-    const $daysLeftText = document.getElementById("daysLeftText");
-    const $pToss = document.getElementById("pToss");
-    const $tossAtText = document.getElementById("tossAtText");
+    const $triplet = document.getElementById("triplet");
+    const $vPao = document.getElementById("vPao");
+    const $vDays = document.getElementById("vDays");
+    const $vToss = document.getElementById("vToss");
 
     const $status = document.getElementById("status");
     const $paoGrid = document.getElementById("paoGrid");
@@ -327,39 +319,35 @@
       $status.textContent = "";
     }
 
-    function resetUi(){
-      hideStatus();
-      $metaRow.style.display = "none";
-      $pDays.style.display = "none";
-      $pToss.style.display = "none";
-      $daysLeftText.textContent = "-";
-      $tossAtText.textContent = "-";
+    function resetResult(){
+      $vDays.textContent = "-";
+      $vToss.textContent = "-";
+    }
+
+    function showTriplet(){
+      $triplet.style.display = "grid";
     }
 
     function showSelected(months){
       selectedPao = months;
-      $heroPao.style.display = "block";
-      $heroPaoValue.textContent = months + "M";
+      showTriplet();
+      $vPao.textContent = months + "M";
+      resetResult();
 
-      // 버튼 active 표시
       document.querySelectorAll(".paoBtn").forEach(btn => {
         const m = Number(btn.dataset.m);
         btn.classList.toggle("active", m === months);
       });
     }
 
-    function showFreshnessMeta(daysLeft, tossAt){
-      $metaRow.style.display = "flex";
+    function setFreshnessValues(daysLeft, tossAt){
+      showTriplet();
 
-      if (Number.isFinite(daysLeft)){
-        $pDays.style.display = "inline-flex";
-        $daysLeftText.textContent = String(daysLeft);
-      }
+      if (Number.isFinite(daysLeft)) $vDays.textContent = String(daysLeft);
+      else $vDays.textContent = "-";
 
-      if (tossAt){
-        $pToss.style.display = "inline-flex";
-        $tossAtText.textContent = String(tossAt);
-      }
+      if (tossAt) $vToss.textContent = String(tossAt);
+      else $vToss.textContent = "-";
     }
 
     async function fetchWithTimeout(url, options, timeoutMs = 20000){
@@ -425,7 +413,7 @@
         btn.textContent = `${m}M`;
         btn.dataset.m = String(m);
         btn.addEventListener("click", async () => {
-          resetUi();
+          hideStatus();
           showSelected(m);
           setStatus(`Selected ${m}M. Checking freshness...`, "");
           await runFreshness(m);
@@ -458,10 +446,10 @@
         }
 
         const data = await res.json().catch(() => ({}));
-
         const daysLeft = Number.isFinite(Number(data?.daysLeft)) ? Number(data.daysLeft) : null;
         const tossAt = typeof data?.tossAt === "string" ? data.tossAt : "";
-        showFreshnessMeta(daysLeft, tossAt);
+
+        setFreshnessValues(daysLeft, tossAt);
 
         if (data?.status === "TOSS"){
           setStatus("Toss it. This product is past the recommended period after opening.", "err");
@@ -484,7 +472,6 @@
 
       ocrBusy = true;
       $btnOcr.disabled = true;
-      resetUi();
       setStatus("Checking PAO mark from photo...", "");
 
       try{
@@ -505,7 +492,7 @@
             (detail?.upstreamStatus ? ` (upstream ${detail.upstreamStatus})` : "") +
             (detail?.usingModel ? ` (model ${detail.usingModel})` : "");
 
-          setStatus(humanScanErrorMessage(res.status) + extra + " You can tap a PAO button below.", "warn");
+          setStatus(humanScanErrorMessage(res.status) + extra + " Tap a PAO button below.", "warn");
           return;
         }
 
@@ -513,9 +500,10 @@
         const pao = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
 
         if (pao.length === 1){
-          showSelected(Number(pao[0]));
-          setStatus(`Detected ${pao[0]}M. Checking freshness...`, "ok");
-          await runFreshness(Number(pao[0]));
+          const m = Number(pao[0]);
+          showSelected(m);
+          setStatus(`Detected ${m}M. Checking freshness...`, "ok");
+          await runFreshness(m);
           return;
         }
 
@@ -568,7 +556,13 @@
 
     $btnOcr.addEventListener("click", runOcr);
 
-    // init
+    $openedDate.addEventListener("change", async () => {
+      if (!selectedPao) return;
+      hideStatus();
+      setStatus("Updating freshness with new opened date...", "");
+      await runFreshness(selectedPao);
+    });
+
     if (!$openedDate.value) $openedDate.value = todayLocalYYYYMMDD();
     buildPaoButtons();
   </script>
