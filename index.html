@@ -11,7 +11,6 @@
       --text:#e8e8ea;
       --muted:#a8abb4;
       --border:rgba(255,255,255,.10);
-      --btn:#2b6cff;
       --btn2:#1f2430;
       --danger:#ff4d4f;
       --ok:#20c997;
@@ -64,10 +63,7 @@
       border: 1px solid var(--border);
       flex: 1 1 160px;
     }
-    button:disabled{
-      opacity: .55;
-      cursor: not-allowed;
-    }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
     .panel{
       margin-top: 14px;
       padding: 12px;
@@ -106,16 +102,9 @@
       color: var(--muted);
       font-size: 13px;
     }
-    .pill b{
-      font-weight: 700;
-      color: var(--text);
-    }
+    .pill b{ font-weight:700; color: var(--text); }
     #imgWrap{ display:none; }
-    #imgPreview{
-      max-width:100%;
-      border-radius:12px;
-      display:block;
-    }
+    #imgPreview{ max-width:100%; border-radius:12px; display:block; }
     .footer{
       margin-top: 8px;
       color: var(--muted);
@@ -134,7 +123,7 @@
   <div class="wrap">
     <div class="header">
       <h1 class="title">Check Your Cosmetic Freshness</h1>
-      <p class="sub">Take a photo and instantly check the product’s freshness after opening.</p>
+      <p class="sub">Take a photo and check freshness after opening.</p>
     </div>
 
     <div class="card">
@@ -208,6 +197,8 @@
 
     function resetUiForNewScan(){
       hideStatus();
+
+      // 수동 버튼은 기본 숨김(성공 시에는 안 보이게)
       $paoButtons.style.display = "none";
       $paoButtons.innerHTML = "";
 
@@ -324,10 +315,21 @@
     }
 
     function humanScanErrorMessage(status){
-      if (status === 429) return "Scanning is busy right now. Please try again in a moment, or choose PAO manually.";
-      if (status >= 500) return "Scanning service is temporarily unavailable. Please try again, or choose PAO manually.";
+      if (status === 429) return "Too many requests right now. Please try again in a moment, or choose PAO manually.";
+      if (status >= 500) return "Service is temporarily unavailable. Please try again, or choose PAO manually.";
       if (status === 400) return "Couldn’t read this image. Please retake the photo (closer, brighter) or choose PAO manually.";
-      return "Couldn’t scan the PAO. Please try again, or choose PAO manually.";
+      return "Couldn’t detect the PAO mark. Please try again, or choose PAO manually.";
+    }
+
+    async function fetchWithTimeout(url, options, timeoutMs = 15000){
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try{
+        const res = await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
+        return res;
+      } finally {
+        clearTimeout(id);
+      }
     }
 
     async function runOcrAuto({ manual } = { manual: false }){
@@ -340,20 +342,21 @@
       ocrBusy = true;
       $btnOcr.disabled = true;
 
-      setStatus(manual ? "Rescanning for PAO symbol..." : "Scanning for PAO symbol...", "");
+      setStatus(manual ? "Rechecking PAO mark..." : "Checking PAO mark...", "");
 
       try{
         const payload = await fileToPayload(selectedFile, 1800, 0.9);
 
-        const res = await fetch(OCR_ENDPOINT, {
+        const res = await fetchWithTimeout(OCR_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        });
+        }, 20000);
 
         if (!res.ok){
           setStatus(humanScanErrorMessage(res.status), "warn");
-          renderPaoButtons([3, 6, 12, 24], { hint: true });
+          // 실패일 때만 수동 선택 버튼 노출
+          renderPaoButtons([3, 6, 12, 24]);
           return;
         }
 
@@ -363,28 +366,30 @@
         if (pao.length === 1){
           showDetected(pao[0]);
           setStatus(`Detected ${pao[0]}M. Checking freshness...`, "ok");
+          // 성공이면 수동 버튼 숨김 유지(어제처럼)
           await runFreshness(pao[0]);
           return;
         }
 
         if (pao.length > 1){
-          setStatus("Multiple PAO symbols found. Please select one:", "");
-          renderPaoButtons(pao, { hint: false });
+          setStatus("Multiple PAO marks found. Please select one:", "");
+          // 복수일 때만 후보 버튼 노출
+          renderPaoButtons(pao);
           return;
         }
 
-        setStatus("Couldn’t scan this photo. Please try again, or choose PAO manually.", "warn");
-        renderPaoButtons([3, 6, 12, 24], { hint: true });
+        setStatus("Couldn’t find a PAO mark. Please choose one:", "warn");
+        renderPaoButtons([3, 6, 12, 24]);
       } catch(e){
-        setStatus("Couldn’t scan this photo. Please try again, or choose PAO manually.", "warn");
-        renderPaoButtons([3, 6, 12, 24], { hint: true });
+        setStatus("Couldn’t detect the PAO mark. Please try again, or choose PAO manually.", "warn");
+        renderPaoButtons([3, 6, 12, 24]);
       } finally{
         ocrBusy = false;
         $btnOcr.disabled = false;
       }
     }
 
-    function renderPaoButtons(months, { hint } = { hint: false }){
+    function renderPaoButtons(months){
       $paoButtons.innerHTML = "";
       $paoButtons.style.display = "flex";
 
@@ -404,11 +409,11 @@
 
     async function runFreshness(paoMonths){
       try{
-        const res = await fetch(FRESHNESS_ENDPOINT, {
+        const res = await fetchWithTimeout(FRESHNESS_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ paoMonths }),
-        });
+        }, 15000);
 
         if (!res.ok){
           setStatus("Couldn’t check freshness right now. Please try again.", "warn");
@@ -422,11 +427,11 @@
         showFreshnessMeta(daysLeft, tossAt);
 
         if (data?.status === "TOSS"){
-          setStatus("⚠️ Toss It. This product is past the recommended period after opening.", "err");
+          setStatus("Toss it. This product is past the recommended period after opening.", "err");
         } else if (data?.status === "WARN"){
-          setStatus("⚠️ Almost time to toss. Use soon or replace.", "warn");
+          setStatus("Almost time to toss. Use soon or replace.", "warn");
         } else {
-          setStatus("✅ Safe to Use. Product is within the recommended period.", "ok");
+          setStatus("Safe to use. Product is within the recommended period.", "ok");
         }
       } catch(e){
         setStatus("Freshness check failed. Please try again.", "warn");
