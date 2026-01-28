@@ -948,7 +948,7 @@
       setStatus("Reading PAO mark from photo...", "");
 
       try{
-        const payload = await fileToPayload(selectedFile, 1400, 0.85);
+        const payload = await fileToPayload(selectedFile, 1100, 0.75);
 
         const res = await fetchWithTimeout(OCR_ENDPOINT, {
           method: "POST",
