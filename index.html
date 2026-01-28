@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -19,7 +19,7 @@
     *{ box-sizing:border-box; }
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
@@ -66,7 +66,7 @@
     }
     button:disabled{ opacity:.55; cursor:not-allowed; }
 
-    .field{
+    .fieldBtn{
       margin-top: 12px;
       display:flex;
       align-items:center;
@@ -76,24 +76,28 @@
       background: rgba(255,255,255,.03);
       border: 1px solid var(--border);
       border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
     }
-    .field label{
-      font-size: 13px;
+    .fieldBtn .left{
+      display:flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .fieldBtn .label{
+      font-size: 12px;
       color: var(--muted);
-      white-space: nowrap;
     }
-    .field input[type="date"]{
-      flex: 1;
-      min-width: 150px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.12);
-      padding: 10px 12px;
-      background: rgba(0,0,0,.18);
+    .fieldBtn .value{
+      font-size: 15px;
       color: var(--text);
-      outline: none;
-      font-size: 14px;
-      color-scheme: dark;
-      -webkit-text-fill-color: var(--text);
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .fieldBtn .chev{
+      color: rgba(255,255,255,.35);
+      font-size: 18px;
+      padding: 0 6px;
     }
 
     .panel{
@@ -215,13 +219,172 @@
       .title{ font-size: 22px; }
       .btn-secondary{ flex: 1 1 100%; }
     }
+
+    /* Date picker modal */
+    .modalBack{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 9999;
+    }
+    .modalBack.show{ display:flex; }
+
+    .modal{
+      width: min(420px, 100%);
+      background: #0f1116;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    }
+    .modalTop{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .topLeft{
+      display:flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .yearBtn{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .monthLabel{
+      font-size: 14px;
+      color: rgba(255,255,255,.75);
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+    .navBtns{
+      display:flex;
+      gap: 8px;
+    }
+    .iconBtn{
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .modalBody{
+      padding: 12px 12px 6px;
+    }
+    .dow{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      padding: 0 2px 8px;
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+      text-align: center;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      padding: 0 2px 10px;
+    }
+    .dayCell{
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.85);
+      font-weight: 800;
+      cursor: pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+    }
+    .dayCell.mute{
+      opacity: .25;
+      cursor: default;
+    }
+    .dayCell.sel{
+      border-color: rgba(32,201,151,.65);
+      background: rgba(32,201,151,.12);
+      color: var(--ok);
+    }
+
+    .yearGrid{
+      display:none;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 12px 12px 14px;
+    }
+    .yearGrid.show{ display:grid; }
+    .yearCell{
+      height: 46px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.85);
+      font-weight: 900;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .yearCell.sel{
+      border-color: rgba(32,201,151,.65);
+      background: rgba(32,201,151,.12);
+      color: var(--ok);
+    }
+
+    .modalBottom{
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    .smallBtn{
+      flex: 1;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 800;
+      padding: 12px 12px;
+      cursor:pointer;
+      min-height: 46px;
+      font-size: 14px;
+    }
+    .smallBtn.primary{
+      border-color: rgba(32,201,151,.55);
+      background: rgba(32,201,151,.10);
+      color: var(--ok);
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="header">
       <h1 class="title">Check Your Cosmetic Freshness</h1>
-      <p class="sub">사진은 옵션. 아래 PAO 버튼을 바로 눌러도 계산됩니다.</p>
+      <p class="sub">Photo is optional. You can tap a PAO button below to calculate instantly.</p>
     </div>
 
     <div class="card">
@@ -234,9 +397,12 @@
         <button id="btnOcr" class="btn-secondary" type="button" disabled>Detect PAO</button>
       </div>
 
-      <div class="field">
-        <label for="openedDate">Opened date</label>
-        <input id="openedDate" type="date" />
+      <div id="openedBtn" class="fieldBtn" role="button" aria-label="Opened date">
+        <div class="left">
+          <div class="label">Opened date</div>
+          <div id="openedValue" class="value">-</div>
+        </div>
+        <div class="chev">›</div>
       </div>
 
       <div class="panel">
@@ -271,6 +437,35 @@
     </div>
   </div>
 
+  <!-- Date picker modal -->
+  <div id="dpBack" class="modalBack" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Date picker">
+      <div class="modalTop">
+        <div class="topLeft">
+          <button id="dpYearBtn" class="yearBtn" type="button">2026</button>
+          <div id="dpMonthLabel" class="monthLabel">January</div>
+        </div>
+        <div class="navBtns">
+          <button id="dpPrev" class="iconBtn" type="button" aria-label="Previous">‹</button>
+          <button id="dpNext" class="iconBtn" type="button" aria-label="Next">›</button>
+        </div>
+      </div>
+
+      <div class="modalBody">
+        <div id="dpDow" class="dow"></div>
+        <div id="dpGrid" class="grid"></div>
+
+        <div id="dpYearGrid" class="yearGrid"></div>
+      </div>
+
+      <div class="modalBottom">
+        <button id="dpToday" class="smallBtn" type="button">Today</button>
+        <button id="dpCancel" class="smallBtn" type="button">Cancel</button>
+        <button id="dpSet" class="smallBtn primary" type="button">Set</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const API_BASE = "https://skinguard.ohryee.workers.dev";
     const OCR_ENDPOINT = API_BASE + "/ocr-pao";
@@ -284,7 +479,8 @@
     const $btnGallery = document.getElementById("btnGallery");
     const $btnOcr = document.getElementById("btnOcr");
 
-    const $openedDate = document.getElementById("openedDate");
+    const $openedBtn = document.getElementById("openedBtn");
+    const $openedValue = document.getElementById("openedValue");
 
     const $imgPreview = document.getElementById("imgPreview");
     const $imgPlaceholder = document.getElementById("imgPlaceholder");
@@ -297,17 +493,42 @@
     const $status = document.getElementById("status");
     const $paoGrid = document.getElementById("paoGrid");
 
+    // date picker elements
+    const $dpBack = document.getElementById("dpBack");
+    const $dpYearBtn = document.getElementById("dpYearBtn");
+    const $dpMonthLabel = document.getElementById("dpMonthLabel");
+    const $dpPrev = document.getElementById("dpPrev");
+    const $dpNext = document.getElementById("dpNext");
+    const $dpDow = document.getElementById("dpDow");
+    const $dpGrid = document.getElementById("dpGrid");
+    const $dpYearGrid = document.getElementById("dpYearGrid");
+    const $dpToday = document.getElementById("dpToday");
+    const $dpCancel = document.getElementById("dpCancel");
+    const $dpSet = document.getElementById("dpSet");
+
+    const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
     let selectedFile = null;
     let previewUrl = null;
     let ocrBusy = false;
     let selectedPao = null;
 
+    // opened date state (YYYY-MM-DD)
+    let openedDate = "";
+
+    // date picker state
+    let dpMode = "day"; // "day" | "year"
+    let dpViewYear = 0;
+    let dpViewMonth = 0; // 0-11
+    let dpSelected = ""; // YYYY-MM-DD (temp selection)
+    let dpYearPageStart = 0; // first year shown in year grid
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+
     function todayLocalYYYYMMDD(){
       const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const day = String(d.getDate()).padStart(2,"0");
-      return `${y}-${m}-${day}`;
+      return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     }
 
     function setStatus(msg, type){
@@ -319,11 +540,6 @@
       $status.textContent = "";
     }
 
-    function resetResult(){
-      $vDays.textContent = "-";
-      $vToss.textContent = "-";
-    }
-
     function showTriplet(){
       $triplet.style.display = "grid";
     }
@@ -332,7 +548,8 @@
       selectedPao = months;
       showTriplet();
       $vPao.textContent = months + "M";
-      resetResult();
+      $vDays.textContent = "-";
+      $vToss.textContent = "-";
 
       document.querySelectorAll(".paoBtn").forEach(btn => {
         const m = Number(btn.dataset.m);
@@ -342,12 +559,8 @@
 
     function setFreshnessValues(daysLeft, tossAt){
       showTriplet();
-
-      if (Number.isFinite(daysLeft)) $vDays.textContent = String(daysLeft);
-      else $vDays.textContent = "-";
-
-      if (tossAt) $vToss.textContent = String(tossAt);
-      else $vToss.textContent = "-";
+      $vDays.textContent = Number.isFinite(daysLeft) ? String(daysLeft) : "-";
+      $vToss.textContent = tossAt ? String(tossAt) : "-";
     }
 
     async function fetchWithTimeout(url, options, timeoutMs = 20000){
@@ -431,13 +644,13 @@
     }
 
     async function runFreshness(paoMonths){
-      const openedDate = ($openedDate.value || "").trim() || todayLocalYYYYMMDD();
+      const od = (openedDate || "").trim() || todayLocalYYYYMMDD();
 
       try{
         const res = await fetchWithTimeout(FRESHNESS_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paoMonths, openedDate }),
+          body: JSON.stringify({ paoMonths, openedDate: od }),
         }, 15000);
 
         if (!res.ok){
@@ -466,13 +679,13 @@
     async function runOcr(){
       if (ocrBusy) return;
       if (!selectedFile){
-        setStatus("No photo selected. Just tap a PAO button below.", "warn");
+        setStatus("No photo selected. Tap a PAO button below.", "warn");
         return;
       }
 
       ocrBusy = true;
       $btnOcr.disabled = true;
-      setStatus("Checking PAO mark from photo...", "");
+      setStatus("Reading PAO mark from photo...", "");
 
       try{
         const payload = await fileToPayload(selectedFile, 1400, 0.85);
@@ -556,14 +769,212 @@
 
     $btnOcr.addEventListener("click", runOcr);
 
-    $openedDate.addEventListener("change", async () => {
-      if (!selectedPao) return;
-      hideStatus();
-      setStatus("Updating freshness with new opened date...", "");
-      await runFreshness(selectedPao);
+    /* Custom date picker logic */
+
+    function parseYYYYMMDD(s){
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"").trim());
+      if (!m) return null;
+      const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+      if (y < 1900 || y > 2100) return null;
+      if (mo < 1 || mo > 12) return null;
+      if (d < 1 || d > 31) return null;
+      const dt = new Date(y, mo-1, d);
+      if (dt.getFullYear() !== y || dt.getMonth() !== mo-1 || dt.getDate() !== d) return null;
+      return { y, mo, d };
+    }
+
+    function daysInMonth(y, m0){
+      return new Date(y, m0+1, 0).getDate();
+    }
+
+    function openDatePicker(){
+      const base = parseYYYYMMDD(openedDate) || parseYYYYMMDD(todayLocalYYYYMMDD());
+      dpSelected = openedDate || todayLocalYYYYMMDD();
+      dpViewYear = base.y;
+      dpViewMonth = base.mo - 1;
+      dpMode = "day";
+      dpYearPageStart = Math.floor(dpViewYear / 12) * 12;
+
+      renderDatePicker();
+      $dpBack.classList.add("show");
+      $dpBack.setAttribute("aria-hidden","false");
+    }
+
+    function closeDatePicker(){
+      $dpBack.classList.remove("show");
+      $dpBack.setAttribute("aria-hidden","true");
+    }
+
+    function renderDatePicker(){
+      $dpYearBtn.textContent = String(dpViewYear);
+      $dpMonthLabel.textContent = MONTHS[dpViewMonth];
+
+      $dpDow.innerHTML = "";
+      DOW.forEach(w => {
+        const div = document.createElement("div");
+        div.textContent = w;
+        $dpDow.appendChild(div);
+      });
+
+      if (dpMode === "year"){
+        $dpDow.style.display = "none";
+        $dpGrid.style.display = "none";
+        $dpYearGrid.classList.add("show");
+        renderYearGrid();
+        return;
+      }
+
+      $dpDow.style.display = "grid";
+      $dpGrid.style.display = "grid";
+      $dpYearGrid.classList.remove("show");
+
+      renderDayGrid();
+    }
+
+    function renderDayGrid(){
+      $dpGrid.innerHTML = "";
+
+      const first = new Date(dpViewYear, dpViewMonth, 1);
+      const startDow = first.getDay(); // 0 Sun
+      const dim = daysInMonth(dpViewYear, dpViewMonth);
+
+      const sel = parseYYYYMMDD(dpSelected);
+      const selKey = sel ? `${sel.y}-${pad2(sel.mo)}-${pad2(sel.d)}` : "";
+
+      // blank cells
+      for (let i=0; i<startDow; i++){
+        const cell = document.createElement("div");
+        cell.className = "dayCell mute";
+        cell.textContent = "";
+        $dpGrid.appendChild(cell);
+      }
+
+      for (let d=1; d<=dim; d++){
+        const key = `${dpViewYear}-${pad2(dpViewMonth+1)}-${pad2(d)}`;
+        const cell = document.createElement("div");
+        cell.className = "dayCell" + (key === selKey ? " sel" : "");
+        cell.textContent = String(d);
+        cell.addEventListener("click", () => {
+          dpSelected = key;
+          renderDatePicker();
+        });
+        $dpGrid.appendChild(cell);
+      }
+
+      // pad to full weeks (optional)
+      const totalCells = startDow + dim;
+      const pad = (7 - (totalCells % 7)) % 7;
+      for (let i=0; i<pad; i++){
+        const cell = document.createElement("div");
+        cell.className = "dayCell mute";
+        cell.textContent = "";
+        $dpGrid.appendChild(cell);
+      }
+    }
+
+    function renderYearGrid(){
+      $dpYearGrid.innerHTML = "";
+
+      const start = dpYearPageStart;
+      const count = 12; // 12 years page
+      for (let i=0; i<count; i++){
+        const y = start + i;
+        const cell = document.createElement("div");
+        cell.className = "yearCell" + (y === dpViewYear ? " sel" : "");
+        cell.textContent = String(y);
+        cell.addEventListener("click", () => {
+          dpViewYear = y;
+          dpMode = "day";
+          renderDatePicker();
+        });
+        $dpYearGrid.appendChild(cell);
+      }
+    }
+
+    $dpYearBtn.addEventListener("click", () => {
+      dpMode = (dpMode === "year") ? "day" : "year";
+      renderDatePicker();
     });
 
-    if (!$openedDate.value) $openedDate.value = todayLocalYYYYMMDD();
+    $dpPrev.addEventListener("click", () => {
+      if (dpMode === "year"){
+        dpYearPageStart -= 12;
+        renderDatePicker();
+        return;
+      }
+      dpViewMonth -= 1;
+      if (dpViewMonth < 0){
+        dpViewMonth = 11;
+        dpViewYear -= 1;
+      }
+      renderDatePicker();
+    });
+
+    $dpNext.addEventListener("click", () => {
+      if (dpMode === "year"){
+        dpYearPageStart += 12;
+        renderDatePicker();
+        return;
+      }
+      dpViewMonth += 1;
+      if (dpViewMonth > 11){
+        dpViewMonth = 0;
+        dpViewYear += 1;
+      }
+      renderDatePicker();
+    });
+
+    $dpCancel.addEventListener("click", () => {
+      closeDatePicker();
+    });
+
+    $dpToday.addEventListener("click", () => {
+      dpSelected = todayLocalYYYYMMDD();
+      const p = parseYYYYMMDD(dpSelected);
+      dpViewYear = p.y;
+      dpViewMonth = p.mo - 1;
+      dpMode = "day";
+      renderDatePicker();
+
+      // apply immediately
+      openedDate = dpSelected;
+      $openedValue.textContent = openedDate;
+      closeDatePicker();
+
+      if (selectedPao){
+        hideStatus();
+        setStatus("Updating freshness...", "");
+        runFreshness(selectedPao);
+      }
+    });
+
+    $dpSet.addEventListener("click", () => {
+      if (!parseYYYYMMDD(dpSelected)){
+        // fallback
+        dpSelected = todayLocalYYYYMMDD();
+      }
+      openedDate = dpSelected;
+      $openedValue.textContent = openedDate;
+      closeDatePicker();
+
+      if (selectedPao){
+        hideStatus();
+        setStatus("Updating freshness...", "");
+        runFreshness(selectedPao);
+      }
+    });
+
+    // tap outside modal closes
+    $dpBack.addEventListener("click", (e) => {
+      if (e.target === $dpBack) closeDatePicker();
+    });
+
+    // opened date button opens picker
+    $openedBtn.addEventListener("click", openDatePicker);
+
+    // init
+    openedDate = todayLocalYYYYMMDD();
+    $openedValue.textContent = openedDate;
     buildPaoButtons();
   </script>
 </body>
