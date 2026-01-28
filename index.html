@@ -12,12 +12,16 @@
         h2 { font-size: 1.1rem; margin: 10px 0; }
         .desc { font-size: 0.8rem; color: #666; margin-bottom: 20px; }
 
+        /* 버튼 영역 */
         .nav-btns { display: flex; gap: 8px; margin-bottom: 15px; }
-        .nav-btns button { flex: 1; padding: 12px; background: var(--btn-bg); color: white; border: 1px solid #333; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+        /* label을 버튼처럼 꾸며서 클릭 반응성을 높임 */
+        .btn-ui { flex: 1; padding: 12px; background: var(--btn-bg); color: white; border: 1px solid #333; border-radius: 8px; font-size: 0.8rem; cursor: pointer; display: inline-block; }
 
+        /* 이미지 뷰어 */
         .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border: 1px solid #222; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
         #preview { width: 100%; height: 100%; object-fit: contain; display: none; }
         
+        /* 로딩/결과/수동 영역 */
         #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
         .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -37,9 +41,12 @@
     <p class="desc">Take a photo to check the product's freshness.</p>
 
     <div class="nav-btns">
-        <button onclick="pickFile('environment')">Take Photo</button>
-        <button onclick="pickFile()">Upload Photo</button>
+        <label for="cameraInput" class="btn-ui">Take Photo</label>
+        <label for="fileInput" class="btn-ui">Upload Photo</label>
     </div>
+
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
 
     <div class="viewer">
         <div id="loader">
@@ -47,29 +54,26 @@
             <div style="font-size: 0.9rem;">분석 중...</div>
         </div>
         <img id="preview">
-        <div id="placeholder" style="color:#444; font-size:0.9rem;">이미지를 업로드하세요</div>
+        <div id="placeholder" style="color:#444; font-size:0.9rem;">사진을 찍거나 업로드하세요</div>
     </div>
 
     <div id="result-box">
         <div style="font-size: 0.75rem; color: #888;">Detected PAO</div>
         <div id="pao-val" class="res-val">-</div>
-        <p style="font-size: 0.7rem; color: #555; margin-top: 10px;">결과가 정확하지 않다면 사진을 다시 찍거나 수동 선택하세요.</p>
     </div>
 
     <div id="manual-area">
-        <div style="color:var(--gold); font-size: 0.8rem; margin-bottom: 15px;">인식 실패. 아래에서 선택해주세요.</div>
+        <div style="color:var(--gold); font-size: 0.8rem; margin-bottom: 15px;">글자를 인식하지 못했습니다.</div>
         <div class="pao-list">
             <div class="pao-btn" onclick="applyManual('3')">3M</div>
             <div class="pao-btn" onclick="applyManual('6')">6M</div>
             <div class="pao-btn" onclick="applyManual('12')">12M</div>
         </div>
     </div>
-
-    <input type="file" id="fileInput" accept="image/*" style="display:none">
 </div>
 
 <script>
-    // 워커 코드 내의 정규식을 수정하여 '마지막' 매칭값만 찾도록 변경
+    // 1. 내부 워커 스크립트 (노이즈 제거 로직 포함)
     const workerCode = `
         importScripts('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
         let worker = null;
@@ -81,14 +85,10 @@
                     await worker.setParameters({ tessedit_char_whitelist: '0123456789M' });
                 }
                 const { data: { text } } = await worker.recognize(imageData);
-                
-                // 텍스트 정제 및 마지막 숫자+M 조합만 추출
                 const cleanText = text.toUpperCase().replace(/\\s/g, '');
-                const matches = cleanText.match(/(\\d+)M/g); // 모든 매칭값 찾기
-                
-                // 여러 개가 잡히면 가장 마지막(보통 사진 하단의 PAO 마크)을 선택
+                const matches = cleanText.match(/(\\d+)M/g);
+                // 가장 마지막 '숫자+M' 패턴 하나만 추출 (시계 등 노이즈 제거)
                 const finalPao = matches ? matches[matches.length - 1].replace('M', '') : null;
-                
                 self.postMessage({ success: true, pao: finalPao });
             } catch (err) {
                 self.postMessage({ success: false, error: err.message });
@@ -99,9 +99,51 @@
     const blob = new Blob([workerCode], { type: 'application/javascript' });
     const worker = new Worker(URL.createObjectURL(blob));
 
-    const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
     const loader = document.getElementById('loader');
     const resultBox = document.getElementById('result-box');
     const paoVal = document.getElementById('pao-val');
     const manualArea = document.getElementById('manual-area');
+    const placeholder = document.getElementById('placeholder');
+
+    // 공통 실행 함수
+    function handleFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+            resultBox.style.display = 'none';
+            manualArea.style.display = 'none';
+            loader.style.display = 'flex';
+            worker.postMessage({ imageData: ev.target.result });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    document.getElementById('cameraInput').addEventListener('change', handleFile);
+    document.getElementById('fileInput').addEventListener('change', handleFile);
+
+    worker.onmessage = (e) => {
+        loader.style.display = 'none';
+        const { success, pao } = e.data;
+        // 숫자가 너무 길면(노이즈) 실패로 간주하고 수동 버튼 노출
+        if (success && pao && pao.length <= 2) {
+            paoVal.innerText = pao + "M";
+            resultBox.style.display = 'block';
+        } else {
+            manualArea.style.display = 'block';
+        }
+    };
+
+    function applyManual(val) {
+        paoVal.innerText = val + "M";
+        resultBox.style.display = 'block';
+        manualArea.style.display = 'none';
+    }
+</script>
+</body>
+</html>
