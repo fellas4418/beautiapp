@@ -168,7 +168,7 @@
             <div id="daysLeft">-</div>
 
             <div class="muted">디버그</div>
-            <div id="debug" class="muted">-</div>
+            
           </div>
 
           <div id="openDateBox" style="margin-top:14px;display:none;">
@@ -218,8 +218,7 @@
     const WORKER_BASE = "https://skinguard.ohryee.workers.dev";
 
     const msg = document.getElementById("msg");
-    const debugEl = document.getElementById("debug");
-
+    
     const btnCamera = document.getElementById("btnCamera");
     const btnCapture = document.getElementById("btnCapture");
     const btnStop = document.getElementById("btnStop");
@@ -260,8 +259,7 @@
     };
 
     function setMsg(t){ msg.textContent = t || ""; }
-    function setDebug(t){ debugEl.textContent = t || "-"; }
-
+    
     function isoDate(d){
       const y = d.getFullYear();
       const m = String(d.getMonth()+1).padStart(2,"0");
@@ -308,7 +306,6 @@
       nickname.value = "";
       document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
       setMsg("카메라를 켜고 촬영하거나, 사진을 선택하면 자동으로 인식합니다.");
-      setDebug("-");
     }
 
     function renderResult(){
@@ -396,8 +393,7 @@
       const base64 = (dataUrl.split(",")[1] || "").trim();
       if (!base64) {
         setMsg("이미지 데이터가 비어있어요. 다시 시도해 주세요.");
-        setDebug("base64 empty");
-        return;
+      return;
       }
 
       setMsg("인식 중…");
@@ -406,10 +402,9 @@
       if (!r.ok) {
         if (r.status === 404) {
           setMsg("인식 서버 경로를 찾지 못했어요. 워커 경로(/ocr 또는 /analyze 등)를 확인해야 합니다.");
-          setDebug(`응답 오류 status=404 (요청 경로 자동탐색 실패)`);
-        } else {
+        } 
+        else {
           setMsg("인식에 실패했어요. 사진을 더 선명하게 찍고 다시 시도해 주세요.");
-          setDebug(`응답 오류 status=${r.status} path=${r.path}`);
         }
         renderResult();
         return;
@@ -429,7 +424,6 @@
         current.paoMonths = null;
         current.paoRaw = "";
         setMsg("PAO(3M/6M/12M 등)를 찾지 못했어요. PAO 마크가 크게 보이게 다시 찍어 주세요.");
-        setDebug(`성공했지만 PAO 추출 실패 path=${r.path}`);
         renderResult();
         return;
       }
@@ -438,7 +432,6 @@
       current.paoRaw = paoRawFromApi || `${paoMonths}M`;
       current.verdict = "NEEDS_OPEN_DATE";
       setMsg(`PAO를 인식했어요: ${current.paoRaw}. 이제 개봉일만 선택하면 됩니다.`);
-      setDebug(`성공 path=${r.path}`);
       renderResult();
     }
 
