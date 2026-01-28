@@ -124,13 +124,13 @@
   <div class="wrap">
     <div class="card">
       <div style="font-size:18px;font-weight:1100;margin-bottom:6px;">Cosmetic Freshness</div>
-      <div class="muted">촬영 또는 사진 선택 → 바로 PAO(3M/6M/12M)를 인식해 보여주고, 개봉일을 한 번만 선택하면 남은 날짜/만료일을 계산해 My Shelf에 저장합니다.</div>
+      <div class="muted">촬영 또는 사진 선택 → PAO(3M/6M/12M 등) 표시 → 개봉일 한 번 선택 → 만료일/남은 날짜 계산 → My Shelf 저장</div>
     </div>
 
     <div class="grid">
       <div class="card">
         <div style="font-size:16px;font-weight:1100;margin-bottom:6px;">촬영 / 사진 가져오기</div>
-        <div class="muted" id="msg">카메라를 켜고 촬영하거나, 사진을 선택하면 자동으로 인식합니다.</div>
+        <div class="muted" id="msg">카메라로 촬영하거나 사진을 선택하면 바로 인식합니다.</div>
 
         <div class="sep"></div>
 
@@ -169,7 +169,7 @@
           </div>
 
           <div id="openDateBox" style="margin-top:14px;display:none;">
-            <div class="muted" style="margin-bottom:10px;">개봉일을 선택하세요 (한 번만).</div>
+            <div class="muted" style="margin-bottom:10px;">개봉일을 선택하세요 (처음 저장할 때 한 번만).</div>
             <div class="chips">
               <button class="chip" data-open="today">오늘</button>
               <button class="chip" data-open="yesterday">어제</button>
@@ -177,7 +177,7 @@
               <button class="chip" data-open="month">한 달 전쯤</button>
               <button class="chip" data-open="unknown">기억 안남</button>
             </div>
-            <div class="muted" style="margin-top:10px;">기억 안남은 보수적으로 추정합니다.</div>
+            <div class="muted" style="margin-top:10px;">기억 안남은 보수적으로 계산합니다.</div>
           </div>
 
           <div id="saveBox" style="display:none;margin-top:14px;">
@@ -302,7 +302,7 @@
       saveBox.style.display = "none";
       nickname.value = "";
       document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-      setMsg("카메라를 켜고 촬영하거나, 사진을 선택하면 자동으로 인식합니다.");
+      setMsg("카메라로 촬영하거나 사진을 선택하면 바로 인식합니다.");
     }
 
     function renderResult(){
@@ -367,10 +367,29 @@
       return n;
     }
 
-    async function postWithFallback(dataUrlOrBase64){
-      const paths = ["/pao", "/ocr", "/analyze", "/detect"];
-      let lastStatus = null;
+    async function downscaleToJpegDataUrl(dataUrl, maxSide = 1280, quality = 0.85) {
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
 
+      let w = img.naturalWidth || img.width;
+      let h = img.naturalHeight || img.height;
+
+      const scale = Math.min(1, maxSide / Math.max(w, h));
+      w = Math.max(1, Math.round(w * scale));
+      h = Math.max(1, Math.round(h * scale));
+
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+
+      return c.toDataURL("image/jpeg", quality);
+    }
+
+    async function postWithFallback(dataUrlOrBase64){
+      const paths = ["/ocr", "/pao", "/analyze", "/detect"];
       const payload = { imageBase64: dataUrlOrBase64 };
 
       for (const p of paths){
@@ -382,73 +401,253 @@
             body: JSON.stringify(payload)
           });
 
-          lastStatus = res.status;
-
           const isJson = (res.headers.get("content-type") || "").includes("application/json");
           const out = isJson ? await res.json().catch(()=> ({})) : {};
 
           if (!res.ok) {
             if (res.status === 404) continue;
-            console.log("worker error", { path:p, status:res.status, out });
             return { ok:false, status: res.status, path: p, payload: out };
           }
-
           return { ok:true, status: res.status, path: p, payload: out };
         }catch(e){
-          console.log("network error", e);
           return { ok:false, status: 0, path: p, payload: { error: "network" } };
         }
       }
-
-      return { ok:false, status: lastStatus ?? 404, path: "(all)", payload: { error: "not_found" } };
-    }
-
-    async function loadImageFromDataUrl(dataUrl){
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-      return img;
-    }
-
-    function isJpegDataUrl(dataUrl){
-      return /^data:image\/jpeg;base64,/i.test(String(dataUrl || ""));
-    }
-
-    async function smartResizeDataUrl(dataUrl, maxSide = 2000, quality = 0.93){
-      const img = await loadImageFromDataUrl(dataUrl);
-
-      let w = img.naturalWidth || img.width;
-      let h = img.naturalHeight || img.height;
-
-      const maxWH = Math.max(w, h);
-
-      if (maxWH <= maxSide && isJpegDataUrl(dataUrl)) {
-        return dataUrl;
-      }
-
-      const scale = Math.min(1, maxSide / maxWH);
-      const nw = Math.max(1, Math.round(w * scale));
-      const nh = Math.max(1, Math.round(h * scale));
-
-      const c = document.createElement("canvas");
-      c.width = nw;
-      c.height = nh;
-      const ctx = c.getContext("2d", { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0, nw, nh);
-
-      return c.toDataURL("image/jpeg", quality);
+      return { ok:false, status: 404, path: "(all)", payload: { error: "not_found" } };
     }
 
     async function recognizeFromDataUrl(dataUrl){
       resetAll();
 
+      const smallUrl = await downscaleToJpegDataUrl(dataUrl, 1280, 0.85);
+
+      current.imageDataUrl = smallUrl;
+      preview.src = smallUrl;
+      preview.style.display = "block";
+
+      setMsg("인식 중…");
+      const r = await postWithFallback(smallUrl);
+
+      if (!r.ok) {
+        setMsg("인식에 실패했어요. PAO 마크가 크게 보이게 더 가까이 찍어 주세요.");
+        renderResult();
+        return;
+      }
+
+      const payload = r.payload || {};
+
+      let paoMonths = toNumberMaybe(payload.paoMonths);
+      if (!paoMonths) paoMonths = monthsFromRaw(payload.paoRaw);
+      if (!paoMonths) {
+        const text = normalizeTextFromPayload(payload);
+        paoMonths = extractPAOFromText(text);
+      }
+
+      if (!paoMonths) {
+        current.paoMonths = null;
+        current.paoRaw = "";
+        setMsg("PAO(3M/6M/12M 등)를 찾지 못했어요. 마크가 선명하게 보이게 다시 찍어 주세요.");
+        renderResult();
+        return;
+      }
+
+      current.paoMonths = paoMonths;
+      current.paoRaw = (typeof payload.paoRaw === "string" && payload.paoRaw.trim()) ? payload.paoRaw.trim() : `${paoMonths}M`;
+      current.verdict = "NEEDS_OPEN_DATE";
+      setMsg(`PAO를 찾았어요: ${current.paoRaw}. 개봉일만 선택하면 됩니다.`);
+      renderResult();
+    }
+
+    function pickOpenDate(option){
+      if (!current.paoMonths) return;
+
+      const now = new Date();
+      const open = new Date(now);
+
+      if (option === "today") {}
+      if (option === "yesterday") open.setDate(open.getDate()-1);
+      if (option === "week") open.setDate(open.getDate()-7);
+      if (option === "month") open.setDate(open.getDate()-30);
+      if (option === "unknown") open.setDate(open.getDate()-60);
+
+      current.openDateISO = isoDate(open);
+
+      const openDate = new Date(current.openDateISO + "T00:00:00");
+      const exp = addMonths(openDate, current.paoMonths);
+      current.expiryISO = isoDate(exp);
+
+      const today0 = new Date(isoDate(new Date()) + "T00:00:00");
+      const diffMs = exp.getTime() - today0.getTime();
+      const diffDays = Math.floor(diffMs / (1000*60*60*24));
+
+      current.daysLeft = diffDays;
+      current.verdict = computeVerdict(diffDays);
+
+      renderResult();
+    }
+
+    function getShelf(){
       try{
-        const safeUrl = await smartResizeDataUrl(dataUrl, 2000, 0.93);
+        const raw = localStorage.getItem("shelf_v1");
+        return raw ? JSON.parse(raw) : [];
+      }catch(e){
+        return [];
+      }
+    }
+    function setShelf(list){
+      localStorage.setItem("shelf_v1", JSON.stringify(list));
+    }
+    function escapeHtml(s){
+      return String(s || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
 
-        current.imageDataUrl = safeUrl;
-        preview.src = safeUrl;
-        preview.style.display = "block";
+    function renderShelf(){
+      const list = getShelf();
+      shelfList.innerHTML = "";
+      emptyShelf.style.display = list.length ? "none" : "block";
 
-        setMsg("인식 중…");
+      list.slice().sort((a,b)=> (a.createdAt < b.createdAt ? 1 : -1))
+        .forEach(item=>{
+          const div = document.createElement("div");
+          div.className = "item";
+          div.innerHTML = `
+            <div class="itemTop">
+              <div>
+                <div class="itemTitle">${escapeHtml(item.nickname || "Unnamed product")}</div>
+                <div class="small">PAO: ${escapeHtml(item.paoRaw || (item.paoMonths ? item.paoMonths+"M" : "-"))} · Opened: ${escapeHtml(item.openDateISO || "-")}</div>
+                <div class="small">Expiry: ${escapeHtml(item.expiryISO || "-")} · Days left: ${item.daysLeft == null ? "-" : item.daysLeft}</div>
+              </div>
+              <div style="text-align:right">
+                <div>${verdictPill(item.verdict)}</div>
+                <div class="small" style="margin-top:8px;"><span class="link" data-del="${item.id}">삭제</span></div>
+              </div>
+            </div>
+          `;
+          shelfList.appendChild(div);
+        });
 
-        const r = await postW
+      shelfList.querySelectorAll("[data-del]").forEach(el=>{
+        el.addEventListener("click", ()=>{
+          const id = el.getAttribute("data-del");
+          const list = getShelf().filter(x => x.id !== id);
+          setShelf(list);
+          renderShelf();
+        });
+      });
+    }
+
+    async function startCamera(){
+      try{
+        setMsg("카메라 여는 중…");
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+        video.srcObject = stream;
+        await video.play();
+        cameraBox.style.display = "block";
+        btnStop.style.display = "inline-flex";
+        btnCapture.disabled = false;
+        setMsg("촬영하기를 누르면 바로 인식합니다.");
+      }catch(e){
+        setMsg("카메라를 열 수 없어요. 브라우저 권한을 확인하거나 사진 가져오기를 사용해 주세요.");
+      }
+    }
+
+    function stopCamera(){
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+      cameraBox.style.display = "none";
+      btnStop.style.display = "none";
+      btnCapture.disabled = true;
+    }
+
+    function captureAndRecognize(){
+      if (!video.videoWidth || !video.videoHeight) {
+        setMsg("카메라 영상이 아직 준비되지 않았어요. 잠깐 후 다시 시도해 주세요.");
+        return;
+      }
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(video, 0, 0, w, h);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      stopCamera();
+      recognizeFromDataUrl(dataUrl);
+    }
+
+    function saveToShelf(){
+      if (!current.paoMonths || !current.openDateISO || !current.expiryISO) {
+        setMsg("저장하려면 PAO 인식 + 개봉일 선택이 필요해요.");
+        return;
+      }
+      const item = {
+        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2)),
+        nickname: (nickname.value || "").trim(),
+        paoMonths: current.paoMonths,
+        paoRaw: current.paoRaw,
+        openDateISO: current.openDateISO,
+        expiryISO: current.expiryISO,
+        daysLeft: current.daysLeft,
+        verdict: current.verdict,
+        createdAt: new Date().toISOString()
+      };
+      const list = getShelf();
+      list.push(item);
+      setShelf(list);
+      renderShelf();
+      setMsg("My Shelf에 저장했어요.");
+    }
+
+    btnCamera.addEventListener("click", startCamera);
+    btnStop.addEventListener("click", ()=>{
+      stopCamera();
+      setMsg("카메라를 껐어요.");
+    });
+    btnCapture.addEventListener("click", captureAndRecognize);
+
+    photoInput.addEventListener("change", async ()=>{
+      const file = photoInput.files && photoInput.files[0];
+      if (!file) return;
+      stopCamera();
+      const dataUrl = await new Promise((resolve, reject)=>{
+        const r = new FileReader();
+        r.onload = ()=> resolve(String(r.result || ""));
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      photoInput.value = "";
+      recognizeFromDataUrl(dataUrl);
+    });
+
+    btnRetry.addEventListener("click", resetAll);
+
+    document.querySelectorAll(".chip").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        pickOpenDate(btn.getAttribute("data-open"));
+      });
+    });
+
+    btnSave.addEventListener("click", saveToShelf);
+
+    clearShelf.addEventListener("click", ()=>{
+      localStorage.removeItem("shelf_v1");
+      renderShelf();
+      setMsg("My Shelf를 전체 삭제했어요.");
+    });
+
+    renderShelf();
+    resetAll();
+  </script>
+</body>
+</html>
