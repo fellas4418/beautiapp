@@ -371,7 +371,6 @@
       const paths = ["/pao", "/ocr", "/analyze", "/detect"];
       let lastStatus = null;
 
-      // dataUrl이면 워커로 그대로 보내도 워커가 처리(=안전)
       const payload = { imageBase64: dataUrlOrBase64 };
 
       for (const p of paths){
@@ -390,11 +389,13 @@
 
           if (!res.ok) {
             if (res.status === 404) continue;
+            console.log("worker error", { path:p, status:res.status, out });
             return { ok:false, status: res.status, path: p, payload: out };
           }
 
           return { ok:true, status: res.status, path: p, payload: out };
         }catch(e){
+          console.log("network error", e);
           return { ok:false, status: 0, path: p, payload: { error: "network" } };
         }
       }
@@ -402,23 +403,38 @@
       return { ok:false, status: lastStatus ?? 404, path: "(all)", payload: { error: "not_found" } };
     }
 
-    async function downscaleToJpegDataUrl(dataUrl, maxSide = 1280, quality = 0.85) {
+    async function loadImageFromDataUrl(dataUrl){
       const img = new Image();
       img.src = dataUrl;
       await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+      return img;
+    }
+
+    function isJpegDataUrl(dataUrl){
+      return /^data:image\/jpeg;base64,/i.test(String(dataUrl || ""));
+    }
+
+    async function smartResizeDataUrl(dataUrl, maxSide = 2000, quality = 0.93){
+      const img = await loadImageFromDataUrl(dataUrl);
 
       let w = img.naturalWidth || img.width;
       let h = img.naturalHeight || img.height;
 
-      const scale = Math.min(1, maxSide / Math.max(w, h));
-      w = Math.max(1, Math.round(w * scale));
-      h = Math.max(1, Math.round(h * scale));
+      const maxWH = Math.max(w, h);
+
+      if (maxWH <= maxSide && isJpegDataUrl(dataUrl)) {
+        return dataUrl;
+      }
+
+      const scale = Math.min(1, maxSide / maxWH);
+      const nw = Math.max(1, Math.round(w * scale));
+      const nh = Math.max(1, Math.round(h * scale));
 
       const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      const ctx = c.getContext("2d");
-      ctx.drawImage(img, 0, 0, w, h);
+      c.width = nw;
+      c.height = nh;
+      const ctx = c.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, nw, nh);
 
       return c.toDataURL("image/jpeg", quality);
     }
@@ -426,239 +442,13 @@
     async function recognizeFromDataUrl(dataUrl){
       resetAll();
 
-      // 핵심: 크기 줄여서 인식 성공률 올림
-      const smallUrl = await downscaleToJpegDataUrl(dataUrl, 1280, 0.85);
-
-      current.imageDataUrl = smallUrl;
-      preview.src = smallUrl;
-      preview.style.display = "block";
-
-      setMsg("인식 중…");
-
-      // 워커가 dataURL도 처리하도록 만들었으니, dataURL을 그대로 보냄(안전 + 단순)
-      const r = await postWithFallback(smallUrl);
-
-      if (!r.ok) {
-        setMsg("인식에 실패했어요. 사진을 더 선명하게 찍고 다시 시도해 주세요.");
-        renderResult();
-        return;
-      }
-
-      const payload = r.payload || {};
-      let paoMonths = toNumberMaybe(payload.paoMonths);
-
-      if (!paoMonths) paoMonths = monthsFromRaw(payload.paoRaw);
-
-      if (!paoMonths) {
-        const text = normalizeTextFromPayload(payload);
-        paoMonths = extractPAOFromText(text);
-      }
-
-      if (!paoMonths) {
-        current.paoMonths = null;
-        current.paoRaw = "";
-        setMsg("PAO(3M/6M/12M 등)를 찾지 못했어요. PAO 마크가 크게 보이게 다시 찍어 주세요.");
-        renderResult();
-        return;
-      }
-
-      current.paoMonths = paoMonths;
-      current.paoRaw = (typeof payload.paoRaw === "string" && payload.paoRaw.trim()) ? payload.paoRaw.trim() : `${paoMonths}M`;
-      current.verdict = "NEEDS_OPEN_DATE";
-      setMsg(`PAO를 인식했어요: ${current.paoRaw}. 이제 개봉일만 선택하면 됩니다.`);
-      renderResult();
-    }
-
-    function pickOpenDate(option){
-      if (!current.paoMonths) return;
-
-      const now = new Date();
-      const open = new Date(now);
-
-      if (option === "today") {}
-      if (option === "yesterday") open.setDate(open.getDate()-1);
-      if (option === "week") open.setDate(open.getDate()-7);
-      if (option === "month") open.setDate(open.getDate()-30);
-      if (option === "unknown") open.setDate(open.getDate()-60);
-
-      current.openDateISO = isoDate(open);
-
-      const openDate = new Date(current.openDateISO + "T00:00:00");
-      const exp = addMonths(openDate, current.paoMonths);
-      current.expiryISO = isoDate(exp);
-
-      const today0 = new Date(isoDate(new Date()) + "T00:00:00");
-      const diffMs = exp.getTime() - today0.getTime();
-      const diffDays = Math.floor(diffMs / (1000*60*60*24));
-
-      current.daysLeft = diffDays;
-      current.verdict = computeVerdict(diffDays);
-
-      renderResult();
-    }
-
-    function getShelf(){
       try{
-        const raw = localStorage.getItem("shelf_v1");
-        return raw ? JSON.parse(raw) : [];
-      }catch(e){
-        return [];
-      }
-    }
-    function setShelf(list){
-      localStorage.setItem("shelf_v1", JSON.stringify(list));
-    }
-    function escapeHtml(s){
-      return String(s || "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
+        const safeUrl = await smartResizeDataUrl(dataUrl, 2000, 0.93);
 
-    function renderShelf(){
-      const list = getShelf();
-      shelfList.innerHTML = "";
-      emptyShelf.style.display = list.length ? "none" : "block";
+        current.imageDataUrl = safeUrl;
+        preview.src = safeUrl;
+        preview.style.display = "block";
 
-      list.slice().sort((a,b)=> (a.createdAt < b.createdAt ? 1 : -1))
-        .forEach(item=>{
-          const div = document.createElement("div");
-          div.className = "item";
-          div.innerHTML = `
-            <div class="itemTop">
-              <div>
-                <div class="itemTitle">${escapeHtml(item.nickname || "Unnamed product")}</div>
-                <div class="small">PAO: ${escapeHtml(item.paoRaw || (item.paoMonths ? item.paoMonths+"M" : "-"))} · Opened: ${escapeHtml(item.openDateISO || "-")}</div>
-                <div class="small">Expiry: ${escapeHtml(item.expiryISO || "-")} · Days left: ${item.daysLeft == null ? "-" : item.daysLeft}</div>
-              </div>
-              <div style="text-align:right">
-                <div>${verdictPill(item.verdict)}</div>
-                <div class="small" style="margin-top:8px;"><span class="link" data-del="${item.id}">삭제</span></div>
-              </div>
-            </div>
-          `;
-          shelfList.appendChild(div);
-        });
+        setMsg("인식 중…");
 
-      shelfList.querySelectorAll("[data-del]").forEach(el=>{
-        el.addEventListener("click", ()=>{
-          const id = el.getAttribute("data-del");
-          const list = getShelf().filter(x => x.id !== id);
-          setShelf(list);
-          renderShelf();
-        });
-      });
-    }
-
-    async function startCamera(){
-      try{
-        setMsg("카메라 여는 중…");
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-        video.srcObject = stream;
-        await video.play();
-        cameraBox.style.display = "block";
-        btnStop.style.display = "inline-flex";
-        btnCapture.disabled = false;
-        setMsg("촬영하기를 누르면 바로 인식합니다.");
-      }catch(e){
-        setMsg("카메라를 열 수 없어요. 브라우저 권한을 확인하거나 사진 가져오기를 사용해 주세요.");
-      }
-    }
-
-    function stopCamera(){
-      if (stream) {
-        stream.getTracks().forEach(t => t.stop());
-        stream = null;
-      }
-      video.srcObject = null;
-      cameraBox.style.display = "none";
-      btnStop.style.display = "none";
-      btnCapture.disabled = true;
-    }
-
-    function captureAndRecognize(){
-      if (!video.videoWidth || !video.videoHeight) {
-        setMsg("카메라 영상이 아직 준비되지 않았어요. 잠깐 후 다시 시도해 주세요.");
-        return;
-      }
-      const w = video.videoWidth;
-      const h = video.videoHeight;
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      ctx.drawImage(video, 0, 0, w, h);
-
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-      stopCamera();
-      recognizeFromDataUrl(dataUrl);
-    }
-
-    function saveToShelf(){
-      if (!current.paoMonths || !current.openDateISO || !current.expiryISO) {
-        setMsg("저장하려면 PAO 인식 + 개봉일 선택이 필요해요.");
-        return;
-      }
-      const item = {
-        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2)),
-        nickname: (nickname.value || "").trim(),
-        paoMonths: current.paoMonths,
-        paoRaw: current.paoRaw,
-        openDateISO: current.openDateISO,
-        expiryISO: current.expiryISO,
-        daysLeft: current.daysLeft,
-        verdict: current.verdict,
-        createdAt: new Date().toISOString()
-      };
-      const list = getShelf();
-      list.push(item);
-      setShelf(list);
-      renderShelf();
-      setMsg("My Shelf에 저장했어요.");
-    }
-
-    btnCamera.addEventListener("click", startCamera);
-    btnStop.addEventListener("click", ()=>{
-      stopCamera();
-      setMsg("카메라를 껐어요.");
-    });
-    btnCapture.addEventListener("click", captureAndRecognize);
-
-    photoInput.addEventListener("change", async ()=>{
-      const file = photoInput.files && photoInput.files[0];
-      if (!file) return;
-      stopCamera();
-      const dataUrl = await new Promise((resolve, reject)=>{
-        const r = new FileReader();
-        r.onload = ()=> resolve(String(r.result || ""));
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
-      photoInput.value = "";
-      recognizeFromDataUrl(dataUrl);
-    });
-
-    btnRetry.addEventListener("click", resetAll);
-
-    document.querySelectorAll(".chip").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-        btn.classList.add("active");
-        pickOpenDate(btn.getAttribute("data-open"));
-      });
-    });
-
-    btnSave.addEventListener("click", saveToShelf);
-
-    clearShelf.addEventListener("click", ()=>{
-      localStorage.removeItem("shelf_v1");
-      renderShelf();
-      setMsg("My Shelf를 전체 삭제했어요.");
-    });
-
-    renderShelf();
-    resetAll();
-  </script>
-</body>
-</html>
+        const r = await postW
