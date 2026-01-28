@@ -166,9 +166,6 @@
 
             <div class="muted">남은 날짜</div>
             <div id="daysLeft">-</div>
-
-            <div class="muted">디버그</div>
-            
           </div>
 
           <div id="openDateBox" style="margin-top:14px;display:none;">
@@ -218,7 +215,7 @@
     const WORKER_BASE = "https://skinguard.ohryee.workers.dev";
 
     const msg = document.getElementById("msg");
-    
+
     const btnCamera = document.getElementById("btnCamera");
     const btnCapture = document.getElementById("btnCapture");
     const btnStop = document.getElementById("btnStop");
@@ -259,7 +256,7 @@
     };
 
     function setMsg(t){ msg.textContent = t || ""; }
-    
+
     function isoDate(d){
       const y = d.getFullYear();
       const m = String(d.getMonth()+1).padStart(2,"0");
@@ -352,6 +349,24 @@
       return best;
     }
 
+    function toNumberMaybe(v){
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      if (typeof v === "string") {
+        const n = parseInt(v, 10);
+        if (Number.isFinite(n)) return n;
+      }
+      return null;
+    }
+
+    function monthsFromRaw(raw){
+      const s = String(raw || "").replace(/Ｍ/g,"M").replace(/ｍ/g,"m");
+      const m = /\b([1-9]\d?)\s*M\b/i.exec(s);
+      if (!m) return null;
+      const n = parseInt(m[1], 10);
+      if (!Number.isFinite(n) || n < 1 || n > 48) return null;
+      return n;
+    }
+
     async function postWithFallback(base64){
       const paths = ["/pao", "/ocr", "/analyze", "/detect"];
       let lastStatus = null;
@@ -392,29 +407,28 @@
 
       const base64 = (dataUrl.split(",")[1] || "").trim();
       if (!base64) {
-        setMsg("이미지 데이터가 비어있어요. 다시 시도해 주세요.");
-      return;
+        setMsg("이미지 처리에 실패했어요. 다시 촬영하거나 다른 사진을 선택해 주세요.");
+        return;
       }
 
       setMsg("인식 중…");
       const r = await postWithFallback(base64);
 
       if (!r.ok) {
-        if (r.status === 404) {
-          setMsg("인식 서버 경로를 찾지 못했어요. 워커 경로(/ocr 또는 /analyze 등)를 확인해야 합니다.");
-        } 
-        else {
-          setMsg("인식에 실패했어요. 사진을 더 선명하게 찍고 다시 시도해 주세요.");
-        }
+        setMsg("인식에 실패했어요. 사진을 더 선명하게 찍고 다시 시도해 주세요.");
         renderResult();
         return;
       }
 
       const payload = r.payload || {};
-      const paoMonthsFromApi = (typeof payload.paoMonths === "number") ? payload.paoMonths : null;
-      const paoRawFromApi = (typeof payload.paoRaw === "string") ? payload.paoRaw : "";
 
-      let paoMonths = paoMonthsFromApi;
+      // 여기부터가 핵심 수정: 문자열로 와도 처리
+      let paoMonths = toNumberMaybe(payload.paoMonths);
+
+      // paoRaw만 있는 워커도 많음 (예: "6M")
+      if (!paoMonths) paoMonths = monthsFromRaw(payload.paoRaw);
+
+      // text 기반 추출도 유지
       if (!paoMonths) {
         const text = normalizeTextFromPayload(payload);
         paoMonths = extractPAOFromText(text);
@@ -429,7 +443,7 @@
       }
 
       current.paoMonths = paoMonths;
-      current.paoRaw = paoRawFromApi || `${paoMonths}M`;
+      current.paoRaw = (typeof payload.paoRaw === "string" && payload.paoRaw.trim()) ? payload.paoRaw.trim() : `${paoMonths}M`;
       current.verdict = "NEEDS_OPEN_DATE";
       setMsg(`PAO를 인식했어요: ${current.paoRaw}. 이제 개봉일만 선택하면 됩니다.`);
       renderResult();
