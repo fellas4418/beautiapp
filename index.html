@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmetic Scanner</title>
+    <title>Cosmetic Freshness</title>
     <style>
         :root { --bg: #0b0b0b; --card: #151515; --btn-bg: #222; --text: #eee; --gold: #ffcc00; }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
         .container { max-width: 400px; margin: auto; }
         
-        /* 헤더 스타일 */
         h2 { font-size: 1.1rem; margin: 10px 0; }
         .desc { font-size: 0.8rem; color: #666; margin-bottom: 20px; }
 
         .nav-btns { display: flex; gap: 8px; margin-bottom: 15px; }
-        .nav-btns button { flex: 1; padding: 12px; background: var(--btn-bg); color: white; border: 1px solid #333; border-radius: 8px; font-size: 0.8rem; }
+        .nav-btns button { flex: 1; padding: 12px; background: var(--btn-bg); color: white; border: 1px solid #333; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
 
         /* 중앙 뷰어 */
         .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border: 1px solid #222; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
@@ -25,25 +24,22 @@
         .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 결과 창: 성공 시에만 등장 */
+        /* 결과 창 */
         #result-box { display: none; margin-top: 20px; padding: 25px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
-        .res-label { font-size: 0.75rem; color: #888; margin-bottom: 8px; }
         .res-val { font-size: 2.5rem; font-weight: bold; color: var(--gold); }
 
-        /* 수동 선택: 실패 시에만 등장 */
-        #manual-area { display: none; margin-top: 20px; animation: fadeIn 0.5s; }
+        /* 수동 선택 영역 (실패 시 등장) */
+        #manual-area { display: none; margin-top: 20px; }
         .manual-msg { color: var(--gold); font-size: 0.8rem; margin-bottom: 15px; }
         .pao-list { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .pao-btn { padding: 15px; background: #111; border: 1px solid #333; color: #ccc; border-radius: 8px; cursor: pointer; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Check Your Cosmetic Freshness</h2>
-    <p class="desc">Take a photo and instantly check the product's freshness.</p>
+    <p class="desc">Take a photo to check the product's freshness.</p>
 
     <div class="nav-btns">
         <button onclick="pickFile('environment')">Take Photo</button>
@@ -60,7 +56,7 @@
     </div>
 
     <div id="result-box">
-        <div class="res-label">Detected PAO</div>
+        <div style="font-size: 0.75rem; color: #888;">Detected PAO</div>
         <div id="pao-val" class="res-val">-</div>
     </div>
 
@@ -77,22 +73,36 @@
 </div>
 
 <script>
+    // 1. Worker 코드를 문자열로 정의 (파일 분리 에러 방지)
+    const workerCode = `
+        importScripts('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+        let worker = null;
+        self.onmessage = async (e) => {
+            const { imageData } = e.data;
+            try {
+                if (!worker) {
+                    worker = await Tesseract.createWorker('eng');
+                    await worker.setParameters({ tessedit_char_whitelist: '0123456789M' });
+                }
+                const { data: { text } } = await worker.recognize(imageData);
+                const match = text.toUpperCase().replace(/\\s/g, '').match(/(\\d+)M/);
+                self.postMessage({ success: true, pao: match ? match[1] : null });
+            } catch (err) {
+                self.postMessage({ success: false, error: err.message });
+            }
+        };
+    `;
+
+    // 2. Blob을 이용해 즉석에서 워커 생성
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    const worker = new Worker(URL.createObjectURL(blob));
+
     const fileInput = document.getElementById('fileInput');
     const preview = document.getElementById('preview');
     const loader = document.getElementById('loader');
     const resultBox = document.getElementById('result-box');
     const paoVal = document.getElementById('pao-val');
     const manualArea = document.getElementById('manual-area');
-    const placeholder = document.getElementById('placeholder');
-
-    // 워커 생성 (에러 방지를 위해 옵션 없이 생성 시도)
-    let worker;
-    try {
-        worker = new Worker('worker.js');
-    } catch(e) {
-        // 일부 환경 호환성 대응
-        worker = new Worker('worker.js', { type: 'module' });
-    }
 
     function pickFile(mode) {
         if(mode) fileInput.setAttribute('capture', mode);
@@ -108,9 +118,8 @@
         reader.onload = (ev) => {
             preview.src = ev.target.result;
             preview.style.display = 'block';
-            placeholder.style.display = 'none';
+            document.getElementById('placeholder').style.display = 'none';
             
-            // 상태 초기화
             resultBox.style.display = 'none';
             manualArea.style.display = 'none';
             loader.style.display = 'flex';
