@@ -15,22 +15,17 @@
         .nav-btns { display: flex; gap: 8px; margin-bottom: 15px; }
         .nav-btns button { flex: 1; padding: 12px; background: var(--btn-bg); color: white; border: 1px solid #333; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
 
-        /* 중앙 뷰어 */
         .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border: 1px solid #222; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
         #preview { width: 100%; height: 100%; object-fit: contain; display: none; }
         
-        /* 분석 중 (로딩) */
         #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
         .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 결과 창 */
         #result-box { display: none; margin-top: 20px; padding: 25px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
         .res-val { font-size: 2.5rem; font-weight: bold; color: var(--gold); }
 
-        /* 수동 선택 영역 (실패 시 등장) */
         #manual-area { display: none; margin-top: 20px; }
-        .manual-msg { color: var(--gold); font-size: 0.8rem; margin-bottom: 15px; }
         .pao-list { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .pao-btn { padding: 15px; background: #111; border: 1px solid #333; color: #ccc; border-radius: 8px; cursor: pointer; }
     </style>
@@ -58,10 +53,11 @@
     <div id="result-box">
         <div style="font-size: 0.75rem; color: #888;">Detected PAO</div>
         <div id="pao-val" class="res-val">-</div>
+        <p style="font-size: 0.7rem; color: #555; margin-top: 10px;">결과가 정확하지 않다면 사진을 다시 찍거나 수동 선택하세요.</p>
     </div>
 
     <div id="manual-area">
-        <div class="manual-msg">글자를 읽지 못했습니다. 수동으로 선택해주세요.</div>
+        <div style="color:var(--gold); font-size: 0.8rem; margin-bottom: 15px;">인식 실패. 아래에서 선택해주세요.</div>
         <div class="pao-list">
             <div class="pao-btn" onclick="applyManual('3')">3M</div>
             <div class="pao-btn" onclick="applyManual('6')">6M</div>
@@ -73,7 +69,7 @@
 </div>
 
 <script>
-    // 1. Worker 코드를 문자열로 정의 (파일 분리 에러 방지)
+    // 워커 코드 내의 정규식을 수정하여 '마지막' 매칭값만 찾도록 변경
     const workerCode = `
         importScripts('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
         let worker = null;
@@ -85,15 +81,21 @@
                     await worker.setParameters({ tessedit_char_whitelist: '0123456789M' });
                 }
                 const { data: { text } } = await worker.recognize(imageData);
-                const match = text.toUpperCase().replace(/\\s/g, '').match(/(\\d+)M/);
-                self.postMessage({ success: true, pao: match ? match[1] : null });
+                
+                // 텍스트 정제 및 마지막 숫자+M 조합만 추출
+                const cleanText = text.toUpperCase().replace(/\\s/g, '');
+                const matches = cleanText.match(/(\\d+)M/g); // 모든 매칭값 찾기
+                
+                // 여러 개가 잡히면 가장 마지막(보통 사진 하단의 PAO 마크)을 선택
+                const finalPao = matches ? matches[matches.length - 1].replace('M', '') : null;
+                
+                self.postMessage({ success: true, pao: finalPao });
             } catch (err) {
                 self.postMessage({ success: false, error: err.message });
             }
         };
     `;
 
-    // 2. Blob을 이용해 즉석에서 워커 생성
     const blob = new Blob([workerCode], { type: 'application/javascript' });
     const worker = new Worker(URL.createObjectURL(blob));
 
@@ -103,53 +105,3 @@
     const resultBox = document.getElementById('result-box');
     const paoVal = document.getElementById('pao-val');
     const manualArea = document.getElementById('manual-area');
-
-    function pickFile(mode) {
-        if(mode) fileInput.setAttribute('capture', mode);
-        else fileInput.removeAttribute('capture');
-        fileInput.click();
-    }
-
-    fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            preview.src = ev.target.result;
-            preview.style.display = 'block';
-            document.getElementById('placeholder').style.display = 'none';
-            
-            resultBox.style.display = 'none';
-            manualArea.style.display = 'none';
-            loader.style.display = 'flex';
-            
-            worker.postMessage({ imageData: ev.target.result });
-        };
-        reader.readAsDataURL(file);
-    };
-
-    worker.onmessage = (e) => {
-        loader.style.display = 'none';
-        const { success, pao } = e.data;
-
-        if (success && pao) {
-            showResult(pao);
-        } else {
-            manualArea.style.display = 'block';
-            resultBox.style.display = 'none';
-        }
-    };
-
-    function showResult(val) {
-        paoVal.innerText = val + "M";
-        resultBox.style.display = 'block';
-        manualArea.style.display = 'none';
-    }
-
-    function applyManual(val) {
-        showResult(val);
-    }
-</script>
-</body>
-</html>
