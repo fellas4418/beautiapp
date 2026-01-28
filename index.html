@@ -26,14 +26,14 @@
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
-    .wrap{max-width:900px;margin:0 auto;padding:18px;}
+    .wrap{max-width:980px;margin:0 auto;padding:18px;}
     .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
     .grow{flex:1 1 auto;}
     .muted{color:var(--muted);font-size:13px;line-height:1.5}
     .sep{height:1px;background:var(--border);margin:14px 0}
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
-    @media (min-width:900px){.grid{grid-template-columns:1.05fr .95fr}}
+    @media (min-width:940px){.grid{grid-template-columns:1.1fr .9fr}}
 
     .btn{
       background:var(--btn);
@@ -42,11 +42,11 @@
       padding:12px 14px;
       border-radius:12px;
       cursor:pointer;
-      font-weight:800;
+      font-weight:900;
     }
     .btn.secondary{background:var(--btn2);color:var(--text);border:1px solid var(--border);}
-    .btn.danger{background:transparent;color:var(--danger);border:1px solid rgba(255,77,79,.35);}
     .btn:disabled{opacity:.55;cursor:not-allowed;}
+    .link{color:var(--danger);cursor:pointer;text-decoration:underline;font-weight:800}
 
     .videoBox{
       border:1px solid var(--border);
@@ -67,6 +67,13 @@
       display:none;
     }
 
+    .kv{display:grid;grid-template-columns:170px 1fr;gap:10px;font-size:14px;line-height:1.6}
+    .paoBig{
+      font-size:26px;
+      font-weight:1000;
+      letter-spacing:0.5px;
+    }
+
     .pill{
       display:inline-flex;
       align-items:center;
@@ -76,13 +83,12 @@
       border:1px solid var(--border);
       background:rgba(255,255,255,.03);
       font-size:13px;
-      font-weight:800;
+      font-weight:900;
     }
     .ok{color:var(--ok)}
     .warn{color:var(--warn)}
     .bad{color:var(--danger)}
 
-    .kv{display:grid;grid-template-columns:160px 1fr;gap:10px;font-size:14px;line-height:1.6}
     .chips{display:flex;gap:10px;flex-wrap:wrap}
     .chip{
       border:1px solid var(--border);
@@ -91,7 +97,7 @@
       padding:10px 12px;
       border-radius:999px;
       cursor:pointer;
-      font-weight:800;
+      font-weight:900;
     }
     .chip.active{border-color:rgba(43,108,255,.8);box-shadow:0 0 0 2px rgba(43,108,255,.25) inset}
 
@@ -103,9 +109,8 @@
       background:rgba(255,255,255,.02);
     }
     .itemTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-    .itemTitle{font-weight:900}
+    .itemTitle{font-weight:1000}
     .small{font-size:12px;color:var(--muted);line-height:1.45}
-    .link{color:var(--danger);cursor:pointer;text-decoration:underline}
 
     input[type="file"]{display:none;}
     input[type="text"]{
@@ -113,147 +118,113 @@
       background:#0a0b0f;color:var(--text);
       width:100%;
     }
-
-    .screen{display:none;}
-    .screen.active{display:block;}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <div style="font-size:18px;font-weight:1000;margin-bottom:6px;">Cosmetic Freshness</div>
-      <div class="muted">촬영하거나 사진을 가져오면 바로 PAO를 인식하고 결과를 보여줍니다. 이후 개봉일을 한 번만 선택하면 남은 날짜/만료일 계산 후 My Shelf에 저장됩니다.</div>
+      <div style="font-size:18px;font-weight:1100;margin-bottom:6px;">Cosmetic Freshness</div>
+      <div class="muted">촬영 또는 사진 선택 → 바로 PAO(3M/6M/12M)를 인식해 보여주고, 개봉일을 한 번만 선택하면 남은 날짜/만료일을 계산해 My Shelf에 저장합니다.</div>
     </div>
 
     <div class="grid">
       <div class="card">
-        <div class="row" style="justify-content:space-between;">
-          <div>
-            <div id="screenTitle" style="font-size:16px;font-weight:1000;">My Shelf</div>
-            <div id="screenSub" class="muted">스캔한 제품이 여기에 쌓입니다.</div>
-          </div>
-          <div class="row">
-            <button id="btnShelf" class="btn secondary" style="display:none;">화장대</button>
-            <button id="btnAdd" class="btn">추가</button>
-          </div>
-        </div>
+        <div style="font-size:16px;font-weight:1100;margin-bottom:6px;">촬영 / 사진 가져오기</div>
+        <div class="muted" id="msg">카메라를 켜고 촬영하거나, 사진을 선택하면 자동으로 인식합니다.</div>
 
         <div class="sep"></div>
 
-        <div id="msg" class="muted"></div>
-
-        <!-- Shelf screen -->
-        <div id="screenShelf" class="screen active">
-          <div class="row" style="justify-content:space-between;margin-bottom:10px;">
-            <div class="muted">팁: Toss it이 한번 뜨면 다음 제품도 확인하고 싶어질 거야.</div>
-            <div class="link" id="clearShelf">전체 삭제</div>
-          </div>
-          <div id="shelfList" class="list"></div>
-          <div id="emptyShelf" class="muted">아직 저장된 제품이 없습니다.</div>
+        <div class="row">
+          <button id="btnCamera" class="btn">카메라 켜기</button>
+          <button id="btnCapture" class="btn secondary" disabled>촬영하기</button>
+          <label for="photoInput" class="btn secondary" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">사진 가져오기</label>
+          <input id="photoInput" type="file" accept="image/*" />
+          <button id="btnStop" class="btn secondary" style="display:none;">카메라 끄기</button>
         </div>
 
-        <!-- Scan screen -->
-        <div id="screenScan" class="screen">
-          <div class="row" style="margin-bottom:10px;">
-            <button id="btnStartCamera" class="btn">촬영하기</button>
-            <label for="photoInput" class="btn secondary" style="display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">내 사진 가져오기</label>
-            <input id="photoInput" type="file" accept="image/*" />
-            <button id="btnStopCamera" class="btn secondary" style="display:none;">카메라 끄기</button>
-          </div>
+        <div style="height:10px"></div>
 
-          <div id="cameraBox" class="videoBox" style="display:none;">
-            <video id="video" playsinline></video>
-          </div>
+        <div id="cameraBox" class="videoBox" style="display:none;">
+          <video id="video" playsinline></video>
+        </div>
 
-          <canvas id="canvas"></canvas>
-          <img id="preview" class="thumb" alt="preview" />
+        <canvas id="canvas"></canvas>
+        <img id="preview" class="thumb" alt="preview" />
 
+        <div id="resultBox" style="display:none;margin-top:14px;">
           <div class="sep"></div>
 
-          <div id="resultBox" style="display:none;">
-            <div class="kv">
-              <div class="muted">Detected PAO</div>
-              <div id="detectedPao" style="font-weight:1000;"></div>
+          <div class="kv">
+            <div class="muted">PAO</div>
+            <div id="detectedPao" class="paoBig">-</div>
 
-              <div class="muted">Confidence</div>
-              <div id="confidence">-</div>
+            <div class="muted">상태</div>
+            <div id="verdict">-</div>
 
-              <div class="muted">Status</div>
-              <div id="verdict">-</div>
+            <div class="muted">만료일</div>
+            <div id="expiryDate">-</div>
 
-              <div class="muted">Expiry date</div>
-              <div id="expiryDate">-</div>
+            <div class="muted">남은 날짜</div>
+            <div id="daysLeft">-</div>
 
-              <div class="muted">Days left</div>
-              <div id="daysLeft">-</div>
+            <div class="muted">디버그</div>
+            <div id="debug" class="muted">-</div>
+          </div>
+
+          <div id="openDateBox" style="margin-top:14px;display:none;">
+            <div class="muted" style="margin-bottom:10px;">개봉일을 선택하세요 (한 번만).</div>
+            <div class="chips">
+              <button class="chip" data-open="today">오늘</button>
+              <button class="chip" data-open="yesterday">어제</button>
+              <button class="chip" data-open="week">일주일 전쯤</button>
+              <button class="chip" data-open="month">한 달 전쯤</button>
+              <button class="chip" data-open="unknown">기억 안남</button>
             </div>
+            <div class="muted" style="margin-top:10px;">기억 안남은 보수적으로 추정합니다.</div>
+          </div>
 
-            <div id="openDateBox" style="margin-top:14px;">
-              <div class="muted" style="margin-bottom:10px;">개봉일을 선택하세요 (한 번만).</div>
-              <div class="chips">
-                <button class="chip" data-open="today">오늘</button>
-                <button class="chip" data-open="yesterday">어제</button>
-                <button class="chip" data-open="week">일주일 전쯤</button>
-                <button class="chip" data-open="month">한 달 전쯤</button>
-                <button class="chip" data-open="unknown">기억 안남</button>
+          <div id="saveBox" style="display:none;margin-top:14px;">
+            <div class="row">
+              <div class="grow">
+                <input id="nickname" type="text" placeholder="(선택) 별명 예: 파란 크림, 선크림" />
               </div>
-              <div class="muted" style="margin-top:10px;">기억 안남은 보수적으로 추정합니다.</div>
-            </div>
-
-            <div id="saveBox" style="display:none;margin-top:14px;">
-              <div class="row">
-                <div class="grow">
-                  <input id="nickname" type="text" placeholder="(선택) 별명 예: 파란 크림, 선크림" />
-                </div>
-                <button id="btnSave" class="btn">My Shelf 저장</button>
-              </div>
-              <div class="muted" style="margin-top:8px;">저장은 이 기기(브라우저)에 저장됩니다.</div>
+              <button id="btnSave" class="btn">My Shelf 저장</button>
             </div>
           </div>
 
-          <div class="sep"></div>
-
-          <div class="row" style="justify-content:space-between;">
-            <button id="btnRetake" class="btn secondary">다시 촬영/선택</button>
-            <button id="btnBackToShelf" class="btn secondary">화장대 돌아가기</button>
-          </div>
+          <div style="height:8px"></div>
+          <button id="btnRetry" class="btn secondary">다시 하기</button>
         </div>
       </div>
 
       <div class="card">
-        <div style="font-size:16px;font-weight:1000;margin-bottom:6px;">현재 스캔 상태</div>
-        <div class="muted" style="margin-bottom:10px;">
-          촬영 또는 사진 선택 → 즉시 인식 결과 표시 → 개봉일 한 번 선택 → 만료/남은 날짜 계산 → 저장
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <div style="font-size:16px;font-weight:1100;">My Shelf</div>
+            <div class="muted">저장된 제품 목록 (이 기기 브라우저에 저장)</div>
+          </div>
+          <div class="link" id="clearShelf">전체 삭제</div>
         </div>
+
         <div class="sep"></div>
-        <div class="muted" id="debug">
-          문제 발생 시 확인: 워커 엔드포인트가 /pao로 연결되어야 하고, 워커가 JSON으로 paoMonths를 반환해야 합니다.
-        </div>
+
+        <div id="shelfList" class="list"></div>
+        <div id="emptyShelf" class="muted">아직 저장된 제품이 없습니다.</div>
       </div>
     </div>
   </div>
 
   <script>
-    // 여기만 네 워커로 바꿔
-    const WORKER_ENDPOINT = "https://skinguard.ohryee.workers.dev/pao";
+    const WORKER_BASE = "https://skinguard.ohryee.workers.dev";
 
     const msg = document.getElementById("msg");
-    const debug = document.getElementById("debug");
+    const debugEl = document.getElementById("debug");
 
-    const btnAdd = document.getElementById("btnAdd");
-    const btnShelf = document.getElementById("btnShelf");
+    const btnCamera = document.getElementById("btnCamera");
+    const btnCapture = document.getElementById("btnCapture");
+    const btnStop = document.getElementById("btnStop");
+    const btnRetry = document.getElementById("btnRetry");
 
-    const screenShelf = document.getElementById("screenShelf");
-    const screenScan = document.getElementById("screenScan");
-    const screenTitle = document.getElementById("screenTitle");
-    const screenSub = document.getElementById("screenSub");
-
-    const shelfList = document.getElementById("shelfList");
-    const emptyShelf = document.getElementById("emptyShelf");
-    const clearShelf = document.getElementById("clearShelf");
-
-    const btnStartCamera = document.getElementById("btnStartCamera");
-    const btnStopCamera = document.getElementById("btnStopCamera");
     const cameraBox = document.getElementById("cameraBox");
     const video = document.getElementById("video");
     const canvas = document.getElementById("canvas");
@@ -263,7 +234,6 @@
 
     const resultBox = document.getElementById("resultBox");
     const detectedPao = document.getElementById("detectedPao");
-    const confidenceEl = document.getElementById("confidence");
     const verdictEl = document.getElementById("verdict");
     const expiryDateEl = document.getElementById("expiryDate");
     const daysLeftEl = document.getElementById("daysLeft");
@@ -273,41 +243,24 @@
     const nickname = document.getElementById("nickname");
     const btnSave = document.getElementById("btnSave");
 
-    const btnRetake = document.getElementById("btnRetake");
-    const btnBackToShelf = document.getElementById("btnBackToShelf");
+    const shelfList = document.getElementById("shelfList");
+    const emptyShelf = document.getElementById("emptyShelf");
+    const clearShelf = document.getElementById("clearShelf");
 
     let stream = null;
 
     let current = {
-      imageDataUrl: "",
       paoMonths: null,
       paoRaw: "",
-      confidence: null,
       openDateISO: null,
       expiryISO: null,
       daysLeft: null,
-      verdict: "NEEDS_OPEN_DATE"
+      verdict: "NEEDS_OPEN_DATE",
+      imageDataUrl: ""
     };
 
     function setMsg(t){ msg.textContent = t || ""; }
-
-    function showShelf(){
-      screenShelf.classList.add("active");
-      screenScan.classList.remove("active");
-      btnShelf.style.display = "none";
-      screenTitle.textContent = "My Shelf";
-      screenSub.textContent = "스캔한 제품이 여기에 쌓입니다.";
-      setMsg("");
-    }
-
-    function showScan(){
-      screenShelf.classList.remove("active");
-      screenScan.classList.add("active");
-      btnShelf.style.display = "inline-flex";
-      screenTitle.textContent = "Scan";
-      screenSub.textContent = "촬영하거나 사진을 가져오면 바로 인식합니다.";
-      setMsg("촬영하거나 사진을 선택해 주세요. 선택/촬영하면 자동으로 인식합니다.");
-    }
+    function setDebug(t){ debugEl.textContent = t || "-"; }
 
     function isoDate(d){
       const y = d.getFullYear();
@@ -319,17 +272,8 @@
     function addMonths(dateObj, months){
       const d = new Date(dateObj);
       const targetMonth = d.getMonth() + months;
-      const originalDay = d.getDate();
       d.setMonth(targetMonth);
-
-      // 월 이동 과정에서 날짜가 밀려버리는 케이스 보정
-      while (d.getMonth() !== ((targetMonth % 12) + 12) % 12) {
-        d.setDate(d.getDate() - 1);
-      }
-      // 그래도 원래 day보다 커지는 이상치 방지
-      if (d.getDate() < originalDay) {
-        // 이미 보정된 상태로 둠
-      }
+      while (d.getMonth() !== ((targetMonth % 12) + 12) % 12) d.setDate(d.getDate() - 1);
       return d;
     }
 
@@ -343,19 +287,18 @@
       if (v === "SAFE") return `<span class="pill"><span class="ok">Safe</span><span class="muted">사용 가능</span></span>`;
       if (v === "NEAR") return `<span class="pill"><span class="warn">Near expiry</span><span class="muted">곧 만료</span></span>`;
       if (v === "TOSS") return `<span class="pill"><span class="bad">Toss it</span><span class="muted">폐기 권장</span></span>`;
-      return `<span class="pill"><span class="muted">개봉일 필요</span></span>`;
+      return `<span class="pill"><span class="muted">개봉일 선택 필요</span></span>`;
     }
 
-    function resetScanState(){
+    function resetAll(){
       current = {
-        imageDataUrl: "",
         paoMonths: null,
         paoRaw: "",
-        confidence: null,
         openDateISO: null,
         expiryISO: null,
         daysLeft: null,
-        verdict: "NEEDS_OPEN_DATE"
+        verdict: "NEEDS_OPEN_DATE",
+        imageDataUrl: ""
       };
       preview.style.display = "none";
       preview.src = "";
@@ -364,27 +307,144 @@
       saveBox.style.display = "none";
       nickname.value = "";
       document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      setMsg("카메라를 켜고 촬영하거나, 사진을 선택하면 자동으로 인식합니다.");
+      setDebug("-");
     }
 
-    function renderAfterScan(){
+    function renderResult(){
       resultBox.style.display = "block";
-      detectedPao.textContent = current.paoRaw || (current.paoMonths ? `${current.paoMonths}M` : "Not found");
-      confidenceEl.textContent = (typeof current.confidence === "number") ? `${Math.round(current.confidence * 100)}%` : "-";
-
+      detectedPao.textContent = current.paoRaw || (current.paoMonths ? `${current.paoMonths}M` : "-");
       verdictEl.innerHTML = verdictPill(current.verdict);
       expiryDateEl.textContent = current.expiryISO || "-";
       daysLeftEl.textContent = (current.daysLeft == null) ? "-" : `${current.daysLeft} days`;
+      openDateBox.style.display = current.paoMonths ? "block" : "none";
+      saveBox.style.display = current.openDateISO ? "block" : "none";
+    }
 
-      if (current.paoMonths) {
-        openDateBox.style.display = "block";
-        saveBox.style.display = current.openDateISO ? "block" : "none";
-      } else {
-        openDateBox.style.display = "none";
-        saveBox.style.display = "none";
+    function normalizeTextFromPayload(payload){
+      if (!payload || typeof payload !== "object") return "";
+      if (typeof payload.text === "string") return payload.text;
+      if (typeof payload.ocrText === "string") return payload.ocrText;
+      if (payload.result && typeof payload.result.text === "string") return payload.result.text;
+      if (payload.data && typeof payload.data.text === "string") return payload.data.text;
+      return "";
+    }
+
+    function extractPAOFromText(text){
+      const t = (text || "").toString()
+        .replace(/\s+/g, " ")
+        .replace(/Ｍ/g,"M").replace(/ｍ/g,"m");
+
+      const patterns = [
+        /\b([1-9]\d?)\s*(M|m)\b/g,
+        /\bPAO\s*[:\-]?\s*([1-9]\d?)\s*(M|m)\b/gi,
+        /\b([1-9]\d?)\s*(mo|mos|month|months)\b/gi
+      ];
+
+      let best = null;
+      for (const re of patterns) {
+        let m;
+        while ((m = re.exec(t)) !== null) {
+          const n = parseInt(m[1], 10);
+          if (!Number.isFinite(n) || n < 1 || n > 48) continue;
+          best = n;
+          break;
+        }
+        if (best) break;
       }
+      return best;
+    }
+
+    async function postWithFallback(base64){
+      const paths = ["/pao", "/ocr", "/analyze", "/detect"];
+      let lastStatus = null;
+
+      for (const p of paths){
+        const url = WORKER_BASE.replace(/\/+$/,"") + p;
+        try{
+          const res = await fetch(url, {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ imageBase64: base64 })
+          });
+
+          lastStatus = res.status;
+
+          const isJson = (res.headers.get("content-type") || "").includes("application/json");
+          const payload = isJson ? await res.json().catch(()=> ({})) : {};
+
+          if (!res.ok) {
+            if (res.status === 404) continue;
+            return { ok:false, status: res.status, path: p, payload };
+          }
+
+          return { ok:true, status: res.status, path: p, payload };
+        }catch(e){
+          return { ok:false, status: 0, path: p, payload: { error: "network" } };
+        }
+      }
+
+      return { ok:false, status: lastStatus ?? 404, path: "(all)", payload: { error: "not_found" } };
+    }
+
+    async function recognizeFromDataUrl(dataUrl){
+      resetAll();
+      current.imageDataUrl = dataUrl;
+      preview.src = dataUrl;
+      preview.style.display = "block";
+
+      const base64 = (dataUrl.split(",")[1] || "").trim();
+      if (!base64) {
+        setMsg("이미지 데이터가 비어있어요. 다시 시도해 주세요.");
+        setDebug("base64 empty");
+        return;
+      }
+
+      setMsg("인식 중…");
+      const r = await postWithFallback(base64);
+
+      if (!r.ok) {
+        if (r.status === 404) {
+          setMsg("인식 서버 경로를 찾지 못했어요. 워커 경로(/ocr 또는 /analyze 등)를 확인해야 합니다.");
+          setDebug(`응답 오류 status=404 (요청 경로 자동탐색 실패)`);
+        } else {
+          setMsg("인식에 실패했어요. 사진을 더 선명하게 찍고 다시 시도해 주세요.");
+          setDebug(`응답 오류 status=${r.status} path=${r.path}`);
+        }
+        renderResult();
+        return;
+      }
+
+      const payload = r.payload || {};
+      const paoMonthsFromApi = (typeof payload.paoMonths === "number") ? payload.paoMonths : null;
+      const paoRawFromApi = (typeof payload.paoRaw === "string") ? payload.paoRaw : "";
+
+      let paoMonths = paoMonthsFromApi;
+      if (!paoMonths) {
+        const text = normalizeTextFromPayload(payload);
+        paoMonths = extractPAOFromText(text);
+      }
+
+      if (!paoMonths) {
+        current.paoMonths = null;
+        current.paoRaw = "";
+        setMsg("PAO(3M/6M/12M 등)를 찾지 못했어요. PAO 마크가 크게 보이게 다시 찍어 주세요.");
+        setDebug(`성공했지만 PAO 추출 실패 path=${r.path}`);
+        renderResult();
+        return;
+      }
+
+      current.paoMonths = paoMonths;
+      current.paoRaw = paoRawFromApi || `${paoMonths}M`;
+      current.verdict = "NEEDS_OPEN_DATE";
+      setMsg(`PAO를 인식했어요: ${current.paoRaw}. 이제 개봉일만 선택하면 됩니다.`);
+      setDebug(`성공 path=${r.path}`);
+      renderResult();
     }
 
     function pickOpenDate(option){
+      if (!current.paoMonths) return;
+
       const now = new Date();
       const open = new Date(now);
 
@@ -392,7 +452,7 @@
       if (option === "yesterday") open.setDate(open.getDate()-1);
       if (option === "week") open.setDate(open.getDate()-7);
       if (option === "month") open.setDate(open.getDate()-30);
-      if (option === "unknown") open.setDate(open.getDate()-60); // 보수적 추정
+      if (option === "unknown") open.setDate(open.getDate()-60);
 
       current.openDateISO = isoDate(open);
 
@@ -407,8 +467,7 @@
       current.daysLeft = diffDays;
       current.verdict = computeVerdict(diffDays);
 
-      saveBox.style.display = "block";
-      renderAfterScan();
+      renderResult();
     }
 
     function getShelf(){
@@ -436,9 +495,7 @@
       shelfList.innerHTML = "";
       emptyShelf.style.display = list.length ? "none" : "block";
 
-      list
-        .slice()
-        .sort((a,b)=> (a.createdAt < b.createdAt ? 1 : -1))
+      list.slice().sort((a,b)=> (a.createdAt < b.createdAt ? 1 : -1))
         .forEach(item=>{
           const div = document.createElement("div");
           div.className = "item";
@@ -468,67 +525,6 @@
       });
     }
 
-    async function fileToDataUrl(file){
-      return new Promise((resolve, reject)=>{
-        const r = new FileReader();
-        r.onload = ()=> resolve(String(r.result || ""));
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
-    }
-
-    async function scanDataUrl(dataUrl){
-      resetScanState();
-      preview.src = dataUrl;
-      preview.style.display = "block";
-      current.imageDataUrl = dataUrl;
-
-      setMsg("인식 중…");
-
-      const base64 = (dataUrl.split(",")[1] || "").trim();
-      if (!base64) {
-        setMsg("이미지 데이터가 비어있어요. 다시 시도해 주세요.");
-        return;
-      }
-
-      try{
-        const res = await fetch(WORKER_ENDPOINT, {
-          method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify({ imageBase64: base64 })
-        });
-
-        const isJson = (res.headers.get("content-type") || "").includes("application/json");
-        const payload = isJson ? await res.json().catch(()=> ({})) : {};
-
-        if (!res.ok) {
-          setMsg(payload?.error || "스캔에 실패했어요. 사진을 더 선명하게 찍고 다시 시도해 주세요.");
-          debug.textContent = `디버그: 엔드포인트 응답 오류. status=${res.status}`;
-          return;
-        }
-
-        current.paoMonths = payload?.paoMonths ?? null;
-        current.paoRaw = payload?.paoRaw ?? (current.paoMonths ? `${current.paoMonths}M` : "");
-        current.confidence = (typeof payload?.confidence === "number") ? payload.confidence : null;
-
-        if (!current.paoMonths) {
-          current.verdict = "NEEDS_OPEN_DATE";
-          renderAfterScan();
-          setMsg("PAO(3M/6M/12M 등)를 찾지 못했어요. PAO 마크가 더 크게 나오게 다시 찍어 주세요.");
-          debug.textContent = "디버그: paoMonths가 null로 반환됨. 워커의 PAO 추출을 확인.";
-          return;
-        }
-
-        current.verdict = "NEEDS_OPEN_DATE";
-        renderAfterScan();
-        setMsg("PAO를 찾았어요. 개봉일만 선택하면 남은 기간이 계산돼요.");
-        debug.textContent = "디버그: 스캔 성공";
-      }catch(e){
-        setMsg("네트워크 문제로 스캔이 실패했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.");
-        debug.textContent = "디버그: fetch 예외 발생";
-      }
-    }
-
     async function startCamera(){
       try{
         setMsg("카메라 여는 중…");
@@ -536,8 +532,9 @@
         video.srcObject = stream;
         await video.play();
         cameraBox.style.display = "block";
-        btnStopCamera.style.display = "inline-flex";
-        setMsg("촬영하기 버튼을 누르면 바로 인식합니다.");
+        btnStop.style.display = "inline-flex";
+        btnCapture.disabled = false;
+        setMsg("촬영하기를 누르면 바로 인식합니다.");
       }catch(e){
         setMsg("카메라를 열 수 없어요. 브라우저 권한을 확인하거나 사진 가져오기를 사용해 주세요.");
       }
@@ -550,17 +547,17 @@
       }
       video.srcObject = null;
       cameraBox.style.display = "none";
-      btnStopCamera.style.display = "none";
+      btnStop.style.display = "none";
+      btnCapture.disabled = true;
     }
 
-    function captureAndScan(){
+    function captureAndRecognize(){
       if (!video.videoWidth || !video.videoHeight) {
         setMsg("카메라 영상이 아직 준비되지 않았어요. 잠깐 후 다시 시도해 주세요.");
         return;
       }
       const w = video.videoWidth;
       const h = video.videoHeight;
-
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -568,12 +565,12 @@
 
       const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
       stopCamera();
-      scanDataUrl(dataUrl);
+      recognizeFromDataUrl(dataUrl);
     }
 
     function saveToShelf(){
       if (!current.paoMonths || !current.openDateISO || !current.expiryISO) {
-        setMsg("저장하려면 PAO 감지와 개봉일 선택이 필요해요.");
+        setMsg("저장하려면 PAO 인식 + 개봉일 선택이 필요해요.");
         return;
       }
       const item = {
@@ -581,7 +578,6 @@
         nickname: (nickname.value || "").trim(),
         paoMonths: current.paoMonths,
         paoRaw: current.paoRaw,
-        confidence: current.confidence,
         openDateISO: current.openDateISO,
         expiryISO: current.expiryISO,
         daysLeft: current.daysLeft,
@@ -592,24 +588,41 @@
       list.push(item);
       setShelf(list);
       renderShelf();
-      setMsg("My Shelf에 저장했어요. 다음 제품도 바로 확인할 수 있어요.");
-      // 저장 후에는 화장대로 보내는 게 자연스러움
-      showShelf();
+      setMsg("My Shelf에 저장했어요.");
     }
 
-    // UI events
-    btnAdd.addEventListener("click", ()=>{
-      showScan();
-      resetScanState();
+    btnCamera.addEventListener("click", startCamera);
+    btnStop.addEventListener("click", ()=>{
+      stopCamera();
+      setMsg("카메라를 껐어요.");
+    });
+    btnCapture.addEventListener("click", captureAndRecognize);
+
+    photoInput.addEventListener("change", async ()=>{
+      const file = photoInput.files && photoInput.files[0];
+      if (!file) return;
+      stopCamera();
+      const dataUrl = await new Promise((resolve, reject)=>{
+        const r = new FileReader();
+        r.onload = ()=> resolve(String(r.result || ""));
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      photoInput.value = "";
+      recognizeFromDataUrl(dataUrl);
     });
 
-    btnShelf.addEventListener("click", ()=>{
-      showShelf();
+    btnRetry.addEventListener("click", resetAll);
+
+    document.querySelectorAll(".chip").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        pickOpenDate(btn.getAttribute("data-open"));
+      });
     });
 
-    btnBackToShelf.addEventListener("click", ()=>{
-      showShelf();
-    });
+    btnSave.addEventListener("click", saveToShelf);
 
     clearShelf.addEventListener("click", ()=>{
       localStorage.removeItem("shelf_v1");
@@ -617,63 +630,8 @@
       setMsg("My Shelf를 전체 삭제했어요.");
     });
 
-    btnStartCamera.addEventListener("click", async ()=>{
-      // 촬영하기 버튼은 카메라 시작 -> 같은 버튼을 촬영 트리거로 동작시키는 방식이 UX상 혼란이 있음
-      // 그래서 카메라가 켜져있으면 "촬영"으로, 아니면 "카메라 시작"으로 동작
-      if (!stream) {
-        await startCamera();
-        btnStartCamera.textContent = "지금 촬영";
-      } else {
-        btnStartCamera.disabled = true;
-        captureAndScan();
-        btnStartCamera.disabled = false;
-        btnStartCamera.textContent = "촬영하기";
-      }
-    });
-
-    btnStopCamera.addEventListener("click", ()=>{
-      stopCamera();
-      btnStartCamera.textContent = "촬영하기";
-      setMsg("카메라를 껐어요. 사진 가져오기도 가능합니다.");
-    });
-
-    photoInput.addEventListener("change", async ()=>{
-      const file = photoInput.files && photoInput.files[0];
-      if (!file) return;
-      stopCamera();
-      btnStartCamera.textContent = "촬영하기";
-      const dataUrl = await fileToDataUrl(file);
-      scanDataUrl(dataUrl);
-      // 같은 파일 다시 선택 가능하게 초기화
-      photoInput.value = "";
-    });
-
-    btnRetake.addEventListener("click", ()=>{
-      resetScanState();
-      stopCamera();
-      btnStartCamera.textContent = "촬영하기";
-      setMsg("촬영하거나 사진을 선택해 주세요. 선택/촬영하면 자동으로 인식합니다.");
-    });
-
-    document.querySelectorAll(".chip").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-        btn.classList.add("active");
-        const opt = btn.getAttribute("data-open");
-        if (!current.paoMonths) {
-          setMsg("PAO를 먼저 인식해야 개봉일 계산이 가능합니다.");
-          return;
-        }
-        pickOpenDate(opt);
-      });
-    });
-
-    btnSave.addEventListener("click", saveToShelf);
-
-    // init
     renderShelf();
-    showShelf();
-    setMsg("");
+    resetAll();
   </script>
 </body>
 </html>
