@@ -3,111 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cosmetic Freshness</title>
+    <title>Cosmetic Scanner</title>
     <style>
-        :root { --bg: #0b0b0b; --card: #151515; --btn-bg: #222; --text: #eee; --gold: #ffcc00; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
+        :root { --bg: #000; --card: #111; --gold: #ffcc00; --text: #eee; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 400px; margin: auto; }
         
-        h2 { font-size: 1.1rem; margin: 10px 0; }
-        .desc { font-size: 0.8rem; color: #666; margin-bottom: 20px; }
+        /* 버튼 스타일 */
+        .btn-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-ui { flex: 1; padding: 15px; background: #222; border: 1px solid #333; border-radius: 10px; color: white; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: block; text-align: center; }
+        .btn-ui:active { background: #333; }
 
-        /* 버튼 영역 */
-        .nav-btns { display: flex; gap: 8px; margin-bottom: 15px; }
-        /* label을 버튼처럼 꾸며서 클릭 반응성을 높임 */
-        .btn-ui { flex: 1; padding: 12px; background: var(--btn-bg); color: white; border: 1px solid #333; border-radius: 8px; font-size: 0.8rem; cursor: pointer; display: inline-block; }
-
-        /* 이미지 뷰어 */
-        .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border: 1px solid #222; border-radius: 12px; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+        /* 미리보기 박스 */
+        .viewer { width: 100%; aspect-ratio: 1; background: var(--card); border-radius: 15px; border: 1px solid #222; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
         #preview { width: 100%; height: 100%; object-fit: contain; display: none; }
         
-        /* 로딩/결과/수동 영역 */
-        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
-        .spinner { width: 30px; height: 30px; border: 3px solid #333; border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        /* 로딩 화면 */
+        #loader { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        #result-box { display: none; margin-top: 20px; padding: 25px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
-        .res-val { font-size: 2.5rem; font-weight: bold; color: var(--gold); }
+        /* 결과창 */
+        #result-box { display: none; margin-top: 20px; padding: 25px; background: #1a1a1a; border-radius: 15px; border: 1px solid #333; }
+        .res-val { font-size: 3rem; font-weight: bold; color: var(--gold); margin: 10px 0; }
 
+        /* 수동 선택창 */
         #manual-area { display: none; margin-top: 20px; }
-        .pao-list { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .pao-btn { padding: 15px; background: #111; border: 1px solid #333; color: #ccc; border-radius: 8px; cursor: pointer; }
+        .pao-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .pao-btn { padding: 15px; background: #111; border: 1px solid #333; color: #999; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Check Your Cosmetic Freshness</h2>
-    <p class="desc">Take a photo to check the product's freshness.</p>
+    <h2 style="text-align: left; margin-bottom: 5px;">Cosmetic Freshness</h2>
+    <p style="text-align: left; color: #666; font-size: 0.8rem; margin-bottom: 25px;">손글씨나 마크를 촬영해 유통기한을 확인하세요.</p>
 
-    <div class="nav-btns">
-        <label for="cameraInput" class="btn-ui">Take Photo</label>
-        <label for="fileInput" class="btn-ui">Upload Photo</label>
+    <div class="btn-row">
+        <label for="camInput" class="btn-ui">사진 촬영</label>
+        <label for="fileInput" class="btn-ui">앨범 선택</label>
     </div>
 
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+    <input type="file" id="camInput" accept="image/*" capture="environment" style="display:none">
     <input type="file" id="fileInput" accept="image/*" style="display:none">
 
     <div class="viewer">
         <div id="loader">
             <div class="spinner"></div>
-            <div style="font-size: 0.9rem;">분석 중...</div>
+            <p style="margin-top: 15px; font-size: 0.9rem;">AI 분석 중...</p>
         </div>
         <img id="preview">
-        <div id="placeholder" style="color:#444; font-size:0.9rem;">사진을 찍거나 업로드하세요</div>
+        <p id="placeholder" style="color:#444;">이미지가 여기에 표시됩니다</p>
     </div>
 
     <div id="result-box">
-        <div style="font-size: 0.75rem; color: #888;">Detected PAO</div>
+        <div style="font-size: 0.8rem; color: #888;">인식 결과</div>
         <div id="pao-val" class="res-val">-</div>
+        <p style="font-size: 0.7rem; color: #555;">정확하지 않다면 아래에서 선택하세요.</p>
     </div>
 
     <div id="manual-area">
-        <div style="color:var(--gold); font-size: 0.8rem; margin-bottom: 15px;">글자를 인식하지 못했습니다.</div>
+        <p style="color: var(--gold); font-size: 0.8rem; margin-bottom: 15px;">글자를 읽지 못했습니다. 직접 선택해주세요.</p>
         <div class="pao-list">
-            <div class="pao-btn" onclick="applyManual('3')">3M</div>
-            <div class="pao-btn" onclick="applyManual('6')">6M</div>
-            <div class="pao-btn" onclick="applyManual('12')">12M</div>
+            <div class="pao-btn" onclick="setManual('3')">3M</div>
+            <div class="pao-btn" onclick="setManual('6')">6M</div>
+            <div class="pao-btn" onclick="setManual('12')">12M</div>
         </div>
     </div>
 </div>
 
 <script>
-    // 1. 내부 워커 스크립트 (노이즈 제거 로직 포함)
-    const workerCode = `
+    // 워커 인라인화 (모바일 경로 문제 방지)
+    const workerBlob = new Blob([`
         importScripts('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
         let worker = null;
         self.onmessage = async (e) => {
-            const { imageData } = e.data;
+            const { img } = e.data;
             try {
                 if (!worker) {
                     worker = await Tesseract.createWorker('eng');
                     await worker.setParameters({ tessedit_char_whitelist: '0123456789M' });
                 }
-                const { data: { text } } = await worker.recognize(imageData);
+                const { data: { text } } = await worker.recognize(img);
                 const cleanText = text.toUpperCase().replace(/\\s/g, '');
                 const matches = cleanText.match(/(\\d+)M/g);
-                // 가장 마지막 '숫자+M' 패턴 하나만 추출 (시계 등 노이즈 제거)
-                const finalPao = matches ? matches[matches.length - 1].replace('M', '') : null;
-                self.postMessage({ success: true, pao: finalPao });
+                // 가장 마지막에 등장하는 짧은 패턴(예: 6M)만 취함
+                const found = matches ? matches[matches.length - 1].replace('M', '') : null;
+                self.postMessage({ ok: true, pao: found });
             } catch (err) {
-                self.postMessage({ success: false, error: err.message });
+                self.postMessage({ ok: false });
             }
         };
-    `;
+    `], { type: 'application/javascript' });
 
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    const worker = new Worker(URL.createObjectURL(blob));
-
+    const worker = new Worker(URL.createObjectURL(workerBlob));
     const preview = document.getElementById('preview');
     const loader = document.getElementById('loader');
     const resultBox = document.getElementById('result-box');
     const paoVal = document.getElementById('pao-val');
     const manualArea = document.getElementById('manual-area');
-    const placeholder = document.getElementById('placeholder');
 
-    // 공통 실행 함수
-    function handleFile(e) {
+    function handleImg(e) {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -115,23 +111,28 @@
         reader.onload = (ev) => {
             preview.src = ev.target.result;
             preview.style.display = 'block';
-            placeholder.style.display = 'none';
+            document.getElementById('placeholder').style.display = 'none';
+            
+            // 상태 초기화
+            loader.style.display = 'flex';
             resultBox.style.display = 'none';
             manualArea.style.display = 'none';
-            loader.style.display = 'flex';
-            worker.postMessage({ imageData: ev.target.result });
+
+            // 이미지 분석 요청
+            worker.postMessage({ img: ev.target.result });
         };
         reader.readAsDataURL(file);
     }
 
-    document.getElementById('cameraInput').addEventListener('change', handleFile);
-    document.getElementById('fileInput').addEventListener('change', handleFile);
+    document.getElementById('camInput').onchange = handleImg;
+    document.getElementById('fileInput').onchange = handleImg;
 
     worker.onmessage = (e) => {
         loader.style.display = 'none';
-        const { success, pao } = e.data;
-        // 숫자가 너무 길면(노이즈) 실패로 간주하고 수동 버튼 노출
-        if (success && pao && pao.length <= 2) {
+        const { ok, pao } = e.data;
+
+        // 2자리 이하의 숫자(6, 12 등)만 정상으로 인정
+        if (ok && pao && pao.length <= 2) {
             paoVal.innerText = pao + "M";
             resultBox.style.display = 'block';
         } else {
@@ -139,7 +140,7 @@
         }
     };
 
-    function applyManual(val) {
+    function setManual(val) {
         paoVal.innerText = val + "M";
         resultBox.style.display = 'block';
         manualArea.style.display = 'none';
