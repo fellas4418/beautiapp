@@ -2,1448 +2,1564 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Keep or Toss</title>
   <meta name="theme-color" content="#0b0c10" />
   <style>
     :root{
       --bg:#0b0c10;
       --card:#111318;
-      --card2:#141720;
+      --card2:#0f1116;
       --text:#e8e8ea;
       --muted:#a8abb4;
       --border:rgba(255,255,255,.10);
-
       --btn:#2b6cff;
-      --btnText:#ffffff;
       --btn2:#1f2430;
-
-      --ok:#20c997;
+      --danger:#ff4d4f;
       --warn:#ffcc00;
-      --bad:#ff4d4f;
-
-      --shadow: 0 10px 28px rgba(0,0,0,.45);
-      --r:18px;
+      --ok:#20c997;
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --radius: 18px;
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      background: radial-gradient(1200px 800px at 10% 5%, rgba(43,108,255,.18), transparent 55%),
-                  radial-gradient(900px 600px at 90% 10%, rgba(32,201,151,.14), transparent 50%),
+      background: radial-gradient(900px 500px at 20% 0%, rgba(43,108,255,.16), transparent 55%),
+                  radial-gradient(900px 500px at 90% 10%, rgba(32,201,151,.14), transparent 55%),
                   var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
+    a{ color:inherit; }
+
     .wrap{
-      max-width: 760px;
+      max-width: 860px;
       margin: 0 auto;
-      padding: 18px 14px 28px;
+      padding: 18px 14px 120px;
     }
+
     .topbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      margin-bottom: 14px;
+      margin: 6px 0 16px;
     }
     .brand{
       display:flex;
       align-items:center;
-      gap:10px;
+      gap:12px;
       min-width: 0;
     }
     .logo{
-      width:34px;height:34px;border-radius:10px;
-      background: linear-gradient(135deg, rgba(43,108,255,.9), rgba(32,201,151,.9));
-      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      width:34px;
+      height:34px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(43,108,255,.95), rgba(32,201,151,.9));
+      box-shadow: 0 10px 25px rgba(43,108,255,.15);
       flex: 0 0 auto;
     }
     .brandText{
       min-width:0;
-      display:flex;
-      flex-direction:column;
-      line-height:1.15;
     }
     .brandTitle{
-      font-weight: 750;
-      letter-spacing: .2px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      font-weight: 800;
+      font-size: 18px;
+      line-height:1.1;
+      letter-spacing:.2px;
     }
     .brandSub{
-      color:var(--muted);
-      font-size: 12.5px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .pill{
-      padding: 7px 10px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.03);
       color: var(--muted);
-      border-radius: 999px;
       font-size: 12.5px;
-      flex:0 0 auto;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chip{
+      border:1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 12.5px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex: 0 0 auto;
+    }
+    .chip strong{
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing:.2px;
     }
 
     .card{
-      background: rgba(17,19,24,.82);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
       border: 1px solid var(--border);
-      border-radius: var(--r);
+      border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 16px;
-      overflow:hidden;
-      backdrop-filter: blur(10px);
     }
-    .card + .card{ margin-top: 14px; }
-
-    .row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
     }
-    .col{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
-    }
-    .title{
-      font-size: 20px;
-      font-weight: 780;
-      letter-spacing: .2px;
-    }
-    .sub{
-      color: var(--muted);
-      font-size: 13.5px;
-      line-height: 1.4;
+    @media (max-width: 820px){
+      .grid{ grid-template-columns: 1fr; }
     }
 
+    .btnRow{ display:flex; gap:10px; flex-wrap: wrap; }
     .btn{
       border: 1px solid var(--border);
       background: rgba(255,255,255,.04);
       color: var(--text);
-      padding: 12px 14px;
       border-radius: 14px;
-      font-weight: 650;
-      letter-spacing: .2px;
-      cursor: pointer;
-      width: 100%;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing:.2px;
+      cursor:pointer;
       user-select:none;
-      -webkit-tap-highlight-color: transparent;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height: 46px;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease, opacity .12s ease;
     }
-    .btn:disabled{
-      opacity:.45;
-      cursor:not-allowed;
-    }
-    .btn.primary{
-      background: linear-gradient(180deg, rgba(43,108,255,.95), rgba(43,108,255,.75));
+    .btn:active{ transform: scale(.99); }
+    .btnPrimary{
+      background: rgba(43,108,255,.90);
       border-color: rgba(43,108,255,.55);
-      color: var(--btnText);
     }
-    .btn.ghost{
-      background: rgba(31,36,48,.55);
+    .btnPrimary:hover{ background: rgba(43,108,255,.98); }
+    .btnDanger{
+      background: rgba(255,77,79,.14);
+      border-color: rgba(255,77,79,.35);
+      color: rgba(255,255,255,.92);
     }
-    .btn.danger{
-      background: rgba(255,77,79,.10);
-      border-color: rgba(255,77,79,.30);
-      color: #ffd7d7;
+    .btnGhost{
+      background: rgba(255,255,255,.02);
     }
-    .btn.small{
-      padding: 10px 12px;
+    .btnSmall{
+      padding: 9px 10px;
       border-radius: 12px;
-      width: auto;
-      white-space:nowrap;
+      min-height: 40px;
+      font-size: 13.5px;
     }
-    .btnrow{
-      display:flex;
-      gap:10px;
-      margin-top: 12px;
-    }
-    .btnrow .btn{ width: 100%; }
+    .btnWide{ width: 100%; }
+
+    .muted{ color: var(--muted); }
+    .hr{ height:1px; background: rgba(255,255,255,.08); margin: 14px 0; }
+
+    .screen{ display:none; }
+    .screen.active{ display:block; }
 
     .hero{
-      padding: 18px 16px;
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: linear-gradient(135deg, rgba(43,108,255,.16), rgba(32,201,151,.10));
-    }
-    .heroBig{
-      font-size: 44px;
-      font-weight: 820;
-      letter-spacing: .3px;
-      margin: 4px 0 6px;
-    }
-    .heroText{
-      color: var(--muted);
-      line-height: 1.45;
-      font-size: 14px;
-      margin: 0 0 14px;
-    }
-
-    .preview{
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.03);
-      overflow:hidden;
-      position:relative;
-      margin-top: 12px;
-    }
-    .preview .empty{
       padding: 18px;
+      border-radius: 22px;
+      background: radial-gradient(650px 280px at 20% 0%, rgba(43,108,255,.25), transparent 55%),
+                  radial-gradient(650px 280px at 90% 15%, rgba(32,201,151,.20), transparent 55%),
+                  rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 14px 45px rgba(0,0,0,.35);
+    }
+    .heroTitle{
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin: 6px 0 6px;
+    }
+    @media (max-width: 480px){
+      .heroTitle{ font-size: 36px; }
+    }
+    .heroDesc{
       color: var(--muted);
-      text-align:center;
-    }
-    .preview img, .preview video{
-      display:block;
-      width:100%;
-      height:auto;
-    }
-    .preview video{
-      background: #000;
-      aspect-ratio: 3/4;
-      object-fit: cover;
-    }
-    .badgeTag{
-      position:absolute;
-      top:10px;
-      left:10px;
-      background: rgba(0,0,0,.45);
-      border: 1px solid rgba(255,255,255,.14);
-      color: rgba(255,255,255,.92);
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 12px;
-      backdrop-filter: blur(8px);
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 14px;
+      max-width: 48ch;
     }
 
+    .cameraBox{
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+      min-height: 320px;
+    }
+    .cameraBox video,
+    .cameraBox img{
+      width: 100%;
+      height: 100%;
+      display:block;
+      object-fit: cover;
+      background: rgba(0,0,0,.35);
+    }
+    .cameraHint{
+      position:absolute;
+      left: 12px;
+      top: 12px;
+      right: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.38);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.88);
+      font-size: 13px;
+      line-height:1.35;
+      backdrop-filter: blur(10px);
+    }
+
+    .fieldGrid{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+    }
     .field{
-      margin-top: 12px;
-      border: 1px solid var(--border);
+      border:1px solid rgba(255,255,255,.10);
       border-radius: 16px;
       padding: 12px 12px;
       background: rgba(255,255,255,.03);
     }
-    .label{
-      font-size: 12.5px;
+    .fieldLabel{
       color: var(--muted);
+      font-size: 12px;
       margin-bottom: 6px;
     }
-    input[type="text"], input[type="date"]{
-      width:100%;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.25);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 12px 12px;
-      font-size: 15px;
-      outline: none;
+    .fieldValue{
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: .3px;
     }
-
-    .center{
-      text-align:center;
-      padding: 12px 0 2px;
-    }
-    .spinner{
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      margin: 14px auto 0;
-      border: 3px solid rgba(255,255,255,.18);
-      border-top-color: rgba(43,108,255,.95);
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin{
-      to{ transform: rotate(360deg); }
+    .fieldValueSmall{
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(232,232,234,.92);
     }
 
     .resultBig{
-      font-size: 66px;
-      font-weight: 860;
-      letter-spacing: .6px;
-      margin: 4px 0 0;
-    }
-    .resultMini{
-      color: var(--muted);
-      font-size: 14px;
-      margin: 6px 0 0;
-      line-height: 1.45;
-    }
-
-    .shelfTop{
       display:flex;
-      align-items:stretch;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .shelfCount{
-      flex: 1 1 220px;
-      padding: 14px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(255,255,255,.03);
-    }
-    .shelfCount .num{
-      font-size: 56px;
-      font-weight: 850;
-      line-height:1;
-      margin-top: 2px;
-    }
-    .shelfCount .txt{
-      color: var(--muted);
-      margin-top: 6px;
-    }
-    .shelfActions{
-      display:flex;
-      gap:10px;
-      flex: 1 1 220px;
-      justify-content:flex-end;
-      align-items:flex-start;
-    }
-    .shelfActions .btn{ width:auto; }
-
-    .gauge{
-      display:flex;
-      gap:14px;
-      align-items:center;
+      align-items:flex-end;
       justify-content:space-between;
-      flex-wrap:wrap;
+      gap: 10px;
+      padding: 14px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.10);
     }
-    .ring{
-      width: 150px;
-      height: 150px;
-      border-radius: 999px;
-      background: conic-gradient(var(--ok) 0deg, var(--ok) 0deg, rgba(255,255,255,.10) 0deg);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      position:relative;
-      flex: 0 0 auto;
-    }
-    .ring::after{
-      content:"";
-      width: 116px;
-      height: 116px;
-      border-radius: 999px;
-      background: rgba(17,19,24,.92);
-      border: 1px solid rgba(255,255,255,.10);
-      position:absolute;
-      inset: 0;
-      margin:auto;
-    }
-    .ringInner{
-      position:relative;
-      z-index:2;
-      text-align:center;
-      line-height:1.05;
-    }
-    .ringPct{
-      font-size: 38px;
-      font-weight: 850;
-    }
-    .ringLbl{
+    .resultBigLeft .k{
       color: var(--muted);
       font-size: 12px;
+    }
+    .resultBigLeft .v{
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-top: 4px;
+    }
+    .tag{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.9);
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing:.2px;
+      white-space: nowrap;
+    }
+    .tagOk{ border-color: rgba(32,201,151,.35); background: rgba(32,201,151,.12); }
+    .tagWarn{ border-color: rgba(255,204,0,.35); background: rgba(255,204,0,.10); color: rgba(255,255,255,.92); }
+    .tagToss{ border-color: rgba(255,77,79,.35); background: rgba(255,77,79,.12); }
+
+    .shelfHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .shelfTotal{
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+    }
+    .shelfTotal .title{
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -.2px;
       margin-top: 2px;
     }
-    .gaugeText{
-      flex: 1 1 220px;
-      min-width: 220px;
+    .shelfTotal .big{
+      font-size: 56px;
+      font-weight: 950;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      margin-top: 6px;
     }
-    .gaugeTitle{
-      font-size: 18px;
-      font-weight: 780;
-      margin-bottom: 4px;
-    }
-    .gaugeDesc{
+    .shelfTotal .sub{
       color: var(--muted);
-      line-height: 1.45;
-      font-size: 13.5px;
-      margin-bottom: 10px;
+      font-size: 13px;
+      margin-top: 2px;
     }
-    .gaugeMini{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
+
+    .gaugeRow{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      gap: 12px;
       align-items:center;
+      margin-top: 10px;
     }
-    .chip{
-      border: 1px solid var(--border);
+    @media (max-width: 420px){
+      .gaugeRow{ grid-template-columns: 140px 1fr; }
+    }
+    .gauge{
+      width: 160px;
+      height: 160px;
+      position: relative;
+    }
+    .gauge svg{ width:100%; height:100%; display:block; }
+    .gaugeCenter{
+      position:absolute;
+      inset: 0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      gap: 2px;
+    }
+    .gaugeCenter .pct{
+      font-size: 34px;
+      font-weight: 950;
+      letter-spacing: -1px;
+    }
+    .gaugeCenter .lbl{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing:.2px;
+    }
+
+    .itemsHeader{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .itemsHeader .h{
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -.2px;
+    }
+    .itemsHeader .hint{
+      color: var(--muted);
+      font-size: 12.5px;
+      border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
       padding: 8px 10px;
       border-radius: 999px;
-      font-size: 12.5px;
-      color: var(--muted);
+      text-align:right;
+      white-space: nowrap;
     }
 
-    .list{
-      margin-top: 12px;
-      display:flex;
-      flex-direction:column;
-      gap: 12px;
-    }
     .item{
-      border: 1px solid var(--border);
+      border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
       border-radius: 18px;
       padding: 14px;
       display:flex;
+      gap: 12px;
       align-items:flex-start;
       justify-content:space-between;
-      gap:12px;
+      margin-top: 10px;
     }
-    .itemLeft{ min-width:0; }
-    .itemName{
-      font-weight: 780;
-      font-size: 16px;
+    .item .left{
+      min-width:0;
+    }
+    .item .name{
+      font-size: 15px;
+      font-weight: 900;
       margin-bottom: 6px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      max-width: 48vw;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .itemMeta{
+    .item .meta{
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-    }
-    .itemRight{
-      display:flex;
-      flex-direction:column;
-      align-items:flex-end;
-      gap:8px;
-      flex:0 0 auto;
-    }
-    .tag{
-      padding: 7px 10px;
-      border-radius: 999px;
       font-size: 12.5px;
-      font-weight: 750;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.04);
-      color: var(--muted);
-    }
-    .tag.safe{
-      border-color: rgba(32,201,151,.30);
-      background: rgba(32,201,151,.12);
-      color: rgba(200,255,240,.95);
-    }
-    .tag.toss{
-      border-color: rgba(255,77,79,.35);
-      background: rgba(255,77,79,.12);
-      color: rgba(255,220,220,.96);
-    }
-
-    .modal-backdrop{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.55);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 20px 14px;
-      z-index: 9999;
-      backdrop-filter: blur(6px);
-    }
-    .modal{
-      width: min(520px, 100%);
-      background: rgba(17,19,24,.92);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.55);
-      padding: 16px;
-    }
-    .modalTitle{
-      font-size: 18px;
-      font-weight: 820;
-      margin-bottom: 6px;
-    }
-    .modalSub{
-      color: var(--muted);
-      font-size: 13.5px;
       line-height: 1.45;
     }
-    .modalActions{
+    .item .right{
       display:flex;
-      gap:10px;
-      margin-top: 14px;
+      flex-direction:column;
+      gap: 8px;
+      align-items:flex-end;
+      flex: 0 0 auto;
     }
-    .modalActions .btn{ width: 100%; }
 
     .toast{
       position: fixed;
       left: 50%;
       transform: translateX(-50%);
-      bottom: 18px;
-      z-index: 9998;
+      bottom: 20px;
+      z-index: 9999;
+      background: rgba(20,22,28,.92);
       border: 1px solid rgba(255,255,255,.14);
-      background: rgba(17,19,24,.90);
-      box-shadow: 0 18px 40px rgba(0,0,0,.55);
-      padding: 10px 12px;
-      border-radius: 14px;
       color: rgba(255,255,255,.92);
+      padding: 10px 12px;
+      border-radius: 999px;
       font-size: 13px;
-      max-width: min(560px, calc(100% - 24px));
-      backdrop-filter: blur(8px);
-      opacity: 0;
-      transition: opacity .18s ease, transform .18s ease;
-      pointer-events:none;
-    }
-    .toast.show{
-      opacity: 1;
-      transform: translateX(-50%) translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.45);
+      max-width: calc(100% - 24px);
+      text-align:center;
+      display:none;
     }
 
-    @media (max-width: 420px){
-      .heroBig{ font-size: 38px; }
-      .ring{ width: 140px; height: 140px; }
-      .ring::after{ width: 110px; height: 110px; }
-      .itemName{ max-width: 56vw; }
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 9000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
     }
+    .overlay.show{ display:flex; }
+    .modal{
+      width: min(520px, 100%);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 20px 70px rgba(0,0,0,.55);
+      padding: 16px;
+      position: relative;
+    }
+    .modalTitle{
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: -.2px;
+      margin: 2px 0 6px;
+    }
+    .modalDesc{
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.5;
+      margin: 0 0 12px;
+    }
+    .modalClose{
+      position:absolute;
+      right: 12px;
+      top: 12px;
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+      font-size: 18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .modalActions{
+      display:flex;
+      gap: 10px;
+      justify-content:flex-end;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .calendarWrap{
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      overflow:hidden;
+      background: rgba(0,0,0,.22);
+    }
+    .calHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      gap: 10px;
+    }
+    .calHead .navBtn{
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      cursor:pointer;
+      color: rgba(255,255,255,.92);
+      font-size: 18px;
+    }
+    .calHead .label{
+      font-size: 15px;
+      font-weight: 950;
+      letter-spacing: -.2px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      user-select:none;
+      cursor:pointer;
+    }
+    .calHead select{
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.92);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 800;
+      font-size: 13px;
+      display:none;
+    }
+    .calHead select.show{ display:inline-flex; }
+
+    .calGrid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      padding: 12px;
+    }
+    .dow{
+      color: rgba(255,255,255,.65);
+      font-size: 12px;
+      font-weight: 800;
+      text-align:center;
+      padding: 6px 0;
+    }
+    .day{
+      border-radius: 14px;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,.02);
+      color: rgba(255,255,255,.88);
+      padding: 10px 0;
+      text-align:center;
+      cursor:pointer;
+      font-weight: 800;
+      user-select:none;
+    }
+    .day.off{
+      opacity: .35;
+    }
+    .day.sel{
+      background: rgba(43,108,255,.25);
+      border-color: rgba(43,108,255,.45);
+    }
+    .day:hover{
+      border-color: rgba(255,255,255,.12);
+    }
+
+    .popup{
+      position: fixed;
+      left: 50%;
+      top: 14px;
+      transform: translateX(-50%);
+      z-index: 9500;
+      width: min(680px, calc(100% - 18px));
+      display:none;
+    }
+    .popup.show{ display:block; }
+    .popupCard{
+      background: rgba(14,16,22,.92);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 22px;
+      box-shadow: 0 16px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .popupTop{
+      padding: 14px 14px 10px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .popupTop .title{
+      font-size: 16px;
+      font-weight: 950;
+      letter-spacing: -.2px;
+    }
+    .popupTop .sub{
+      color: rgba(255,255,255,.72);
+      font-size: 13px;
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+    .popupBody{
+      padding: 0 14px 14px;
+    }
+    .tips{
+      margin-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      padding-top: 10px;
+      color: rgba(255,255,255,.76);
+      font-size: 12.8px;
+      line-height: 1.5;
+    }
+    .tips span{
+      display:block;
+      margin-top: 6px;
+      color: rgba(255,255,255,.70);
+    }
+
+    .hiddenInput{ display:none; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
-        <div class="logo"></div>
+        <div class="logo" aria-hidden="true"></div>
         <div class="brandText">
           <div class="brandTitle">Keep or Toss</div>
-          <div class="brandSub">Check your makeup before you use it.</div>
+          <div class="brandSub">Check your makeup before you use it</div>
         </div>
       </div>
-      <div id="savedPill" class="pill">Not saved</div>
+      <div class="chip" id="chipSaved">
+        <strong id="savedCount">0</strong> saved
+      </div>
     </div>
 
-    <div id="app"></div>
+    <div id="screenHome" class="screen active">
+      <div class="hero">
+        <div class="heroTitle">keep or toss?</div>
+        <div class="heroDesc">Take a photo of the PAO icon (like 6M, 12M) to check freshness.
+        Save it to My Shelf to build your “item box”.</div>
+        <div class="btnRow">
+          <button class="btn btnPrimary btnWide" id="btnTakePhoto">Take a photo</button>
+          <button class="btn btnGhost btnWide" id="btnUploadPhoto">Upload a photo</button>
+          <input id="fileInputHome" class="hiddenInput" type="file" accept="image/*" />
+        </div>
+        <div class="hr"></div>
+        <div class="btnRow">
+          <button class="btn btnSmall btnWide" id="btnGoShelf">Go to My Shelf</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="screenScan" class="screen">
+      <div class="grid">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div>
+              <div style="font-weight:950;font-size:18px;letter-spacing:-.2px;">Photo</div>
+              <div class="muted" style="font-size:13px;margin-top:4px;">Focus on the PAO icon (3M / 6M / 12M).</div>
+            </div>
+            <button class="btn btnSmall btnGhost" id="btnBackFromScan">Home</button>
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <div class="cameraBox" id="cameraBox">
+            <div class="cameraHint" id="cameraHint">
+              Tip: Fill the frame with the PAO icon. Avoid reflections.
+            </div>
+            <video id="video" playsinline autoplay muted style="display:none;"></video>
+            <img id="previewImg" alt="preview" style="display:none;" />
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <div class="btnRow">
+            <button class="btn btnWide" id="btnCapture">Capture</button>
+            <button class="btn btnWide" id="btnChooseImage">Choose image</button>
+            <input id="fileInput" class="hiddenInput" type="file" accept="image/*" />
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <div class="fieldGrid">
+            <div class="field">
+              <div class="fieldLabel">Opened date</div>
+              <div class="fieldValue" id="openedDateText">-</div>
+            </div>
+            <button class="btn btnSmall" id="btnPickDate">Pick</button>
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <div class="fieldGrid">
+            <div class="field">
+              <div class="fieldLabel">Product name (optional)</div>
+              <div class="fieldValueSmall" id="productNameText">Not set</div>
+            </div>
+            <button class="btn btnSmall" id="btnEditName">Edit</button>
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <button class="btn btnPrimary btnWide" id="btnAnalyze">Analyze</button>
+          <div class="muted" id="analyzeHint" style="font-size:12.5px;margin-top:8px;line-height:1.45;"></div>
+
+        </div>
+
+        <div class="card">
+          <div style="font-weight:950;font-size:18px;letter-spacing:-.2px;">Result</div>
+          <div class="muted" style="font-size:13px;margin-top:6px;line-height:1.45;">
+            After analysis, you’ll get a Safe/Toss pop-up.
+            Then you can save it to My Shelf.
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <div class="resultBig">
+            <div class="resultBigLeft">
+              <div class="k">Detected PAO</div>
+              <div class="v" id="detectedPaoBig">-</div>
+            </div>
+            <div class="tag" id="statusTag">Waiting</div>
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <div class="field">
+            <div class="fieldLabel">Expires</div>
+            <div class="fieldValue" id="expiresText">-</div>
+          </div>
+
+          <div style="height:10px;"></div>
+
+          <div class="field">
+            <div class="fieldLabel">Days left</div>
+            <div class="fieldValue" id="daysLeftText">-</div>
+          </div>
+
+          <div style="height:12px;"></div>
+
+          <button class="btn btnWide" id="btnSave" disabled>Save to My Shelf</button>
+
+          <div class="muted" style="font-size:12.5px;margin-top:10px;line-height:1.45;">
+            If PAO looks wrong, re-shoot closer, or upload a clearer photo.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="screenShelf" class="screen">
+      <div class="card">
+        <div class="shelfHeader">
+          <div class="shelfTotal">
+            <div class="title">My Shelf</div>
+            <div class="big" id="totalBig">0</div>
+            <div class="sub">items inside</div>
+          </div>
+          <div class="btnRow" style="justify-content:flex-end;">
+            <button class="btn btnSmall" id="btnAddFromShelf">Add</button>
+            <button class="btn btnSmall btnDanger" id="btnClearAll">Clear all</button>
+            <button class="btn btnSmall btnGhost" id="btnHomeFromShelf">Home</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="gaugeRow">
+          <div class="gauge">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="12" />
+              <circle id="gaugeArc" cx="60" cy="60" r="46" fill="none" stroke="rgba(32,201,151,.90)" stroke-width="12"
+                stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="0 999" />
+            </svg>
+            <div class="gaugeCenter">
+              <div class="pct" id="gaugePct">0%</div>
+              <div class="lbl">safe ratio</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-weight:950;font-size:18px;letter-spacing:-.2px;" id="gaugeTitle">-</div>
+            <div class="muted" style="font-size:13px;line-height:1.45;margin-top:6px;" id="gaugeCopy">-</div>
+            <div style="height:10px;"></div>
+            <div class="muted" style="font-size:13px;line-height:1.45;" id="gaugeNumbers">Safe 0 / 0</div>
+            <div style="height:10px;"></div>
+            <button class="btn btnSmall" id="btnNotif">Notifications</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="itemsHeader">
+          <div class="h">Items</div>
+          <div class="hint">Delete = one item · Clear all = everything</div>
+        </div>
+        <div id="itemsList"></div>
+      </div>
+    </div>
   </div>
 
-  <div id="modal-root"></div>
-  <div id="toast" class="toast"></div>
+  <div class="toast" id="toast"></div>
+
+  <div class="popup" id="resultPopup">
+    <div class="popupCard">
+      <div class="popupTop">
+        <div>
+          <div class="title" id="popupTitle">-</div>
+          <div class="sub" id="popupSub">-</div>
+        </div>
+        <button class="modalClose" id="popupClose" aria-label="close">×</button>
+      </div>
+      <div class="popupBody">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div class="tag" id="popupTag">-</div>
+          <div class="tag" id="popupPao">-</div>
+          <div class="tag" id="popupExpire">-</div>
+        </div>
+        <div class="tips" id="popupTips">
+          Quick tips
+          <span id="tip1">-</span>
+          <span id="tip2">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlayConfirm">
+    <div class="modal">
+      <div class="modalTitle" id="confirmTitle">Confirm</div>
+      <div class="modalDesc" id="confirmDesc">Are you sure?</div>
+      <button class="modalClose" id="confirmClose">×</button>
+      <div class="modalActions">
+        <button class="btn" id="confirmCancel">Cancel</button>
+        <button class="btn" id="confirmOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlayDate">
+    <div class="modal">
+      <div class="modalTitle">Pick Opened Date</div>
+      <button class="modalClose" id="dateClose">×</button>
+      <div class="calendarWrap">
+        <div class="calHead">
+          <button class="navBtn" id="calPrev">‹</button>
+          <div class="label" id="calLabel">
+            <span id="calLabelText">2024-05</span>
+            <select id="yearSelect"></select>
+          </div>
+          <button class="navBtn" id="calNext">›</button>
+        </div>
+        <div class="calGrid" id="calGrid"></div>
+      </div>
+      <div class="modalActions">
+        <button class="btn btnPrimary btnWide" id="dateOk">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlayText">
+    <div class="modal">
+      <div class="modalTitle">Product Name</div>
+      <button class="modalClose" id="textClose">×</button>
+      <div style="height:10px;"></div>
+      <input type="text" id="textInput" placeholder="e.g. Cleansing Oil" style="
+        width:100%;
+        border-radius: 16px;
+        border:1px solid rgba(255,255,255,.12);
+        padding: 14px 14px;
+        background: rgba(255,255,255,.04);
+        color: rgba(255,255,255,.92);
+        font-size: 15px;
+        font-weight: 700;
+        outline:none;
+      " />
+      <div class="modalActions">
+        <button class="btn" id="textCancel">Cancel</button>
+        <button class="btn btnPrimary" id="textOk">Save</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    // 너 워커 도메인만 정확히 넣어
-    // 예: https://skinguard.ohryee.workers.dev
-    const WORKER_BASE = "https://skinguard.ohryee.workers.dev";
+    const API_BASE = "https://skinguard.ohryee.workers.dev";
+    const ENDPOINT_META = "https://skinguard.ohryee.workers.dev/ocr-meta";
+    const ENDPOINT_FRESHNESS = API_BASE + "/freshness";
 
-    const Screen = {
-      ENTRY: "ENTRY",
-      SCAN: "SCAN",
-      ANALYZE: "ANALYZE",
-      SAVE: "SAVE",
-      SHELF: "SHELF",
-    };
+    const Screen = { HOME: "HOME", SCAN: "SCAN", SHELF: "SHELF" };
 
     const state = {
-      screen: Screen.ENTRY,
-
+      screen: Screen.HOME,
       stream: null,
       imageDataUrl: "",
-
-      detectedPao: "",
-      paoCandidates: [],
-      productNameOCR: "",
-      status: "",
-      analyzeError: "",
-
-      openedDate: "",
+      openedAt: isoToday(),
       productName: "",
-
-      notiOnOpenEnabled: false,
-      noti7days: false,
-      notiOnDay: true,
-
-      items: [],
-
-      modal: null,
-
-      autoAnalyze: false
+      detectedPao: null,
+      paoCandidates: [],
+      freshness: null,
+      busy: false,
+      items: loadItems(),
+      notifEnabled: false,
+      remind7: false,
+      remindDay: true,
     };
 
-    const $app = document.getElementById("app");
-    const $modal = document.getElementById("modal-root");
-    const $toast = document.getElementById("toast");
-    const $savedPill = document.getElementById("savedPill");
+    const el = (id) => document.getElementById(id);
 
-    function setScreen(next) {
-      cleanupScreenSideEffects();
-      state.screen = next;
-      render();
-    }
-
-    function openModal(obj) {
-      state.modal = obj;
-      renderModal();
-    }
-
-    function closeModal() {
-      state.modal = null;
-      renderModal();
-    }
-
-    function toast(msg, ms=1700) {
-      $toast.textContent = msg;
-      $toast.classList.add("show");
-      setTimeout(() => $toast.classList.remove("show"), ms);
-    }
-
-    function render() {
-      updateSavedPill();
-
-      switch (state.screen) {
-        case Screen.ENTRY:
-          $app.innerHTML = viewEntry();
-          bindEntry();
-          break;
-
-        case Screen.SCAN:
-          $app.innerHTML = viewScan();
-          bindScan();
-          break;
-
-        case Screen.ANALYZE:
-          $app.innerHTML = viewAnalyze();
-          bindAnalyze();
-          break;
-
-        case Screen.SAVE:
-          $app.innerHTML = viewSave();
-          bindSave();
-          break;
-
-        case Screen.SHELF:
-          $app.innerHTML = viewShelf();
-          bindShelf();
-          break;
-      }
-      renderModal();
-    }
-
-    function renderModal() {
-      if (!state.modal) { $modal.innerHTML = ""; return; }
-
-      if (state.modal.type === "CLEAR_ALL_CONFIRM") {
-        $modal.innerHTML = modalClearAll();
-        bindModalClearAll();
-        return;
-      }
-
-      if (state.modal.type === "RESULT_POPUP") {
-        $modal.innerHTML = modalResult(state.modal);
-        bindModalResult();
-        return;
-      }
-    }
-
-    function updateSavedPill() {
-      const n = state.items.length;
-      $savedPill.textContent = n ? (n === 1 ? "1 saved" : (n + " saved")) : "Not saved";
-    }
-
-    function viewEntry() {
-      return `
-        <div class="card">
-          <div class="hero">
-            <div class="heroBig">keep or toss?</div>
-            <p class="heroText">Take a photo of the PAO icon (like 6M, 12M) to check freshness.</p>
-
-            <div class="btnrow">
-              <button id="btnTakePhoto" class="btn primary">Take a photo</button>
-            </div>
-            <div class="btnrow">
-              <button id="btnUpload" class="btn ghost">Upload a photo</button>
-            </div>
-
-            <div class="sub" style="margin-top:12px;">Your shelf starts the moment you save your first item.</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="row">
-            <div class="col">
-              <div class="title">My Shelf</div>
-              <div class="sub">See your overall freshness at a glance.</div>
-            </div>
-            <button id="btnGoShelf" class="btn small">Open</button>
-          </div>
-        </div>
-      `;
-    }
-
-    function bindEntry() {
-      document.getElementById("btnTakePhoto").onclick = () => {
-        state.autoAnalyze = false;
-        setScreen(Screen.SCAN);
-        startCameraIfPossible();
-      };
-
-      document.getElementById("btnUpload").onclick = () => {
-        state.autoAnalyze = true;
-        setScreen(Screen.SCAN);
-        setTimeout(() => {
-          const input = document.getElementById("fileInput");
-          if (input) input.click();
-        }, 60);
-      };
-
-      document.getElementById("btnGoShelf").onclick = () => setScreen(Screen.SHELF);
-    }
-
-    function viewScan() {
-      const hasImage = !!state.imageDataUrl;
-      return `
-        <div class="card">
-          <div class="row">
-            <div class="col">
-              <div class="title">Scan</div>
-              <div class="sub">Focus on the PAO icon (6M / 12M).</div>
-            </div>
-            <button id="btnBack" class="btn small">Back</button>
-          </div>
-
-          <div class="preview" style="margin-top:12px;">
-            <div class="badgeTag">Camera</div>
-            <video id="video" playsinline autoplay muted></video>
-          </div>
-
-          <div class="btnrow">
-            <button id="btnCapture" class="btn primary">Capture</button>
-            <button id="btnSwitchToUpload" class="btn ghost">Choose image</button>
-          </div>
-
-          <div class="preview" style="margin-top:12px;">
-            <div class="badgeTag">Preview</div>
-            ${hasImage ? `<img id="previewImg" src="${state.imageDataUrl}" alt="preview" />` : `<div class="empty">No image yet</div>`}
-          </div>
-
-          <input id="fileInput" type="file" accept="image/*" style="display:none" />
-
-          <div class="btnrow">
-            <button id="btnAnalyze" class="btn" ${hasImage ? "" : "disabled"}>Analyze</button>
-          </div>
-        </div>
-      `;
-    }
-
-    function bindScan() {
-      document.getElementById("btnBack").onclick = () => {
-        stopCamera();
-        setScreen(Screen.ENTRY);
-      };
-
-      document.getElementById("btnSwitchToUpload").onclick = () => {
-        const input = document.getElementById("fileInput");
-        if (input) input.click();
-      };
-
-      const input = document.getElementById("fileInput");
-      input.onchange = async (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        state.imageDataUrl = await fileToDataUrl(file);
-        stopCamera();
-
-        if (state.autoAnalyze) {
-          setScreen(Screen.ANALYZE);
-        } else {
-          render();
-        }
-      };
-
-      document.getElementById("btnCapture").onclick = async () => {
-        const video = document.getElementById("video");
-        const dataUrl = captureFromVideo(video);
-        if (!dataUrl) {
-          toast("Capture failed. Try again.");
-          return;
-        }
-        state.imageDataUrl = dataUrl;
-        stopCamera();
-        setScreen(Screen.ANALYZE);
-      };
-
-      document.getElementById("btnAnalyze").onclick = () => setScreen(Screen.ANALYZE);
-
-      startCameraIfPossible();
-    }
-
-    function viewAnalyze() {
-      return `
-        <div class="card">
-          <div class="center">
-            <div class="title">Checking freshness…</div>
-            <div class="sub">Hold on a sec.</div>
-            <div class="spinner"></div>
-          </div>
-        </div>
-      `;
-    }
-
-    function bindAnalyze() {
-      runAnalyze();
-    }
-
-    async function runAnalyze() {
-      state.analyzeError = "";
-      state.detectedPao = "";
-      state.paoCandidates = [];
-      state.productNameOCR = "";
-      state.status = "";
-
-      try {
-        const meta = await detectMetaFromWorker(state.imageDataUrl);
-
-        state.detectedPao = normalizePao(meta.bestPao || meta.detectedPao || "");
-        state.paoCandidates = Array.isArray(meta.paoCandidates) ? meta.paoCandidates : [];
-        state.productNameOCR = safeString(meta.productName || "");
-
-        if (!state.detectedPao) {
-          throw new Error("No PAO detected");
-        }
-
-        if (!state.productName && state.productNameOCR) {
-          state.productName = state.productNameOCR;
-        }
-
-        const today = isoToday();
-        if (!state.openedDate) state.openedDate = today;
-
-        const exp = addMonthsISO(state.openedDate, monthsFromPao(state.detectedPao));
-        state.status = compareISO(today, exp) <= 0 ? "SAFE" : "TOSS";
-
-        openModal({
-          type: "RESULT_POPUP",
-          pao: state.detectedPao,
-          status: state.status,
-          tip: state.status === "SAFE" ? pickTipSafe() : pickTipToss()
-        });
-
-        setTimeout(() => {
-          closeModal();
-          setScreen(Screen.SAVE);
-        }, 2300);
-
-      } catch (err) {
-        state.analyzeError = "Scan failed. Try a clearer PAO photo.";
-        toast(state.analyzeError, 2300);
-        setScreen(Screen.SCAN);
-      }
-    }
-
-    function viewSave() {
-      const today = isoToday();
-      if (!state.openedDate) state.openedDate = today;
-
-      const candidatesText = (state.paoCandidates && state.paoCandidates.length)
-        ? ("Candidates: " + state.paoCandidates.map(n => n + "M").join(", "))
-        : "";
-
-      const nameHint = state.productNameOCR ? ("OCR: " + escapeHtml(state.productNameOCR)) : "";
-
-      return `
-        <div class="card">
-          <div class="row">
-            <div class="col">
-              <div class="title">Save</div>
-              <div class="sub">Detected: ${escapeHtml(state.detectedPao || "-")}</div>
-              ${candidatesText ? `<div class="sub" style="margin-top:4px;">${escapeHtml(candidatesText)}</div>` : ``}
-              ${nameHint ? `<div class="sub" style="margin-top:4px;">${nameHint}</div>` : ``}
-            </div>
-            <button id="btnBackToScan" class="btn small">Back</button>
-          </div>
-
-          <div class="field">
-            <div class="label">Opened date</div>
-            <input id="openedDate" type="date" value="${state.openedDate}" />
-          </div>
-
-          <div class="field">
-            <div class="label">Product name (optional)</div>
-            <input id="productName" type="text" value="${escapeAttr(state.productName || "")}" placeholder="e.g., Cushion foundation" />
-          </div>
-
-          <div class="field">
-            <div class="label">Reminders</div>
-            <div class="sub" style="margin-top:2px;">
-              This MVP shows reminders when you open the app. True scheduled push needs server subscriptions.
-            </div>
-            <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-              <button id="btnEnableNoti" class="btn small">${state.notiOnOpenEnabled ? "Enabled" : "Enable"}</button>
-              <span class="chip">On the day: ${state.notiOnDay ? "On" : "Off"}</span>
-              <span class="chip">7 days before: ${state.noti7days ? "On" : "Off"}</span>
-            </div>
-            <div class="btnrow" style="margin-top:10px;">
-              <button id="toggle7" class="btn">${state.noti7days ? "Turn off 7 days before" : "Turn on 7 days before"}</button>
-              <button id="toggleDay" class="btn">${state.notiOnDay ? "Turn off on the day" : "Turn on on the day"}</button>
-            </div>
-          </div>
-
-          <div class="btnrow">
-            <button id="btnSave" class="btn primary">Save to My Shelf</button>
-          </div>
-        </div>
-      `;
-    }
-
-    function bindSave() {
-      document.getElementById("btnBackToScan").onclick = () => setScreen(Screen.SCAN);
-
-      document.getElementById("openedDate").onchange = (e) => {
-        state.openedDate = e.target.value;
-      };
-
-      document.getElementById("productName").oninput = (e) => {
-        state.productName = e.target.value;
-      };
-
-      document.getElementById("toggle7").onclick = () => {
-        state.noti7days = !state.noti7days;
-        saveSettings();
-        render();
-      };
-      document.getElementById("toggleDay").onclick = () => {
-        state.notiOnDay = !state.notiOnDay;
-        saveSettings();
-        render();
-      };
-
-      document.getElementById("btnEnableNoti").onclick = async () => {
-        const ok = await enableOnOpenNotifications();
-        if (ok) {
-          state.notiOnOpenEnabled = true;
-          saveSettings();
-          toast("Notifications enabled (on-open reminders).");
-          render();
-        }
-      };
-
-      document.getElementById("btnSave").onclick = () => {
-        addItemToShelf();
-        saveItems();
-        saveSettings();
-        setScreen(Screen.SHELF);
-        setTimeout(() => maybeRunOnOpenReminders(true), 250);
-      };
-    }
-
-    function viewShelf() {
-      const stats = computeShelfStats(state.items);
-      const pct = stats.total ? Math.round((stats.safe / stats.total) * 100) : 100;
-
-      const gauge = gaugeLabel(pct);
-      const ringDeg = Math.round((pct / 100) * 360);
-
-      return `
-        <div class="card">
-          <div class="row">
-            <div class="col">
-              <div class="title">My Shelf</div>
-              <div class="sub">Your items, your freshness.</div>
-            </div>
-            <button id="btnBackToEntry" class="btn small">Back</button>
-          </div>
-
-          <div class="shelfTop" style="margin-top:12px;">
-            <div class="shelfCount">
-              <div class="sub">Items</div>
-              <div class="num">${stats.total}</div>
-              <div class="txt sub">items inside</div>
-            </div>
-
-            <div class="shelfActions">
-              <button id="btnAdd" class="btn small primary">Add</button>
-              <button id="btnClearAll" class="btn small danger" ${stats.total ? "" : "disabled"}>Clear all</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="gauge">
-            <div class="ring" style="background: conic-gradient(var(--ok) ${ringDeg}deg, rgba(255,255,255,.10) 0deg);">
-              <div class="ringInner">
-                <div class="ringPct">${pct}%</div>
-                <div class="ringLbl">safe ratio</div>
-              </div>
-            </div>
-
-            <div class="gaugeText">
-              <div class="gaugeTitle">${escapeHtml(gauge.title)}</div>
-              <div class="gaugeDesc">${escapeHtml(gauge.desc)}</div>
-              <div class="gaugeMini">
-                <span class="chip">Safe ${stats.safe} / ${stats.total}</span>
-                <span class="chip">Toss ${stats.toss} / ${stats.total}</span>
-                <span class="chip">${gauge.mz}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="row">
-            <div class="title">Items</div>
-            <div class="pill">Delete for one item · Clear all for everything</div>
-          </div>
-
-          <div class="list">
-            ${state.items.length ? state.items.map(renderItem).join("") : `<div class="sub" style="padding:8px 2px;">No items yet.</div>`}
-          </div>
-        </div>
-      `;
-    }
-
-    function bindShelf() {
-      document.getElementById("btnBackToEntry").onclick = () => setScreen(Screen.ENTRY);
-
-      document.getElementById("btnAdd").onclick = () => {
-        state.autoAnalyze = false;
-        setScreen(Screen.SCAN);
-        startCameraIfPossible();
-      };
-
-      const clearBtn = document.getElementById("btnClearAll");
-      if (clearBtn) {
-        clearBtn.onclick = () => openModal({ type: "CLEAR_ALL_CONFIRM" });
-      }
-
-      document.querySelectorAll("[data-del]").forEach(btn => {
-        btn.onclick = () => {
-          const id = btn.getAttribute("data-del");
-          state.items = state.items.filter(x => x.id !== id);
-          saveItems();
-          render();
-        };
-      });
-    }
-
-    function renderItem(it) {
-      const tagClass = it.status === "TOSS" ? "toss" : "safe";
-      const exp = it.expires || computeExpires(it.openedDate, it.pao);
-      return `
-        <div class="item">
-          <div class="itemLeft">
-            <div class="itemName">${escapeHtml(it.name || "Untitled item")}</div>
-            <div class="itemMeta">
-              Opened: ${escapeHtml(it.openedDate)}<br/>
-              PAO: ${escapeHtml(it.pao)}<br/>
-              Expires: ${escapeHtml(exp)}
-            </div>
-          </div>
-          <div class="itemRight">
-            <span class="tag ${tagClass}">${it.status === "TOSS" ? "Toss" : "Safe"}</span>
-            <button class="btn small danger" data-del="${escapeAttr(it.id)}">Delete</button>
-          </div>
-        </div>
-      `;
-    }
-
-    function modalClearAll() {
-      return `
-        <div class="modal-backdrop" role="dialog" aria-modal="true">
-          <div class="modal">
-            <div class="modalTitle">Clear all items?</div>
-            <div class="modalSub">This will permanently remove all products from your shelf.</div>
-            <div class="modalActions">
-              <button id="mCancel" class="btn">Cancel</button>
-              <button id="mClear" class="btn danger">Clear all</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function bindModalClearAll() {
-      document.getElementById("mCancel").onclick = closeModal;
-      document.getElementById("mClear").onclick = () => {
-        state.items = [];
-        saveItems();
-        closeModal();
-        toast("Cleared.");
-        render();
-      };
-      $modal.firstElementChild.onclick = (e) => {
-        if (e.target === $modal.firstElementChild) closeModal();
-      };
-    }
-
-    function modalResult({ pao, status, tip }) {
-      const isToss = status === "TOSS";
-      const ttl = isToss ? "TOSS IT" : "SAFE TO USE";
-      const sub = isToss
-        ? "Better to avoid irritation and breakouts."
-        : "Looks good. Keep it clean and steady.";
-      return `
-        <div class="modal-backdrop" role="dialog" aria-modal="true">
-          <div class="modal">
-            <div class="modalTitle">${ttl}</div>
-            <div class="modalSub">${sub}</div>
-            <div style="margin-top:10px; padding:12px; border-radius:16px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03);">
-              <div class="resultBig">${escapeHtml(pao)}</div>
-              <div class="resultMini">${escapeHtml(tip)}</div>
-            </div>
-            <div class="modalActions">
-              <button id="mOk" class="btn ${isToss ? "danger" : "primary"}">OK</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function bindModalResult() {
-      document.getElementById("mOk").onclick = closeModal;
-      $modal.firstElementChild.onclick = (e) => {
-        if (e.target === $modal.firstElementChild) closeModal();
-      };
-    }
-
-    function addItemToShelf() {
-      const today = isoToday();
-      const opened = state.openedDate || today;
-      const pao = state.detectedPao || "6M";
-      const expires = computeExpires(opened, pao);
-      const status = compareISO(today, expires) <= 0 ? "SAFE" : "TOSS";
-
-      const item = {
-        id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
-        name: (state.productName || "").trim() || "Untitled item",
-        openedDate: opened,
-        pao,
-        expires,
-        status,
-        createdAt: Date.now()
-      };
-
-      state.items.unshift(item);
-
-      state.productName = "";
-      state.imageDataUrl = "";
-      state.detectedPao = "";
-      state.paoCandidates = [];
-      state.productNameOCR = "";
-      state.status = "";
-      state.autoAnalyze = false;
-    }
-
-    function computeExpires(openedISO, pao) {
-      const m = monthsFromPao(pao);
-      return addMonthsISO(openedISO, m);
-    }
-
-    function computeShelfStats(items) {
-      let safe = 0;
-      let toss = 0;
-      for (const it of items) {
-        if (it.status === "TOSS") toss++;
-        else safe++;
-      }
-      return { total: items.length, safe, toss };
-    }
-
-    function gaugeLabel(pct) {
-      if (pct >= 80) {
-        return {
-          title: "Good",
-          desc: "Mostly clean. You’re managing well.",
-          mz: "You’re in the clean zone."
-        };
-      }
-      if (pct >= 60) {
-        return {
-          title: "Okay",
-          desc: "A few risky ones. Time for a quick cleanup.",
-          mz: "Not bad, but check the back row."
-        };
-      }
-      if (pct >= 40) {
-        return {
-          title: "Bad",
-          desc: "You’ve got too many expired items in rotation.",
-          mz: "Your shelf is side-eyeing you."
-        };
-      }
-      return {
-        title: "Very bad",
-        desc: "High risk. Toss the expired ones today.",
-        mz: "This shelf needs an intervention."
-      };
-    }
-
-    function pickTipSafe() {
-      const tips = [
-        "Wipe the opening clean and keep the cap tight.",
-        "Store away from heat and direct sunlight.",
-        "If smell or texture changes, stop using it.",
-        "Keep applicators clean to avoid bacteria buildup."
-      ];
-      return tips[Math.floor(Math.random() * tips.length)];
-    }
-
-    function pickTipToss() {
-      const tips = [
-        "If it stings, smells off, or separates, toss it immediately.",
-        "Mascara and liquid liners are the fastest to go bad.",
-        "Don’t ‘revive’ old products with water or alcohol.",
-        "When in doubt, toss. Skin repairs cost more."
-      ];
-      return tips[Math.floor(Math.random() * tips.length)];
-    }
-
-    async function detectMetaFromWorker(imageDataUrl) {
-      if (!WORKER_BASE) throw new Error("No worker base");
-
-      const base64 = imageDataUrl.includes(",") ? imageDataUrl.split(",")[1] : imageDataUrl;
-
-      const res = await fetch(WORKER_BASE.replace(/\/+$/, "") + "/ocr-meta", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mimeType: "image/jpeg" })
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data || data.ok === false) throw new Error("Worker error");
-
-      return data;
-    }
-
-    function normalizePao(raw) {
-      const s = String(raw || "").toUpperCase().replace(/\s+/g, "");
-      const m = s.match(/(\d{1,2})M/);
-      if (!m) return "";
-      const n = Number(m[1]);
-      if (!Number.isFinite(n)) return "";
-      if (n < 1 || n > 36) return "";
-      return n + "M";
-    }
-
-    function monthsFromPao(pao) {
-      const m = String(pao || "").toUpperCase().match(/(\d{1,2})M/);
-      const n = m ? Number(m[1]) : 0;
-      return Number.isFinite(n) ? n : 0;
-    }
-
-    function isoToday() {
+    function isoToday(){
       const d = new Date();
       const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
       return `${yyyy}-${mm}-${dd}`;
     }
 
-    function compareISO(a, b) {
-      if (a === b) return 0;
-      return a < b ? -1 : 1;
+    function toast(msg, ms=2200){
+      const t = el("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(toast._tm);
+      toast._tm = setTimeout(()=> t.style.display="none", ms);
     }
 
-    function addMonthsISO(iso, months) {
-      const [y, m, d] = iso.split("-").map(Number);
-      const dt = new Date(y, (m - 1), d);
-      const targetMonth = dt.getMonth() + months;
+    function setScreen(s){
+      state.screen = s;
+      el("screenHome").classList.toggle("active", s===Screen.HOME);
+      el("screenScan").classList.toggle("active", s===Screen.SCAN);
+      el("screenShelf").classList.toggle("active", s===Screen.SHELF);
 
-      const temp = new Date(dt.getFullYear(), targetMonth, 1);
-      const lastDay = new Date(temp.getFullYear(), temp.getMonth() + 1, 0).getDate();
-      const day = Math.min(d, lastDay);
-      const out = new Date(temp.getFullYear(), temp.getMonth(), day);
-
-      const yyyy = out.getFullYear();
-      const mm = String(out.getMonth() + 1).padStart(2, "0");
-      const dd = String(out.getDate()).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd}`;
+      if(s !== Screen.SCAN){ stopCamera(); }
+      renderTopChip();
+      if(s === Screen.SHELF) renderShelf();
+      if(s === Screen.SCAN) renderScan();
     }
 
-    async function fileToDataUrl(file) {
-      return new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
+    function renderTopChip(){
+      const c = state.items.length;
+      el("savedCount").textContent = String(c);
+      el("chipSaved").style.opacity = c ? "1" : ".75";
     }
 
-    function captureFromVideo(video) {
-      if (!video || !video.videoWidth || !video.videoHeight) return "";
+    function loadItems(){
+      try{
+        const raw = localStorage.getItem("kot_items");
+        const arr = JSON.parse(raw || "[]");
+        return Array.isArray(arr) ? arr : [];
+      }catch{ return []; }
+    }
+
+    function saveItems(){
+      localStorage.setItem("kot_items", JSON.stringify(state.items));
+      renderTopChip();
+    }
+
+    function stopCamera(){
+      if(state.stream){
+        try{ state.stream.getTracks().forEach(t => t.stop()); }catch{}
+      }
+      state.stream = null;
+      const v = el("video");
+      v.srcObject = null;
+      v.style.display = "none";
+    }
+
+    async function startCameraIfPossible(){
+      const v = el("video");
+      const img = el("previewImg");
+      img.style.display = "none";
+      v.style.display = "block";
+
+      if(state.stream) stopCamera();
+
+      try{
+        const s = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+          audio: false
+        });
+        state.stream = s;
+        v.srcObject = s;
+      }catch(e){
+        console.error(e);
+        toast("Camera failed. Upload instead.", 3000);
+        v.style.display = "none";
+      }
+    }
+
+    function capturePhoto(){
+      const video = el("video");
       const canvas = document.createElement("canvas");
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext("2d");
-      if (!ctx) return "";
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/jpeg", 0.92);
+      return canvas.toDataURL("image/jpeg", 0.9);
     }
 
-    async function startCameraIfPossible() {
-      if (state.screen !== Screen.SCAN) return;
-
-      const video = document.getElementById("video");
-      if (!video) return;
-
-      if (state.stream) {
-        try { video.srcObject = state.stream; } catch {}
-        return;
-      }
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-          audio: false
-        });
-        state.stream = stream;
-        try { video.srcObject = stream; } catch {}
-        video.play().catch(() => {});
-      } catch (e) {
-        toast("Camera blocked. Use Upload instead.", 2200);
-      }
+    function showOverlay(id, show){
+      el(id).classList.toggle("show", !!show);
     }
 
-    function stopCamera() {
-      if (state.stream) {
-        try { state.stream.getTracks().forEach(t => t.stop()); } catch {}
-      }
-      state.stream = null;
-      const video = document.getElementById("video");
-      if (video) {
-        try { video.srcObject = null; } catch {}
+    function normalizeProductName(s){
+      return String(s||"").replace(/\s+/g," ").trim().slice(0,80);
+    }
+
+    function renderScan(){
+      el("openedDateText").textContent = state.openedAt || "-";
+      el("productNameText").textContent = state.productName ? state.productName : "Not set";
+      el("analyzeHint").textContent = "";
+      el("detectedPaoBig").textContent = state.detectedPao ? (state.detectedPao + "M") : "-";
+      el("expiresText").textContent = state.freshness?.tossAt || "-";
+      el("daysLeftText").textContent = (state.freshness && Number.isFinite(state.freshness.daysLeft)) ? String(state.freshness.daysLeft) : "-";
+      setStatusTag("WAIT");
+      el("btnSave").disabled = !(state.detectedPao && state.freshness);
+
+      // preview
+      const img = el("previewImg");
+      const v = el("video");
+      if(state.imageDataUrl){
+        img.src = state.imageDataUrl;
+        img.style.display = "block";
+        v.style.display = "none";
+      }else{
+        img.style.display = "none";
       }
     }
 
-    function cleanupScreenSideEffects() {
-      if (state.screen === Screen.SCAN) stopCamera();
-      closeModal();
+    function setStatusTag(kind){
+      const tag = el("statusTag");
+      tag.className = "tag";
+      if(kind === "OK"){
+        tag.classList.add("tagOk");
+        tag.textContent = "Safe";
+      }else if(kind === "WARN"){
+        tag.classList.add("tagWarn");
+        tag.textContent = "Close";
+      }else if(kind === "TOSS"){
+        tag.classList.add("tagToss");
+        tag.textContent = "Toss";
+      }else{
+        tag.textContent = "Waiting";
+      }
     }
 
-    function safeString(x, max=80) {
-      const s = String(x || "").replace(/\s+/g, " ").trim();
-      if (!s) return "";
-      return s.length > max ? s.slice(0, max).trim() : s;
+    function computeStatus(daysLeft){
+      if(!Number.isFinite(daysLeft)) return "WAIT";
+      if(daysLeft < 0) return "TOSS";
+      if(daysLeft <= 30) return "WARN";
+      return "OK";
     }
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-      }[m]));
-    }
-    function escapeAttr(s) {
-      return escapeHtml(s).replace(/"/g, "&quot;");
-    }
+    function openResultPopup(status, pao, tossAt, daysLeft){
+      const p = el("resultPopup");
+      const title = el("popupTitle");
+      const sub = el("popupSub");
+      const tag = el("popupTag");
+      const paoTag = el("popupPao");
+      const expTag = el("popupExpire");
 
-    function saveItems() {
-      localStorage.setItem("kot_shelf_items", JSON.stringify(state.items));
-      updateSavedPill();
-    }
+      tag.className = "tag";
+      paoTag.className = "tag";
+      expTag.className = "tag";
 
-    function loadItems() {
-      try {
-        state.items = JSON.parse(localStorage.getItem("kot_shelf_items") || "[]");
-        if (!Array.isArray(state.items)) state.items = [];
-      } catch {
-        state.items = [];
+      if(status === "OK"){
+        title.textContent = "Safe";
+        sub.textContent = "Looks fresh. You’re good to go.";
+        tag.classList.add("tagOk");
+        tag.textContent = "SAFE";
+      }else if(status === "WARN"){
+        title.textContent = "Close to toss";
+        sub.textContent = "Almost done. Use it soon, or plan to toss.";
+        tag.classList.add("tagWarn");
+        tag.textContent = "CLOSE";
+      }else{
+        title.textContent = "Toss it";
+        sub.textContent = "Expired after opening. It’s time to let it go.";
+        tag.classList.add("tagToss");
+        tag.textContent = "TOSS IT";
       }
 
-      const today = isoToday();
-      state.items = state.items.map(it => {
-        const opened = it.openedDate || today;
-        const pao = it.pao || "6M";
-        const exp = it.expires || computeExpires(opened, pao);
-        const st = it.status || (compareISO(today, exp) <= 0 ? "SAFE" : "TOSS");
-        return { ...it, openedDate: opened, pao, expires: exp, status: st };
+      paoTag.textContent = pao + "M PAO";
+      expTag.textContent = "Until " + tossAt;
+
+      const tips = getTips(status);
+      el("tip1").textContent = tips[0];
+      el("tip2").textContent = tips[1];
+
+      p.style.display = "block";
+      p.classList.add("show");
+    }
+
+    function getTips(status){
+      if(status === "OK") return [
+        "Keep it in a cool, dry place away from sunlight.",
+        "Close the lid tightly to prevent drying or bacteria."
+      ];
+      if(status === "WARN") return [
+        "Use it daily to finish before the expiry date.",
+        "Check for changes in smell or texture."
+      ];
+      return [
+        "Old makeup can harbor bacteria and cause breakouts.",
+        "If you had irritation before, don’t risk it. Skin > product."
+      ];
+    }
+
+    function openConfirm({ title, desc, okText="OK", danger=false }){
+      return new Promise((resolve)=>{
+        el("confirmTitle").textContent = title;
+        el("confirmDesc").textContent = desc;
+        el("confirmOk").textContent = okText;
+        el("confirmOk").className = danger ? "btn btnDanger" : "btn btnPrimary";
+        const close = (v)=>{
+          showOverlay("overlayConfirm", false);
+          cleanup();
+          resolve(v);
+        };
+        const cleanup = ()=>{
+          el("confirmClose").onclick = null;
+          el("confirmCancel").onclick = null;
+          el("confirmOk").onclick = null;
+        };
+        el("confirmClose").onclick = ()=> close(false);
+        el("confirmCancel").onclick = ()=> close(false);
+        el("confirmOk").onclick = ()=> close(true);
+        showOverlay("overlayConfirm", true);
       });
     }
 
-    function saveSettings() {
-      localStorage.setItem("kot_settings", JSON.stringify({
-        notiOnOpenEnabled: state.notiOnOpenEnabled,
-        noti7days: state.noti7days,
-        notiOnDay: state.notiOnDay
-      }));
+    function openTextInput(initial){
+      return new Promise((resolve)=>{
+        el("textInput").value = initial || "";
+        const close = (v)=>{
+          showOverlay("overlayText", false);
+          cleanup();
+          resolve(v);
+        };
+        const cleanup = ()=>{
+          el("textClose").onclick = null;
+          el("textCancel").onclick = null;
+          el("textOk").onclick = null;
+        };
+        el("textClose").onclick = ()=> close(null);
+        el("textCancel").onclick = ()=> close(null);
+        el("textOk").onclick = ()=> close(normalizeProductName(el("textInput").value));
+        showOverlay("overlayText", true);
+        setTimeout(()=> el("textInput").focus(), 50);
+      });
     }
 
-    function loadSettings() {
-      try {
-        const s = JSON.parse(localStorage.getItem("kot_settings") || "{}");
-        state.notiOnOpenEnabled = !!s.notiOnOpenEnabled;
-        state.noti7days = !!s.noti7days;
-        state.notiOnDay = (s.notiOnDay === undefined) ? true : !!s.notiOnDay;
-      } catch {}
-    }
+    // Calendar
+    const cal = { y: new Date().getFullYear(), m: new Date().getMonth(), sel: null, showYearSelect: false };
 
-    async function enableOnOpenNotifications() {
-      if (!("serviceWorker" in navigator)) {
-        toast("This browser does not support notifications.");
-        return false;
+    function buildYearSelect(){
+      const ys = el("yearSelect");
+      ys.innerHTML = "";
+      const nowY = new Date().getFullYear();
+      const minY = nowY - 10;
+      const maxY = nowY + 10;
+      for(let y=minY;y<=maxY;y++){
+        const opt = document.createElement("option");
+        opt.value = String(y);
+        opt.textContent = String(y);
+        ys.appendChild(opt);
       }
-      try {
-        await navigator.serviceWorker.register("./sw.js");
-        await navigator.serviceWorker.ready;
+      ys.value = String(cal.y);
+      ys.onchange = ()=>{
+        cal.y = Number(ys.value);
+        renderCalendar();
+      };
+    }
 
-        const perm = await Notification.requestPermission();
-        if (perm !== "granted") {
-          toast("Notification permission not granted.", 2200);
-          return false;
+    function openDatePicker(){
+      const d = new Date(state.openedAt);
+      if(!Number.isNaN(d.getTime())){
+        cal.y = d.getFullYear();
+        cal.m = d.getMonth();
+        cal.sel = new Date(d.getTime());
+      }else{
+        cal.y = new Date().getFullYear();
+        cal.m = new Date().getMonth();
+        cal.sel = new Date();
+      }
+      cal.showYearSelect = false;
+      buildYearSelect();
+      renderCalendar();
+      showOverlay("overlayDate", true);
+    }
+
+    function closeDatePicker(){
+      showOverlay("overlayDate", false);
+      el("yearSelect").classList.remove("show");
+      cal.showYearSelect = false;
+    }
+
+    function renderCalendar(){
+      const label = el("calLabelText");
+      label.textContent = `${cal.y}-${String(cal.m+1).padStart(2,"0")}`;
+      const ys = el("yearSelect");
+      ys.value = String(cal.y);
+
+      const grid = el("calGrid");
+      grid.innerHTML = "";
+      const dows = ["S","M","T","W","T","F","S"];
+      dows.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "dow";
+        div.textContent = d;
+        grid.appendChild(div);
+      });
+
+      const first = new Date(cal.y, cal.m, 1);
+      const last = new Date(cal.y, cal.m + 1, 0);
+      const startDow = first.getDay();
+      const prevLast = new Date(cal.y, cal.m, 0).getDate();
+
+      for(let i=0; i<startDow; i++){
+        const div = document.createElement("div");
+        div.className = "day off";
+        div.textContent = String(prevLast - startDow + i + 1);
+        grid.appendChild(div);
+      }
+
+      for(let d=1; d<=last.getDate(); d++){
+        const div = document.createElement("div");
+        div.className = "day";
+        if(cal.sel && cal.sel.getFullYear()===cal.y && cal.sel.getMonth()===cal.m && cal.sel.getDate()===d){
+          div.classList.add("sel");
         }
-        return true;
-      } catch (e) {
-        toast("Failed to enable notifications.", 2200);
-        return false;
+        div.textContent = String(d);
+        div.onclick = ()=>{
+          const newSel = new Date(cal.y, cal.m, d);
+          state.openedAt = `${newSel.getFullYear()}-${String(newSel.getMonth()+1).padStart(2,"0")}-${String(newSel.getDate()).padStart(2,"0")}`;
+          cal.sel = newSel;
+          renderCalendar();
+        };
+        grid.appendChild(div);
       }
     }
 
-    async function notify(title, body) {
-      if (!("serviceWorker" in navigator)) return;
-      if (!("Notification" in window)) return;
-      if (Notification.permission !== "granted") return;
-
-      try {
-        const reg = await navigator.serviceWorker.ready;
-        reg.showNotification(title, { body });
-      } catch {}
+    // Analyze
+    async function compressToDataUrl(fileOrDataUrl){
+      if(typeof fileOrDataUrl === "string" && fileOrDataUrl.startsWith("data:image")){
+        return fileOrDataUrl;
+      }
+      const file = fileOrDataUrl;
+      const img = new Image();
+      const dataUrl = await new Promise((resolve,reject)=>{
+        const reader = new FileReader();
+        reader.onload = ()=> resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      await new Promise((resolve,reject)=>{
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
+      const maxW = 1400;
+      const maxH = 1400;
+      let w = img.width;
+      let h = img.height;
+      const scale = Math.min(1, maxW / w, maxH / h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, w, h);
+      return canvas.toDataURL("image/jpeg", 0.86);
     }
 
-    async function maybeRunOnOpenReminders(force=false) {
-      if (!state.notiOnOpenEnabled) return;
-      if (!force && !state.items.length) return;
+    function getMimeFromDataUrl(dataUrl){
+      const m = String(dataUrl||"").match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/);
+      return m ? m[1] : "image/jpeg";
+    }
 
-      const today = isoToday();
-      let expToday = 0;
-      let expSoon = 0;
+    async function analyzeNow(){
+      if(state.busy) return;
+      if(!state.imageDataUrl){ toast("Add a photo first.", 2200); return; }
 
-      for (const it of state.items) {
-        const exp = it.expires || computeExpires(it.openedDate, it.pao);
-        if (exp === today) expToday++;
+      state.busy = true;
+      el("btnAnalyze").disabled = true;
+      el("btnAnalyze").textContent = "Analyzing...";
+      el("analyzeHint").textContent = "";
 
-        if (state.noti7days) {
-          const d7 = addDaysISO(today, 7);
-          if (compareISO(exp, today) >= 0 && compareISO(exp, d7) <= 0) {
-            expSoon++;
+      try {
+        const mimeType = getMimeFromDataUrl(state.imageDataUrl) || "image/jpeg";
+
+        const r = await fetch(ENDPOINT_META, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageBase64: state.imageDataUrl,
+            mimeType,
+          }),
+        });
+
+        const j = await r.json().catch(() => null);
+
+        // 디버그
+        console.log("ocr-meta response:", r.status, j);
+
+        if (!r.ok || !j || !j.ok) {
+          const code = j?.error || "UNKNOWN";
+          const status = j?.status || r.status;
+
+          if (status === 404) {
+            toast("Endpoint not found (404). Check /ocr-meta URL.", 3000);
+          } else if (code === "UPSTREAM_ERROR") {
+            toast("Couldn’t read PAO. Re-shoot closer & clearer.", 3000);
+          } else if (code === "NO_API_KEY") {
+            toast("Server missing API key.", 3000);
+          } else {
+            toast(`Scan failed (${status}).`, 2500);
           }
+
+          el("analyzeHint").textContent =
+            "Tip: Fill the PAO icon larger in frame (6M/12M), avoid glare, focus sharply.";
+          return;
         }
-      }
 
-      if (state.notiOnDay && expToday > 0) {
-        await notify("Keep or Toss", expToday === 1 ? "1 item expires today." : (expToday + " items expire today."));
-      } else if (state.noti7days && expSoon > 0) {
-        await notify("Keep or Toss", expSoon === 1 ? "1 item expires within 7 days." : (expSoon + " items expire within 7 days."));
+        const pao = Array.isArray(j.paoCandidates) ? j.paoCandidates : [];
+        state.paoCandidates = pao;
+        if (j.productName) state.productName = j.productName;
+        state.detectedPao = pao[0] || null;
+
+        if (!state.detectedPao) {
+          toast("PAO icon not detected. Try again.", 2500);
+          return;
+        }
+
+        // step 2: freshness
+        const r2 = await fetch(ENDPOINT_FRESHNESS, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pao: state.detectedPao, openedAt: state.openedAt })
+        });
+        const j2 = await r2.json().catch(() => null);
+        if (!r2.ok || !j2 || !j2.tossAt) {
+          toast("Failed to calculate freshness.", 2400);
+          return;
+        }
+
+        state.freshness = j2;
+        const st = computeStatus(j2.daysLeft);
+        setStatusTag(st);
+        renderScan();
+        openResultPopup(st, state.detectedPao, j2.tossAt, j2.daysLeft);
+        el("btnSave").disabled = false;
+
+      } catch (e) {
+        console.error("ocr-meta fetch error:", e);
+        toast("Network error. Try again.", 2500);
+      } finally {
+        state.busy = false;
+        el("btnAnalyze").disabled = false;
+        el("btnAnalyze").textContent = "Analyze";
       }
     }
 
-    function addDaysISO(iso, days) {
-      const [y, m, d] = iso.split("-").map(Number);
-      const dt = new Date(y, m - 1, d);
-      dt.setDate(dt.getDate() + days);
-      const yyyy = dt.getFullYear();
-      const mm = String(dt.getMonth() + 1).padStart(2, "0");
-      const dd = String(dt.getDate()).padStart(2, "0");
-      return `${yyyy}-${mm}-${dd}`;
+    function addCurrentToShelf(){
+      if(!(state.detectedPao && state.freshness)) return;
+      const item = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2),
+        name: state.productName || "Untitled item",
+        openedAt: state.openedAt || isoToday(),
+        pao: state.detectedPao,
+        expiresAt: state.freshness.tossAt,
+        daysLeft: state.freshness.daysLeft,
+        status: computeStatus(state.freshness.daysLeft),
+        createdAt: Date.now()
+      };
+      state.items.unshift(item);
+      saveItems();
+      toast("Saved to My Shelf.", 1800);
+      setScreen(Screen.SHELF);
+      runOnOpenReminders();
     }
 
-    loadItems();
-    loadSettings();
+    function renderShelf(){
+      const total = state.items.length;
+      el("totalBig").textContent = String(total);
+      const safeCount = state.items.filter(it => it.status === "OK").length;
+      const ratio = total ? Math.round((safeCount / total) * 100) : 0;
 
-    setScreen(Screen.ENTRY);
-    setTimeout(() => maybeRunOnOpenReminders(false), 600);
+      // gauge arc
+      const circ = 2 * Math.PI * 46;
+      const dash = (circ * ratio) / 100;
+      const arc = el("gaugeArc");
+      arc.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
+      // color
+      if(ratio >= 80){ arc.setAttribute("stroke", "rgba(32,201,151,.92)"); }
+      else if(ratio >= 60){ arc.setAttribute("stroke", "rgba(255,204,0,.92)"); }
+      else { arc.setAttribute("stroke", "rgba(255,77,79,.92)"); }
+      el("gaugePct").textContent = `${ratio}%`;
+
+      let title = "Good";
+      let copy = "Mostly clean. You’re managing well.";
+      if(total === 0){
+        title = "Empty shelf";
+        copy = "Add your first item. Your “item box” starts now.";
+      }else if(ratio >= 80){
+        title = "Good";
+        copy = "Mostly clean. You’re managing well.";
+      }else if(ratio >= 60){
+        title = "Decent";
+        copy = "A few items need attention soon.";
+      }else{
+        title = "Alert";
+        copy = "Many items expired. Toss them for skin safety.";
+      }
+      el("gaugeTitle").textContent = title;
+      el("gaugeCopy").textContent = copy;
+      el("gaugeNumbers").textContent = `Safe ${safeCount} / ${total}`;
+
+      const list = el("itemsList");
+      list.innerHTML = "";
+      if(total === 0){
+        list.innerHTML = `<div class="muted" style="text-align:center;padding:40px 0;">No items saved yet.</div>`;
+      }
+
+      for(const it of state.items){
+        const row = document.createElement("div");
+        row.className = "item";
+        const left = document.createElement("div");
+        left.className = "left";
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = it.name || "Untitled item";
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.innerHTML = `Opened: ${it.openedAt}<br>` + `PAO: ${it.pao}M<br>` + `Expires: ${it.expiresAt}`;
+        left.appendChild(name);
+        left.appendChild(meta);
+
+        const right = document.createElement("div");
+        right.className = "right";
+        const st = document.createElement("div");
+        st.className = "tag";
+        if(it.status === "OK"){ st.classList.add("tagOk"); st.textContent = "Safe"; }
+        else if(it.status === "WARN"){ st.classList.add("tagWarn"); st.textContent = "Close"; }
+        else { st.classList.add("tagToss"); st.textContent = "Toss"; }
+
+        const del = document.createElement("button");
+        del.className = "btn btnSmall btnDanger";
+        del.textContent = "Delete";
+        del.onclick = async ()=>{
+          const ok = await openConfirm({ title: "Delete this item?", desc: "This will permanently remove it from your shelf.", okText: "Delete", danger: true });
+          if(!ok) return;
+          state.items = state.items.filter(x => x.id !== it.id);
+          saveItems();
+          renderShelf();
+        };
+        right.appendChild(st);
+        right.appendChild(del);
+        row.appendChild(left);
+        row.appendChild(right);
+        list.appendChild(row);
+      }
+    }
+
+    // Reminders
+    async function requestNotif(){
+      if(!("Notification" in window)) return;
+      const res = await Notification.requestPermission();
+      if(res === "granted"){
+        state.notifEnabled = true;
+        toast("Notifications enabled!", 1800);
+      }
+    }
+
+    function runOnOpenReminders(){
+      if(!state.notifEnabled || Notification.permission !== "granted") return;
+      const items = state.items;
+      const today = new Date();
+      const todayIso = today.toISOString().split("T")[0];
+      const in7 = new Date(); in7.setDate(in7.getDate()+7);
+      const in7Iso = in7.toISOString().split("T")[0];
+
+      if(state.remind7){
+        const hits = items.filter(it => it.expiresAt === in7Iso);
+        if(hits.length) new Notification("Keep or Toss", { body: `${hits.length} item(s) expire in 7 days.` });
+      }
+      if(state.remindDay){
+        const hits = items.filter(it => it.expiresAt === todayIso);
+        if(hits.length) new Notification("Keep or Toss", { body: `${hits.length} item(s) expire today.` });
+      }
+    }
+
+    // Events
+    el("btnTakePhoto").onclick = async ()=>{
+      setScreen(Screen.SCAN);
+      state.imageDataUrl = "";
+      state.detectedPao = null;
+      state.freshness = null;
+      renderScan();
+      await startCameraIfPossible();
+    };
+
+    el("btnUploadPhoto").onclick = ()=> el("fileInputHome").click();
+    el("fileInputHome").onchange = async (e)=>{
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if(!f) return;
+      setScreen(Screen.SCAN);
+      state.imageDataUrl = await compressToDataUrl(f);
+      state.detectedPao = null;
+      state.freshness = null;
+      renderScan();
+    };
+
+    el("btnBackFromScan").onclick = ()=> setScreen(Screen.HOME);
+    el("btnGoShelf").onclick = ()=> setScreen(Screen.SHELF);
+    el("btnHomeFromShelf").onclick = ()=> setScreen(Screen.HOME);
+    el("btnAddFromShelf").onclick = ()=> { setScreen(Screen.SCAN); state.imageDataUrl=""; state.detectedPao=null; state.freshness=null; renderScan(); };
+
+    el("btnCapture").onclick = async ()=>{
+      if(!state.stream) await startCameraIfPossible();
+      if(!state.stream) return;
+      state.imageDataUrl = capturePhoto();
+      renderScan();
+    };
+
+    el("btnChooseImage").onclick = ()=> el("fileInput").click();
+    el("fileInput").onchange = async (e)=>{
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if(!f) return;
+      state.imageDataUrl = await compressToDataUrl(f);
+      renderScan();
+    };
+
+    el("btnPickDate").onclick = ()=> openDatePicker();
+    el("calPrev").onclick = ()=>{ cal.m--; if(cal.m<0){ cal.m=11; cal.y--; } renderCalendar(); };
+    el("calNext").onclick = ()=>{ cal.m++; if(cal.m>11){ cal.m=0; cal.y++; } renderCalendar(); };
+    el("calLabel").onclick = ()=>{ cal.showYearSelect = !cal.showYearSelect; el("yearSelect").classList.toggle("show", cal.showYearSelect); };
+    el("dateClose").onclick = ()=> closeDatePicker();
+    el("dateOk").onclick = ()=> { renderScan(); closeDatePicker(); };
+
+    el("btnEditName").onclick = async ()=>{
+      const res = await openTextInput(state.productName);
+      if(res !== null){ state.productName = res; renderScan(); }
+    };
+
+    el("btnAnalyze").onclick = ()=> analyzeNow();
+    el("popupClose").onclick = ()=> el("resultPopup").style.display = "none";
+    el("btnSave").onclick = ()=> addCurrentToShelf();
+
+    el("btnClearAll").onclick = async ()=>{
+      const ok = await openConfirm({ title: "Clear everything?", desc: "This will remove all items from your shelf.", okText: "Clear All", danger: true });
+      if(!ok) return;
+      state.items = [];
+      saveItems();
+      renderShelf();
+    };
+
+    el("btnNotif").onclick = ()=> requestNotif();
+
+    // Init
+    renderTopChip();
   </script>
 </body>
 </html>
