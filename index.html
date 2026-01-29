@@ -62,9 +62,7 @@
       box-shadow: 0 10px 25px rgba(43,108,255,.15);
       flex: 0 0 auto;
     }
-    .brandText{
-      min-width:0;
-    }
+    .brandText{ min-width:0; }
     .brandTitle{
       font-weight: 800;
       font-size: 18px;
@@ -91,6 +89,8 @@
       align-items:center;
       gap:8px;
       flex: 0 0 auto;
+      cursor: pointer;
+      user-select:none;
     }
     .chip strong{
       color: var(--text);
@@ -144,9 +144,7 @@
       border-color: rgba(255,77,79,.35);
       color: rgba(255,255,255,.92);
     }
-    .btnGhost{
-      background: rgba(255,255,255,.02);
-    }
+    .btnGhost{ background: rgba(255,255,255,.02); }
     .btnSmall{
       padding: 9px 10px;
       border-radius: 12px;
@@ -154,6 +152,7 @@
       font-size: 13.5px;
     }
     .btnWide{ width: 100%; }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
 
     .muted{ color: var(--muted); }
     .hr{ height:1px; background: rgba(255,255,255,.08); margin: 14px 0; }
@@ -216,6 +215,8 @@
       font-size: 13px;
       line-height:1.35;
       backdrop-filter: blur(10px);
+      pointer-events: none;
+      z-index: 2;
     }
 
     .fieldGrid{
@@ -384,9 +385,7 @@
       justify-content:space-between;
       margin-top: 10px;
     }
-    .item .left{
-      min-width:0;
-    }
+    .item .left{ min-width:0; }
     .item .name{
       font-size: 15px;
       font-weight: 900;
@@ -430,11 +429,12 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,.55);
-      z-index: 9000;
+      z-index: 9800;
       display:none;
       align-items:center;
       justify-content:center;
       padding: 16px;
+      backdrop-filter: blur(6px);
     }
     .overlay.show{ display:flex; }
     .modal{
@@ -552,23 +552,19 @@
       font-weight: 800;
       user-select:none;
     }
-    .day.off{
-      opacity: .35;
-    }
+    .day.off{ opacity: .35; cursor: default; }
     .day.sel{
       background: rgba(43,108,255,.25);
       border-color: rgba(43,108,255,.45);
     }
-    .day:hover{
-      border-color: rgba(255,255,255,.12);
-    }
+    .day:hover{ border-color: rgba(255,255,255,.12); }
 
     .popup{
       position: fixed;
       left: 50%;
       top: 14px;
       transform: translateX(-50%);
-      z-index: 9500;
+      z-index: 9700;
       width: min(680px, calc(100% - 18px));
       display:none;
     }
@@ -599,9 +595,7 @@
       margin-top: 3px;
       line-height: 1.35;
     }
-    .popupBody{
-      padding: 0 14px 14px;
-    }
+    .popupBody{ padding: 0 14px 14px; }
     .tips{
       margin-top: 10px;
       border-top: 1px solid rgba(255,255,255,.10);
@@ -619,6 +613,7 @@
     .hiddenInput{ display:none; }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="topbar">
@@ -629,7 +624,7 @@
           <div class="brandSub">Check your makeup before you use it</div>
         </div>
       </div>
-      <div class="chip" id="chipSaved">
+      <div class="chip" id="chipSaved" title="Open My Shelf">
         <strong id="savedCount">0</strong> saved
       </div>
     </div>
@@ -883,7 +878,7 @@
 
   <script>
     const API_BASE = "https://skinguard.ohryee.workers.dev";
-    const ENDPOINT_META = "https://skinguard.ohryee.workers.dev/ocr-meta";
+    const ENDPOINT_META = API_BASE + "/ocr-meta";
     const ENDPOINT_FRESHNESS = API_BASE + "/freshness";
 
     const Screen = { HOME: "HOME", SCAN: "SCAN", SHELF: "SHELF" };
@@ -973,11 +968,17 @@
 
       try{
         const s = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          video: { facingMode: { ideal: "environment" } },
           audio: false
         });
         state.stream = s;
         v.srcObject = s;
+
+        await new Promise((resolve)=> {
+          v.onloadedmetadata = ()=> resolve();
+          setTimeout(resolve, 500);
+        });
+        try{ await v.play(); }catch{}
       }catch(e){
         console.error(e);
         toast("Camera failed. Upload instead.", 3000);
@@ -987,9 +988,13 @@
 
     function capturePhoto(){
       const video = el("video");
+      const vw = video.videoWidth || 0;
+      const vh = video.videoHeight || 0;
+      if(!vw || !vh) return "";
+
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = vw;
+      canvas.height = vh;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       return canvas.toDataURL("image/jpeg", 0.9);
@@ -1010,12 +1015,12 @@
       el("detectedPaoBig").textContent = state.detectedPao ? (state.detectedPao + "M") : "-";
       el("expiresText").textContent = state.freshness?.tossAt || "-";
       el("daysLeftText").textContent = (state.freshness && Number.isFinite(state.freshness.daysLeft)) ? String(state.freshness.daysLeft) : "-";
-      setStatusTag("WAIT");
+      setStatusTag(computeStatus(state.freshness?.daysLeft));
       el("btnSave").disabled = !(state.detectedPao && state.freshness);
 
-      // preview
       const img = el("previewImg");
       const v = el("video");
+
       if(state.imageDataUrl){
         img.src = state.imageDataUrl;
         img.style.display = "block";
@@ -1043,13 +1048,14 @@
     }
 
     function computeStatus(daysLeft){
-      if(!Number.isFinite(daysLeft)) return "WAIT";
-      if(daysLeft < 0) return "TOSS";
-      if(daysLeft <= 30) return "WARN";
+      const n = Number(daysLeft);
+      if(!Number.isFinite(n)) return "WAIT";
+      if(n < 0) return "TOSS";
+      if(n <= 30) return "WARN";
       return "OK";
     }
 
-    function openResultPopup(status, pao, tossAt, daysLeft){
+    function openResultPopup(status, pao, tossAt){
       const p = el("resultPopup");
       const title = el("popupTitle");
       const sub = el("popupSub");
@@ -1078,8 +1084,8 @@
         tag.textContent = "TOSS IT";
       }
 
-      paoTag.textContent = pao + "M PAO";
-      expTag.textContent = "Until " + tossAt;
+      paoTag.textContent = `${pao}M PAO`;
+      expTag.textContent = `Until ${tossAt}`;
 
       const tips = getTips(status);
       el("tip1").textContent = tips[0];
@@ -1087,6 +1093,12 @@
 
       p.style.display = "block";
       p.classList.add("show");
+    }
+
+    function closeResultPopup(){
+      const p = el("resultPopup");
+      p.classList.remove("show");
+      p.style.display = "none";
     }
 
     function getTips(status){
@@ -1106,10 +1118,13 @@
 
     function openConfirm({ title, desc, okText="OK", danger=false }){
       return new Promise((resolve)=>{
+        closeResultPopup();
+
         el("confirmTitle").textContent = title;
         el("confirmDesc").textContent = desc;
         el("confirmOk").textContent = okText;
         el("confirmOk").className = danger ? "btn btnDanger" : "btn btnPrimary";
+
         const close = (v)=>{
           showOverlay("overlayConfirm", false);
           cleanup();
@@ -1123,6 +1138,7 @@
         el("confirmClose").onclick = ()=> close(false);
         el("confirmCancel").onclick = ()=> close(false);
         el("confirmOk").onclick = ()=> close(true);
+
         showOverlay("overlayConfirm", true);
       });
     }
@@ -1143,12 +1159,12 @@
         el("textClose").onclick = ()=> close(null);
         el("textCancel").onclick = ()=> close(null);
         el("textOk").onclick = ()=> close(normalizeProductName(el("textInput").value));
+
         showOverlay("overlayText", true);
         setTimeout(()=> el("textInput").focus(), 50);
       });
     }
 
-    // Calendar
     const cal = { y: new Date().getFullYear(), m: new Date().getMonth(), sel: null, showYearSelect: false };
 
     function buildYearSelect(){
@@ -1194,13 +1210,12 @@
     }
 
     function renderCalendar(){
-      const label = el("calLabelText");
-      label.textContent = `${cal.y}-${String(cal.m+1).padStart(2,"0")}`;
-      const ys = el("yearSelect");
-      ys.value = String(cal.y);
+      el("calLabelText").textContent = `${cal.y}-${String(cal.m+1).padStart(2,"0")}`;
+      el("yearSelect").value = String(cal.y);
 
       const grid = el("calGrid");
       grid.innerHTML = "";
+
       const dows = ["S","M","T","W","T","F","S"];
       dows.forEach(d => {
         const div = document.createElement("div");
@@ -1238,24 +1253,26 @@
       }
     }
 
-    // Analyze
     async function compressToDataUrl(fileOrDataUrl){
       if(typeof fileOrDataUrl === "string" && fileOrDataUrl.startsWith("data:image")){
         return fileOrDataUrl;
       }
       const file = fileOrDataUrl;
       const img = new Image();
+
       const dataUrl = await new Promise((resolve,reject)=>{
         const reader = new FileReader();
         reader.onload = ()=> resolve(reader.result);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+
       await new Promise((resolve,reject)=>{
         img.onload = resolve;
         img.onerror = reject;
         img.src = dataUrl;
       });
+
       const maxW = 1400;
       const maxH = 1400;
       let w = img.width;
@@ -1263,11 +1280,13 @@
       const scale = Math.min(1, maxW / w, maxH / h);
       w = Math.round(w * scale);
       h = Math.round(h * scale);
+
       const canvas = document.createElement("canvas");
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, w, h);
+
       return canvas.toDataURL("image/jpeg", 0.86);
     }
 
@@ -1276,62 +1295,104 @@
       return m ? m[1] : "image/jpeg";
     }
 
+    function pickBestPao(paoCandidates){
+      const arr = (Array.isArray(paoCandidates) ? paoCandidates : [])
+        .map(n => Number(n))
+        .filter(n => [3,6,9,12,18,24,36].includes(n));
+
+      if(!arr.length) return null;
+      arr.sort((a,b)=> a-b);
+      return arr[0];
+    }
+
     async function analyzeNow(){
       if(state.busy) return;
-      if(!state.imageDataUrl){ toast("Add a photo first.", 2200); return; }
+      if(!state.imageDataUrl){
+        toast("Add a photo first.", 2200);
+        return;
+      }
 
       state.busy = true;
       el("btnAnalyze").disabled = true;
       el("btnAnalyze").textContent = "Analyzing...";
-      el("analyzeHint").textContent = "";
+      el("analyzeHint").textContent = "Working…";
 
-      try {
-  const mimeType = getMimeFromDataUrl(state.imageDataUrl) || "image/jpeg";
+      try{
+        const mimeType = getMimeFromDataUrl(state.imageDataUrl) || "image/jpeg";
 
-  toast("Sending to OCR...", 1200);
+        const r = await fetch(ENDPOINT_META, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageBase64: state.imageDataUrl,
+            mimeType,
+          }),
+        });
 
-  const r = await fetch(ENDPOINT_META, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      imageBase64: state.imageDataUrl, // dataURL 그대로 OK
-      mimeType,
-    }),
-  });
+        const j = await r.json().catch(()=> null);
 
-  const j = await r.json().catch(() => null);
+        if(!r.ok || !j || !j.ok){
+          const code = j?.error || "UNKNOWN";
+          const msg = j?.message || "";
+          el("analyzeHint").textContent = "Try a closer, clearer photo (avoid reflections).";
+          toast(`OCR failed: ${code}`.slice(0, 120), 3200);
+          return;
+        }
 
-  // 여기서 OCR이 진짜 되는지 1차 판정 끝난다
-  console.log("OCR META STATUS:", r.status);
-  console.log("OCR META BODY:", j);
+        state.paoCandidates = j.paoCandidates || [];
+        const best = pickBestPao(state.paoCandidates);
+        if(!best){
+          el("analyzeHint").textContent = "PAO not detected. Re-shoot closer (6M / 12M should be readable).";
+          toast("PAO not detected. Try again.", 2800);
+          return;
+        }
 
-  // 화면에도 보이게(모바일에서 콘솔 보기 힘들 수 있으니까)
-  const brief = j
-    ? `status=${r.status} ok=${j.ok} pao=${JSON.stringify(j.paoCandidates || [])}`
-    : `status=${r.status} body=parse_failed`;
+        state.detectedPao = best;
 
-  toast(brief, 3500);
+        if(!state.productName && j.productName){
+          state.productName = normalizeProductName(j.productName);
+        }
 
-  if (!r.ok || !j || !j.ok) {
-    const code = j?.error || "UNKNOWN";
-    const msg = j?.message || "";
-    toast(`OCR failed: ${code} ${msg}`.slice(0, 120), 3500);
-    return;
-  }
+        const fr = await fetch(ENDPOINT_FRESHNESS, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paoMonths: state.detectedPao,
+            openedAt: state.openedAt || isoToday(),
+          }),
+        });
 
-  // 성공이면 여기서 잠깐 멈춰. UI 연결은 B에서 한다.
-  // 지금은 "응답이 제대로 왔다"만 확인하면 됨.
-  // 예: j.paoCandidates, j.productName
+        const fj = await fr.json().catch(()=> null);
+        if(!fr.ok || !fj || !fj.ok){
+          el("analyzeHint").textContent = "Freshness check failed. Try again.";
+          toast("Freshness failed.", 2500);
+          return;
+        }
 
-} catch (e) {
-  console.log("OCR META FETCH ERROR:", e);
-  toast("OCR fetch error (network / CORS).", 3500);
-  return;
-}
+        state.freshness = fj;
+        const status = fj.status || computeStatus(fj.daysLeft);
 
+        renderScan();
+        setStatusTag(status);
+
+        openResultPopup(status, state.detectedPao, fj.tossAt);
+
+        el("btnSave").disabled = false;
+        el("analyzeHint").textContent = "Done.";
+      }catch(e){
+        console.error(e);
+        el("analyzeHint").textContent = "Network/CORS error. Check endpoint.";
+        toast("OCR fetch error (network / CORS).", 3500);
+      }finally{
+        state.busy = false;
+        el("btnAnalyze").disabled = false;
+        el("btnAnalyze").textContent = "Analyze";
+      }
+    }
 
     function addCurrentToShelf(){
       if(!(state.detectedPao && state.freshness)) return;
+
       const item = {
         id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2),
         name: state.productName || "Untitled item",
@@ -1342,9 +1403,12 @@
         status: computeStatus(state.freshness.daysLeft),
         createdAt: Date.now()
       };
+
       state.items.unshift(item);
       saveItems();
+
       toast("Saved to My Shelf.", 1800);
+      closeResultPopup();
       setScreen(Screen.SHELF);
       runOnOpenReminders();
     }
@@ -1352,18 +1416,19 @@
     function renderShelf(){
       const total = state.items.length;
       el("totalBig").textContent = String(total);
+
       const safeCount = state.items.filter(it => it.status === "OK").length;
       const ratio = total ? Math.round((safeCount / total) * 100) : 0;
 
-      // gauge arc
       const circ = 2 * Math.PI * 46;
       const dash = (circ * ratio) / 100;
       const arc = el("gaugeArc");
       arc.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
-      // color
+
       if(ratio >= 80){ arc.setAttribute("stroke", "rgba(32,201,151,.92)"); }
       else if(ratio >= 60){ arc.setAttribute("stroke", "rgba(255,204,0,.92)"); }
       else { arc.setAttribute("stroke", "rgba(255,77,79,.92)"); }
+
       el("gaugePct").textContent = `${ratio}%`;
 
       let title = "Good";
@@ -1387,26 +1452,33 @@
 
       const list = el("itemsList");
       list.innerHTML = "";
+
       if(total === 0){
         list.innerHTML = `<div class="muted" style="text-align:center;padding:40px 0;">No items saved yet.</div>`;
+        return;
       }
 
       for(const it of state.items){
         const row = document.createElement("div");
         row.className = "item";
+
         const left = document.createElement("div");
         left.className = "left";
+
         const name = document.createElement("div");
         name.className = "name";
         name.textContent = it.name || "Untitled item";
+
         const meta = document.createElement("div");
         meta.className = "meta";
         meta.innerHTML = `Opened: ${it.openedAt}<br>` + `PAO: ${it.pao}M<br>` + `Expires: ${it.expiresAt}`;
+
         left.appendChild(name);
         left.appendChild(meta);
 
         const right = document.createElement("div");
         right.className = "right";
+
         const st = document.createElement("div");
         st.className = "tag";
         if(it.status === "OK"){ st.classList.add("tagOk"); st.textContent = "Safe"; }
@@ -1417,21 +1489,27 @@
         del.className = "btn btnSmall btnDanger";
         del.textContent = "Delete";
         del.onclick = async ()=>{
-          const ok = await openConfirm({ title: "Delete this item?", desc: "This will permanently remove it from your shelf.", okText: "Delete", danger: true });
+          const ok = await openConfirm({
+            title: "Delete this item?",
+            desc: "This will permanently remove it from your shelf.",
+            okText: "Delete",
+            danger: true
+          });
           if(!ok) return;
           state.items = state.items.filter(x => x.id !== it.id);
           saveItems();
           renderShelf();
         };
+
         right.appendChild(st);
         right.appendChild(del);
+
         row.appendChild(left);
         row.appendChild(right);
         list.appendChild(row);
       }
     }
 
-    // Reminders
     async function requestNotif(){
       if(!("Notification" in window)) return;
       const res = await Notification.requestPermission();
@@ -1443,6 +1521,7 @@
 
     function runOnOpenReminders(){
       if(!state.notifEnabled || Notification.permission !== "granted") return;
+
       const items = state.items;
       const today = new Date();
       const todayIso = today.toISOString().split("T")[0];
@@ -1459,47 +1538,79 @@
       }
     }
 
-    // Events
+    el("chipSaved").onclick = ()=> setScreen(Screen.SHELF);
+
     el("btnTakePhoto").onclick = async ()=>{
       setScreen(Screen.SCAN);
       state.imageDataUrl = "";
       state.detectedPao = null;
       state.freshness = null;
+      closeResultPopup();
       renderScan();
       await startCameraIfPossible();
     };
 
     el("btnUploadPhoto").onclick = ()=> el("fileInputHome").click();
+
     el("fileInputHome").onchange = async (e)=>{
       const f = e.target.files && e.target.files[0];
       e.target.value = "";
       if(!f) return;
+
       setScreen(Screen.SCAN);
+      stopCamera();
       state.imageDataUrl = await compressToDataUrl(f);
       state.detectedPao = null;
       state.freshness = null;
+      closeResultPopup();
       renderScan();
+
+      setTimeout(()=> analyzeNow(), 180);
     };
 
     el("btnBackFromScan").onclick = ()=> setScreen(Screen.HOME);
     el("btnGoShelf").onclick = ()=> setScreen(Screen.SHELF);
     el("btnHomeFromShelf").onclick = ()=> setScreen(Screen.HOME);
-    el("btnAddFromShelf").onclick = ()=> { setScreen(Screen.SCAN); state.imageDataUrl=""; state.detectedPao=null; state.freshness=null; renderScan(); };
+
+    el("btnAddFromShelf").onclick = async ()=>{
+      setScreen(Screen.SCAN);
+      state.imageDataUrl = "";
+      state.detectedPao = null;
+      state.freshness = null;
+      closeResultPopup();
+      renderScan();
+      await startCameraIfPossible();
+    };
 
     el("btnCapture").onclick = async ()=>{
       if(!state.stream) await startCameraIfPossible();
       if(!state.stream) return;
-      state.imageDataUrl = capturePhoto();
+
+      const shot = capturePhoto();
+      if(!shot){
+        toast("Capture failed. Try again.", 2000);
+        return;
+      }
+      state.imageDataUrl = shot;
+      stopCamera();
       renderScan();
     };
 
     el("btnChooseImage").onclick = ()=> el("fileInput").click();
+
     el("fileInput").onchange = async (e)=>{
       const f = e.target.files && e.target.files[0];
       e.target.value = "";
       if(!f) return;
+
+      stopCamera();
       state.imageDataUrl = await compressToDataUrl(f);
+      state.detectedPao = null;
+      state.freshness = null;
+      closeResultPopup();
       renderScan();
+
+      setTimeout(()=> analyzeNow(), 180);
     };
 
     el("btnPickDate").onclick = ()=> openDatePicker();
@@ -1515,11 +1626,16 @@
     };
 
     el("btnAnalyze").onclick = ()=> analyzeNow();
-    el("popupClose").onclick = ()=> el("resultPopup").style.display = "none";
+    el("popupClose").onclick = ()=> closeResultPopup();
     el("btnSave").onclick = ()=> addCurrentToShelf();
 
     el("btnClearAll").onclick = async ()=>{
-      const ok = await openConfirm({ title: "Clear everything?", desc: "This will remove all items from your shelf.", okText: "Clear All", danger: true });
+      const ok = await openConfirm({
+        title: "Clear everything?",
+        desc: "This will remove all items from your shelf.",
+        okText: "Clear All",
+        danger: true
+      });
       if(!ok) return;
       state.items = [];
       saveItems();
@@ -1528,7 +1644,6 @@
 
     el("btnNotif").onclick = ()=> requestNotif();
 
-    // Init
     renderTopChip();
   </script>
 </body>
