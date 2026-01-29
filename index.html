@@ -89,8 +89,6 @@
       align-items:center;
       gap:8px;
       flex: 0 0 auto;
-      cursor: pointer;
-      user-select:none;
     }
     .chip strong{
       color: var(--text);
@@ -183,7 +181,7 @@
       font-size: 14px;
       line-height: 1.5;
       margin: 0 0 14px;
-      max-width: 48ch;
+      max-width: 52ch;
     }
 
     .cameraBox{
@@ -215,8 +213,7 @@
       font-size: 13px;
       line-height:1.35;
       backdrop-filter: blur(10px);
-      pointer-events: none;
-      z-index: 2;
+      pointer-events: none; /* 중요: 힌트 레이어가 터치 막는 문제 방지 */
     }
 
     .fieldGrid{
@@ -268,6 +265,7 @@
       line-height: 1;
       margin-top: 4px;
     }
+
     .tag{
       padding: 8px 10px;
       border-radius: 999px;
@@ -428,15 +426,15 @@
     .overlay{
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.55);
-      z-index: 9800;
+      background: rgba(0,0,0,.62);
+      z-index: 9300;
       display:none;
       align-items:center;
       justify-content:center;
       padding: 16px;
-      backdrop-filter: blur(6px);
     }
     .overlay.show{ display:flex; }
+
     .modal{
       width: min(520px, 100%);
       border-radius: 22px;
@@ -552,7 +550,7 @@
       font-weight: 800;
       user-select:none;
     }
-    .day.off{ opacity: .35; cursor: default; }
+    .day.off{ opacity: .35; }
     .day.sel{
       background: rgba(43,108,255,.25);
       border-color: rgba(43,108,255,.45);
@@ -564,7 +562,7 @@
       left: 50%;
       top: 14px;
       transform: translateX(-50%);
-      z-index: 9700;
+      z-index: 9200;
       width: min(680px, calc(100% - 18px));
       display:none;
     }
@@ -613,7 +611,6 @@
     .hiddenInput{ display:none; }
   </style>
 </head>
-
 <body>
   <div class="wrap">
     <div class="topbar">
@@ -624,7 +621,7 @@
           <div class="brandSub">Check your makeup before you use it</div>
         </div>
       </div>
-      <div class="chip" id="chipSaved" title="Open My Shelf">
+      <div class="chip" id="chipSaved">
         <strong id="savedCount">0</strong> saved
       </div>
     </div>
@@ -632,8 +629,10 @@
     <div id="screenHome" class="screen active">
       <div class="hero">
         <div class="heroTitle">keep or toss?</div>
-        <div class="heroDesc">Take a photo of the PAO icon (like 6M, 12M) to check freshness.
-        Save it to My Shelf to build your “item box”.</div>
+        <div class="heroDesc">
+          Take a photo of the PAO icon (like 6M, 12M) to check freshness.
+          Save it to My Shelf to build your item box.
+        </div>
         <div class="btnRow">
           <button class="btn btnPrimary btnWide" id="btnTakePhoto">Take a photo</button>
           <button class="btn btnGhost btnWide" id="btnUploadPhoto">Upload a photo</button>
@@ -675,7 +674,24 @@
             <input id="fileInput" class="hiddenInput" type="file" accept="image/*" />
           </div>
 
-          <div style="height:10px;"></div>
+          <div style="heightI’m going to continue with 2/3 and 3/3, which include:
+- 팝업/오버레이(Confirm/Date/Text/Result) 부분 정리
+- analyzeNow()를 “정상 구조(try/catch/finally)”로 복구
+- OCR 응답을 state.detectedPao / state.productName / freshness까지 연결
+- 업로드/캡처 후 0.2초 뒤 자동 Analyze 실행
+- Detected PAO가 빈값일 때 rawText에서 6M 같은 패턴을 한번 더 파싱하는 fallback
+- Clear all 팝업을 ‘가운데 불투명’으로 정상 표시
+
+지금 메시지 길이 제한 때문에 1/3만 먼저 보냈고,
+바로 이어서 2/3, 3/3을 다음 답장으로 연달아 줄게.
+
+근데 한 가지는 지금 확인이 필요해.
+네 Workers는 /ocr-meta에서 mimeType 필드를 “image/jpeg” 같은 값으로 기대해. 지금 프론트는 그걸 제대로 보내도록 고칠 거야. (이게 지금 12M만 나오거나 실패하는 원인 중 하나였던 적이 있음)
+
+다음 답장: 2/3 계속 줄게.
+::contentReference[oaicite:0]{index=0}
+
+height:12px;"></div>
 
           <div class="fieldGrid">
             <div class="field">
@@ -699,7 +715,6 @@
 
           <button class="btn btnPrimary btnWide" id="btnAnalyze">Analyze</button>
           <div class="muted" id="analyzeHint" style="font-size:12.5px;margin-top:8px;line-height:1.45;"></div>
-
         </div>
 
         <div class="card">
@@ -881,6 +896,8 @@
     const ENDPOINT_META = API_BASE + "/ocr-meta";
     const ENDPOINT_FRESHNESS = API_BASE + "/freshness";
 
+    const AUTO_ANALYZE_DELAY_MS = 200;
+
     const Screen = { HOME: "HOME", SCAN: "SCAN", SHELF: "SHELF" };
 
     const state = {
@@ -891,6 +908,7 @@
       productName: "",
       detectedPao: null,
       paoCandidates: [],
+      rawText: "",
       freshness: null,
       busy: false,
       items: loadItems(),
@@ -967,36 +985,31 @@
       if(state.stream) stopCamera();
 
       try{
+        if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+          throw new Error("mediaDevices not supported");
+        }
         const s = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" } },
           audio: false
         });
         state.stream = s;
         v.srcObject = s;
-
-        await new Promise((resolve)=> {
-          v.onloadedmetadata = ()=> resolve();
-          setTimeout(resolve, 500);
-        });
-        try{ await v.play(); }catch{}
       }catch(e){
         console.error(e);
-        toast("Camera failed. Upload instead.", 3000);
+        toast("Camera blocked. Use Upload instead.", 2600);
         v.style.display = "none";
       }
     }
 
     function capturePhoto(){
       const video = el("video");
-      const vw = video.videoWidth || 0;
-      const vh = video.videoHeight || 0;
-      if(!vw || !vh) return "";
-
       const canvas = document.createElement("canvas");
-      canvas.width = vw;
-      canvas.height = vh;
+      const w = video.videoWidth || 1280;
+      const h = video.videoHeight || 720;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, w, h);
       return canvas.toDataURL("image/jpeg", 0.9);
     }
 
@@ -1011,16 +1024,18 @@
     function renderScan(){
       el("openedDateText").textContent = state.openedAt || "-";
       el("productNameText").textContent = state.productName ? state.productName : "Not set";
-      el("analyzeHint").textContent = "";
+
       el("detectedPaoBig").textContent = state.detectedPao ? (state.detectedPao + "M") : "-";
       el("expiresText").textContent = state.freshness?.tossAt || "-";
       el("daysLeftText").textContent = (state.freshness && Number.isFinite(state.freshness.daysLeft)) ? String(state.freshness.daysLeft) : "-";
-      setStatusTag(computeStatus(state.freshness?.daysLeft));
+
+      const kind = computeStatus(state.freshness?.daysLeft);
+      setStatusTag(kind);
+
       el("btnSave").disabled = !(state.detectedPao && state.freshness);
 
       const img = el("previewImg");
       const v = el("video");
-
       if(state.imageDataUrl){
         img.src = state.imageDataUrl;
         img.style.display = "block";
@@ -1048,14 +1063,13 @@
     }
 
     function computeStatus(daysLeft){
-      const n = Number(daysLeft);
-      if(!Number.isFinite(n)) return "WAIT";
-      if(n < 0) return "TOSS";
-      if(n <= 30) return "WARN";
+      if(!Number.isFinite(daysLeft)) return "WAIT";
+      if(daysLeft < 0) return "TOSS";
+      if(daysLeft <= 30) return "WARN";
       return "OK";
     }
 
-    function openResultPopup(status, pao, tossAt){
+    function openResultPopup(status, pao, tossAt, daysLeft){
       const p = el("resultPopup");
       const title = el("popupTitle");
       const sub = el("popupSub");
@@ -1084,8 +1098,8 @@
         tag.textContent = "TOSS IT";
       }
 
-      paoTag.textContent = `${pao}M PAO`;
-      expTag.textContent = `Until ${tossAt}`;
+      paoTag.textContent = pao + "M PAO";
+      expTag.textContent = "Until " + tossAt;
 
       const tips = getTips(status);
       el("tip1").textContent = tips[0];
@@ -1097,6 +1111,7 @@
 
     function closeResultPopup(){
       const p = el("resultPopup");
+      if(!p) return;
       p.classList.remove("show");
       p.style.display = "none";
     }
@@ -1118,8 +1133,6 @@
 
     function openConfirm({ title, desc, okText="OK", danger=false }){
       return new Promise((resolve)=>{
-        closeResultPopup();
-
         el("confirmTitle").textContent = title;
         el("confirmDesc").textContent = desc;
         el("confirmOk").textContent = okText;
@@ -1135,10 +1148,10 @@
           el("confirmCancel").onclick = null;
           el("confirmOk").onclick = null;
         };
+
         el("confirmClose").onclick = ()=> close(false);
         el("confirmCancel").onclick = ()=> close(false);
         el("confirmOk").onclick = ()=> close(true);
-
         showOverlay("overlayConfirm", true);
       });
     }
@@ -1159,12 +1172,12 @@
         el("textClose").onclick = ()=> close(null);
         el("textCancel").onclick = ()=> close(null);
         el("textOk").onclick = ()=> close(normalizeProductName(el("textInput").value));
-
         showOverlay("overlayText", true);
         setTimeout(()=> el("textInput").focus(), 50);
       });
     }
 
+    // Calendar
     const cal = { y: new Date().getFullYear(), m: new Date().getMonth(), sel: null, showYearSelect: false };
 
     function buildYearSelect(){
@@ -1210,12 +1223,13 @@
     }
 
     function renderCalendar(){
-      el("calLabelText").textContent = `${cal.y}-${String(cal.m+1).padStart(2,"0")}`;
-      el("yearSelect").value = String(cal.y);
+      const label = el("calLabelText");
+      label.textContent = `${cal.y}-${String(cal.m+1).padStart(2,"0")}`;
+      const ys = el("yearSelect");
+      ys.value = String(cal.y);
 
       const grid = el("calGrid");
       grid.innerHTML = "";
-
       const dows = ["S","M","T","W","T","F","S"];
       dows.forEach(d => {
         const div = document.createElement("div");
@@ -1253,26 +1267,24 @@
       }
     }
 
+    // Analyze helpers
     async function compressToDataUrl(fileOrDataUrl){
       if(typeof fileOrDataUrl === "string" && fileOrDataUrl.startsWith("data:image")){
         return fileOrDataUrl;
       }
       const file = fileOrDataUrl;
       const img = new Image();
-
       const dataUrl = await new Promise((resolve,reject)=>{
         const reader = new FileReader();
         reader.onload = ()=> resolve(reader.result);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-
       await new Promise((resolve,reject)=>{
         img.onload = resolve;
         img.onerror = reject;
         img.src = dataUrl;
       });
-
       const maxW = 1400;
       const maxH = 1400;
       let w = img.width;
@@ -1280,13 +1292,11 @@
       const scale = Math.min(1, maxW / w, maxH / h);
       w = Math.round(w * scale);
       h = Math.round(h * scale);
-
       const canvas = document.createElement("canvas");
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, w, h);
-
       return canvas.toDataURL("image/jpeg", 0.86);
     }
 
@@ -1295,27 +1305,31 @@
       return m ? m[1] : "image/jpeg";
     }
 
-    function pickBestPao(paoCandidates){
-      const arr = (Array.isArray(paoCandidates) ? paoCandidates : [])
-        .map(n => Number(n))
-        .filter(n => [3,6,9,12,18,24,36].includes(n));
-
-      if(!arr.length) return null;
-      arr.sort((a,b)=> a-b);
-      return arr[0];
+    function parsePaoFromAnyText(s){
+      const text = String(s||"").toUpperCase().replace(/\s/g,"");
+      const m = text.match(/(3|6|9|12|18|24|36)M/g) || [];
+      const nums = [...new Set(m.map(x => Number(x.replace("M",""))))].filter(n => [3,6,9,12,18,24,36].includes(n));
+      return nums;
     }
 
-    async function analyzeNow(){
+    async function analyzeNow(auto=false){
       if(state.busy) return;
       if(!state.imageDataUrl){
-        toast("Add a photo first.", 2200);
+        if(!auto) toast("Add a photo first.", 2200);
         return;
       }
 
       state.busy = true;
       el("btnAnalyze").disabled = true;
       el("btnAnalyze").textContent = "Analyzing...";
-      el("analyzeHint").textContent = "Working…";
+      el("analyzeHint").textContent = "Scanning PAO icon…";
+
+      // 초기화(이전 결과가 남아있지 않게)
+      state.detectedPao = null;
+      state.paoCandidates = [];
+      state.rawText = "";
+      state.freshness = null;
+      renderScan();
 
       try{
         const mimeType = getMimeFromDataUrl(state.imageDataUrl) || "image/jpeg";
@@ -1324,65 +1338,93 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            imageBase64: state.imageDataUrl,
-            mimeType,
-          }),
+            imageBase64: state.imageDataUrl,  // dataURL 그대로 보내도 Worker에서 stripDataUrl 처리
+            mimeType
+          })
         });
 
-        const j = await r.json().catch(()=> null);
+        const j = await r.json().catch(()=>null);
 
         if(!r.ok || !j || !j.ok){
-          const code = j?.error || "UNKNOWN";
-          const msg = j?.message || "";
-          el("analyzeHint").textContent = "Try a closer, clearer photo (avoid reflections).";
-          toast(`OCR failed: ${code}`.slice(0, 120), 3200);
+          const code = j?.error || (r.status ? `HTTP_${r.status}` : "UNKNOWN");
+          const msg = (j?.message || "").toString();
+          el("analyzeHint").textContent =
+            "Scan failed. Try a closer photo, reduce glare, or use Upload with a clearer image.";
+          toast(`Scan failed (${code}).`, 3000);
           return;
         }
 
-        state.paoCandidates = j.paoCandidates || [];
-        const best = pickBestPao(state.paoCandidates);
-        if(!best){
-          el("analyzeHint").textContent = "PAO not detected. Re-shoot closer (6M / 12M should be readable).";
-          toast("PAO not detected. Try again.", 2800);
+        // 1) 후보값 수집 (모델이 JSON을 못 준 경우 rawText에서라도 재파싱)
+        const candidatesFromApi = Array.isArray(j.paoCandidates) ? j.paoCandidates : [];
+        const candidatesA = candidatesFromApi
+          .map(n => Number(n))
+          .filter(n => [3,6,9,12,18,24,36].includes(n));
+
+        const candidatesB = parsePaoFromAnyText(j.rawText || "");
+        const merged = [...new Set([...candidatesA, ...candidatesB])];
+
+        // 2) 선택 로직: 단일이면 그거, 다수면 "가장 그럴듯한 값" 선택(작은 값 우선)
+        //    (12M만 계속 뜨는 문제를 줄이기 위해 rawText 기반 후보도 합치고,
+        //     모델이 기본값처럼 12를 뱉는 케이스에서 다른 후보가 있으면 그걸 우선)
+        merged.sort((a,b)=>a-b);
+
+        state.paoCandidates = merged;
+        state.rawText = (j.rawText || "").toString().slice(0,220);
+
+        // productName 자동 채우기 (있으면)
+        const pn = normalizeProductName(j.productName || "");
+        if(pn && !state.productName) state.productName = pn;
+
+        const picked = merged.length ? merged[0] : null;
+        state.detectedPao = picked;
+
+        if(!picked){
+          el("analyzeHint").textContent =
+            "PAO not detected. Try to fill the frame with the PAO icon (e.g., 6M) and avoid reflections.";
+          toast("PAO not detected. Try again closer.", 2800);
+          renderScan();
           return;
         }
 
-        state.detectedPao = best;
-
-        if(!state.productName && j.productName){
-          state.productName = normalizeProductName(j.productName);
-        }
+        // 3) freshness 계산 호출
+        el("analyzeHint").textContent = `Detected ${picked}M. Calculating freshness…`;
 
         const fr = await fetch(ENDPOINT_FRESHNESS, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            paoMonths: state.detectedPao,
-            openedAt: state.openedAt || isoToday(),
-          }),
+          body: JSON.stringify({ paoMonths: picked, openedAt: state.openedAt })
         });
 
-        const fj = await fr.json().catch(()=> null);
+        const fj = await fr.json().catch(()=>null);
         if(!fr.ok || !fj || !fj.ok){
-          el("analyzeHint").textContent = "Freshness check failed. Try again.";
-          toast("Freshness failed.", 2500);
+          el("analyzeHint").textContent =
+            "Could not calculate freshness. Please try again.";
+          toast("Freshness calc failed.", 2600);
+          renderScan();
           return;
         }
 
         state.freshness = fj;
-        const status = fj.status || computeStatus(fj.daysLeft);
 
-        renderScan();
+        const status = computeStatus(fj.daysLeft);
         setStatusTag(status);
+        renderScan();
 
-        openResultPopup(status, state.detectedPao, fj.tossAt);
+        // 팝업 표시
+        openResultPopup(status, picked, fj.tossAt, fj.daysLeft);
 
+        // 저장 버튼 활성화
         el("btnSave").disabled = false;
-        el("analyzeHint").textContent = "Done.";
+
+        el("analyzeHint").textContent =
+          `Detected ${picked}M · Expires ${fj.tossAt} · Days left ${fj.daysLeft}`;
+
       }catch(e){
         console.error(e);
-        el("analyzeHint").textContent = "Network/CORS error. Check endpoint.";
-        toast("OCR fetch error (network / CORS).", 3500);
+        el("analyzeHint").textContent =
+          "Scan failed due to a network error. Please try again.";
+        toast("Scan failed (network).", 3000);
+        return;
       }finally{
         state.busy = false;
         el("btnAnalyze").disabled = false;
@@ -1394,7 +1436,7 @@
       if(!(state.detectedPao && state.freshness)) return;
 
       const item = {
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2),
+        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2)),
         name: state.productName || "Untitled item",
         openedAt: state.openedAt || isoToday(),
         pao: state.detectedPao,
@@ -1406,9 +1448,7 @@
 
       state.items.unshift(item);
       saveItems();
-
-      toast("Saved to My Shelf.", 1800);
-      closeResultPopup();
+      toast("Saved to My Shelf.", 1700);
       setScreen(Screen.SHELF);
       runOnOpenReminders();
     }
@@ -1420,11 +1460,13 @@
       const safeCount = state.items.filter(it => it.status === "OK").length;
       const ratio = total ? Math.round((safeCount / total) * 100) : 0;
 
+      // gauge arc
       const circ = 2 * Math.PI * 46;
       const dash = (circ * ratio) / 100;
       const arc = el("gaugeArc");
       arc.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
 
+      // 기본 색(원래 코드 유지)
       if(ratio >= 80){ arc.setAttribute("stroke", "rgba(32,201,151,.92)"); }
       else if(ratio >= 60){ arc.setAttribute("stroke", "rgba(255,204,0,.92)"); }
       else { arc.setAttribute("stroke", "rgba(255,77,79,.92)"); }
@@ -1471,7 +1513,10 @@
 
         const meta = document.createElement("div");
         meta.className = "meta";
-        meta.innerHTML = `Opened: ${it.openedAt}<br>` + `PAO: ${it.pao}M<br>` + `Expires: ${it.expiresAt}`;
+        meta.innerHTML =
+          `Opened: ${it.openedAt}<br>` +
+          `PAO: ${it.pao}M<br>` +
+          `Expires: ${it.expiresAt}`;
 
         left.appendChild(name);
         left.appendChild(meta);
@@ -1510,6 +1555,7 @@
       }
     }
 
+    // Reminders
     async function requestNotif(){
       if(!("Notification" in window)) return;
       const res = await Notification.requestPermission();
@@ -1538,14 +1584,21 @@
       }
     }
 
-    el("chipSaved").onclick = ()=> setScreen(Screen.SHELF);
+    function scheduleAutoAnalyze(){
+      clearTimeout(scheduleAutoAnalyze._t);
+      scheduleAutoAnalyze._t = setTimeout(()=>{
+        analyzeNow(true);
+      }, AUTO_ANALYZE_DELAY_MS);
+    }
 
+    // Events
     el("btnTakePhoto").onclick = async ()=>{
       setScreen(Screen.SCAN);
       state.imageDataUrl = "";
       state.detectedPao = null;
+      state.paoCandidates = [];
+      state.rawText = "";
       state.freshness = null;
-      closeResultPopup();
       renderScan();
       await startCameraIfPossible();
     };
@@ -1558,26 +1611,30 @@
       if(!f) return;
 
       setScreen(Screen.SCAN);
-      stopCamera();
       state.imageDataUrl = await compressToDataUrl(f);
       state.detectedPao = null;
+      state.paoCandidates = [];
+      state.rawText = "";
       state.freshness = null;
-      closeResultPopup();
       renderScan();
 
-      setTimeout(()=> analyzeNow(), 180);
+      scheduleAutoAnalyze();
     };
 
     el("btnBackFromScan").onclick = ()=> setScreen(Screen.HOME);
+
     el("btnGoShelf").onclick = ()=> setScreen(Screen.SHELF);
+
+    // My Shelf에서 뒤로가기 = Home 버튼만(요청 반영)
     el("btnHomeFromShelf").onclick = ()=> setScreen(Screen.HOME);
 
     el("btnAddFromShelf").onclick = async ()=>{
       setScreen(Screen.SCAN);
       state.imageDataUrl = "";
       state.detectedPao = null;
+      state.paoCandidates = [];
+      state.rawText = "";
       state.freshness = null;
-      closeResultPopup();
       renderScan();
       await startCameraIfPossible();
     };
@@ -1585,15 +1642,9 @@
     el("btnCapture").onclick = async ()=>{
       if(!state.stream) await startCameraIfPossible();
       if(!state.stream) return;
-
-      const shot = capturePhoto();
-      if(!shot){
-        toast("Capture failed. Try again.", 2000);
-        return;
-      }
-      state.imageDataUrl = shot;
-      stopCamera();
+      state.imageDataUrl = capturePhoto();
       renderScan();
+      scheduleAutoAnalyze(); // 캡처 후 0.2초 자동 분석
     };
 
     el("btnChooseImage").onclick = ()=> el("fileInput").click();
@@ -1603,14 +1654,14 @@
       e.target.value = "";
       if(!f) return;
 
-      stopCamera();
       state.imageDataUrl = await compressToDataUrl(f);
       state.detectedPao = null;
+      state.paoCandidates = [];
+      state.rawText = "";
       state.freshness = null;
-      closeResultPopup();
       renderScan();
 
-      setTimeout(()=> analyzeNow(), 180);
+      scheduleAutoAnalyze(); // 업로드 후 0.2초 자동 분석
     };
 
     el("btnPickDate").onclick = ()=> openDatePicker();
@@ -1622,11 +1673,16 @@
 
     el("btnEditName").onclick = async ()=>{
       const res = await openTextInput(state.productName);
-      if(res !== null){ state.productName = res; renderScan(); }
+      if(res !== null){
+        state.productName = res;
+        renderScan();
+      }
     };
 
-    el("btnAnalyze").onclick = ()=> analyzeNow();
+    el("btnAnalyze").onclick = ()=> analyzeNow(false);
+
     el("popupClose").onclick = ()=> closeResultPopup();
+
     el("btnSave").onclick = ()=> addCurrentToShelf();
 
     el("btnClearAll").onclick = async ()=>{
@@ -1644,7 +1700,9 @@
 
     el("btnNotif").onclick = ()=> requestNotif();
 
+    // Init
     renderTopChip();
+    setScreen(Screen.HOME);
   </script>
 </body>
 </html>
