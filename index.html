@@ -1286,79 +1286,49 @@
       el("analyzeHint").textContent = "";
 
       try {
-        const mimeType = getMimeFromDataUrl(state.imageDataUrl) || "image/jpeg";
+  const mimeType = getMimeFromDataUrl(state.imageDataUrl) || "image/jpeg";
 
-        const r = await fetch(ENDPOINT_META, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            imageBase64: state.imageDataUrl,
-            mimeType,
-          }),
-        });
+  toast("Sending to OCR...", 1200);
 
-        const j = await r.json().catch(() => null);
+  const r = await fetch(ENDPOINT_META, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      imageBase64: state.imageDataUrl, // dataURL 그대로 OK
+      mimeType,
+    }),
+  });
 
-        // 디버그
-        console.log("ocr-meta response:", r.status, j);
+  const j = await r.json().catch(() => null);
 
-        if (!r.ok || !j || !j.ok) {
-          const code = j?.error || "UNKNOWN";
-          const status = j?.status || r.status;
+  // 여기서 OCR이 진짜 되는지 1차 판정 끝난다
+  console.log("OCR META STATUS:", r.status);
+  console.log("OCR META BODY:", j);
 
-          if (status === 404) {
-            toast("Endpoint not found (404). Check /ocr-meta URL.", 3000);
-          } else if (code === "UPSTREAM_ERROR") {
-            toast("Couldn’t read PAO. Re-shoot closer & clearer.", 3000);
-          } else if (code === "NO_API_KEY") {
-            toast("Server missing API key.", 3000);
-          } else {
-            toast(`Scan failed (${status}).`, 2500);
-          }
+  // 화면에도 보이게(모바일에서 콘솔 보기 힘들 수 있으니까)
+  const brief = j
+    ? `status=${r.status} ok=${j.ok} pao=${JSON.stringify(j.paoCandidates || [])}`
+    : `status=${r.status} body=parse_failed`;
 
-          el("analyzeHint").textContent =
-            "Tip: Fill the PAO icon larger in frame (6M/12M), avoid glare, focus sharply.";
-          return;
-        }
+  toast(brief, 3500);
 
-        const pao = Array.isArray(j.paoCandidates) ? j.paoCandidates : [];
-        state.paoCandidates = pao;
-        if (j.productName) state.productName = j.productName;
-        state.detectedPao = pao[0] || null;
+  if (!r.ok || !j || !j.ok) {
+    const code = j?.error || "UNKNOWN";
+    const msg = j?.message || "";
+    toast(`OCR failed: ${code} ${msg}`.slice(0, 120), 3500);
+    return;
+  }
 
-        if (!state.detectedPao) {
-          toast("PAO icon not detected. Try again.", 2500);
-          return;
-        }
+  // 성공이면 여기서 잠깐 멈춰. UI 연결은 B에서 한다.
+  // 지금은 "응답이 제대로 왔다"만 확인하면 됨.
+  // 예: j.paoCandidates, j.productName
 
-        // step 2: freshness
-        const r2 = await fetch(ENDPOINT_FRESHNESS, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pao: state.detectedPao, openedAt: state.openedAt })
-        });
-        const j2 = await r2.json().catch(() => null);
-        if (!r2.ok || !j2 || !j2.tossAt) {
-          toast("Failed to calculate freshness.", 2400);
-          return;
-        }
+} catch (e) {
+  console.log("OCR META FETCH ERROR:", e);
+  toast("OCR fetch error (network / CORS).", 3500);
+  return;
+}
 
-        state.freshness = j2;
-        const st = computeStatus(j2.daysLeft);
-        setStatusTag(st);
-        renderScan();
-        openResultPopup(st, state.detectedPao, j2.tossAt, j2.daysLeft);
-        el("btnSave").disabled = false;
-
-      } catch (e) {
-        console.error("ocr-meta fetch error:", e);
-        toast("Network error. Try again.", 2500);
-      } finally {
-        state.busy = false;
-        el("btnAnalyze").disabled = false;
-        el("btnAnalyze").textContent = "Analyze";
-      }
-    }
 
     function addCurrentToShelf(){
       if(!(state.detectedPao && state.freshness)) return;
