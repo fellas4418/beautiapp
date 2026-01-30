@@ -1364,12 +1364,14 @@
 
         // OCR 실패면 여기서 무조건 끝 (freshness 절대 호출 금지)
         if(!r.ok || !j || !j.ok){
-          el("analyzeHint").textContent =
-            "Couldn’t read PAO. Try a closer photo, reduce glare, or upload a clearer image.";
-          toast("Couldn’t read PAO. Try again closer.", 2800);
-          renderScan();
-          return;
+        el("analyzeHint").textContent =
+           "Couldn’t read PAO. Try a closer shot, reduce glare, or upload a clearer image.";
+      if(!auto){
+        toast("Couldn’t read PAO. Try again.", 2400);
         }
+        renderScan();
+      return;
+      }
 
         const candidatesFromApi = (Array.isArray(j.paoCandidates) ? j.paoCandidates : [])
           .map(n => Number(n))
@@ -1388,12 +1390,15 @@
         state.detectedPao = picked;
 
         if(!picked){
-          el("analyzeHint").textContent =
-            "PAO not detected. Fill the frame with the PAO icon (e.g., 6M) and avoid reflections.";
-          toast("PAO not detected. Try again closer.", 2800);
-          renderScan();
-          return;
-        }
+  el("analyzeHint").textContent =
+    "PAO not detected. Fill the frame with the PAO icon (e.g., 6M) and avoid reflections.";
+  if(!auto){
+    toast("PAO not detected. Try again.", 2400);
+  }
+  renderScan();
+  return;
+}
+
 
         // freshness 계산
         el("analyzeHint").textContent = `Detected ${picked}M. Checking freshness…`;
