@@ -213,7 +213,7 @@
       font-size: 13px;
       line-height:1.35;
       backdrop-filter: blur(10px);
-      pointer-events: none; /* 중요: 힌트 레이어가 터치 막는 문제 방지 */
+      pointer-events: none;
     }
 
     .fieldGrid{
@@ -674,24 +674,7 @@
             <input id="fileInput" class="hiddenInput" type="file" accept="image/*" />
           </div>
 
-          <div style="heightI’m going to continue with 2/3 and 3/3, which include:
-- 팝업/오버레이(Confirm/Date/Text/Result) 부분 정리
-- analyzeNow()를 “정상 구조(try/catch/finally)”로 복구
-- OCR 응답을 state.detectedPao / state.productName / freshness까지 연결
-- 업로드/캡처 후 0.2초 뒤 자동 Analyze 실행
-- Detected PAO가 빈값일 때 rawText에서 6M 같은 패턴을 한번 더 파싱하는 fallback
-- Clear all 팝업을 ‘가운데 불투명’으로 정상 표시
-
-지금 메시지 길이 제한 때문에 1/3만 먼저 보냈고,
-바로 이어서 2/3, 3/3을 다음 답장으로 연달아 줄게.
-
-근데 한 가지는 지금 확인이 필요해.
-네 Workers는 /ocr-meta에서 mimeType 필드를 “image/jpeg” 같은 값으로 기대해. 지금 프론트는 그걸 제대로 보내도록 고칠 거야. (이게 지금 12M만 나오거나 실패하는 원인 중 하나였던 적이 있음)
-
-다음 답장: 2/3 계속 줄게.
-::contentReference[oaicite:0]{index=0}
-
-height:12px;"></div>
+          <div style="height:12px;"></div>
 
           <div class="fieldGrid">
             <div class="field">
@@ -994,6 +977,13 @@ height:12px;"></div>
         });
         state.stream = s;
         v.srcObject = s;
+
+        // 중요: 메타데이터 로드 + 재생 보장 (캡처 버튼이 안 먹는 케이스 방지)
+        await new Promise((resolve)=> {
+          if(v.readyState >= 1) return resolve();
+          v.onloadedmetadata = ()=> resolve();
+        });
+        await v.play().catch(()=>{});
       }catch(e){
         console.error(e);
         toast("Camera blocked. Use Upload instead.", 2600);
@@ -1003,6 +993,10 @@ height:12px;"></div>
 
     function capturePhoto(){
       const video = el("video");
+      if(!video.videoWidth || !video.videoHeight){
+        toast("Camera not ready. Try again.", 2000);
+        return "";
+      }
       const canvas = document.createElement("canvas");
       const w = video.videoWidth || 1280;
       const h = video.videoHeight || 720;
@@ -1107,6 +1101,10 @@ height:12px;"></div>
 
       p.style.display = "block";
       p.classList.add("show");
+
+      // 자동 닫힘(2.6초): 확인 누르면 즉시 닫히고, 안 누르면 자동으로 사라짐
+      clearTimeout(openResultPopup._t);
+      openResultPopup._t = setTimeout(()=> closeResultPopup(), 2600);
     }
 
     function closeResultPopup(){
@@ -1312,6 +1310,25 @@ height:12px;"></div>
       return nums;
     }
 
+    // 후보 선택 개선:
+    // - API 후보 + rawText 후보를 합침
+    // - rawText에 후보가 있고 API가 단일(특히 12만 던지는) 케이스면 rawText 우선
+    function pickBestPao(merged, candidatesFromApi, candidatesFromRaw){
+      const a = [...new Set(candidatesFromApi)].sort((x,y)=>x-y);
+      const b = [...new Set(candidatesFromRaw)].sort((x,y)=>x-y);
+      const all = [...new Set(merged)].sort((x,y)=>x-y);
+
+      if(all.length === 0) return null;
+
+      // rawText가 의미있게 잡힌 경우 우선
+      if(b.length && (!a.length || (a.length === 1 && b[0] !== a[0]))){
+        return b[0];
+      }
+
+      // 기본: 가장 작은 값(보수적으로)
+      return all[0];
+    }
+
     async function analyzeNow(auto=false){
       if(state.busy) return;
       if(!state.imageDataUrl){
@@ -1322,9 +1339,9 @@ height:12px;"></div>
       state.busy = true;
       el("btnAnalyze").disabled = true;
       el("btnAnalyze").textContent = "Analyzing...";
-      el("analyzeHint").textContent = "Scanning PAO icon…";
+      el("analyzeHint").textContent = "Reading PAO icon…";
 
-      // 초기화(이전 결과가 남아있지 않게)
+      // 초기화
       state.detectedPao = null;
       state.paoCandidates = [];
       state.rawText = "";
@@ -1338,56 +1355,48 @@ height:12px;"></div>
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            imageBase64: state.imageDataUrl,  // dataURL 그대로 보내도 Worker에서 stripDataUrl 처리
+            imageBase64: state.imageDataUrl,
             mimeType
           })
         });
 
         const j = await r.json().catch(()=>null);
 
+        // OCR 실패면 여기서 무조건 끝 (freshness 절대 호출 금지)
         if(!r.ok || !j || !j.ok){
-          const code = j?.error || (r.status ? `HTTP_${r.status}` : "UNKNOWN");
-          const msg = (j?.message || "").toString();
           el("analyzeHint").textContent =
-            "Scan failed. Try a closer photo, reduce glare, or use Upload with a clearer image.";
-          toast(`Scan failed (${code}).`, 3000);
+            "Couldn’t read PAO. Try a closer photo, reduce glare, or upload a clearer image.";
+          toast("Couldn’t read PAO. Try again closer.", 2800);
+          renderScan();
           return;
         }
 
-        // 1) 후보값 수집 (모델이 JSON을 못 준 경우 rawText에서라도 재파싱)
-        const candidatesFromApi = Array.isArray(j.paoCandidates) ? j.paoCandidates : [];
-        const candidatesA = candidatesFromApi
+        const candidatesFromApi = (Array.isArray(j.paoCandidates) ? j.paoCandidates : [])
           .map(n => Number(n))
           .filter(n => [3,6,9,12,18,24,36].includes(n));
 
-        const candidatesB = parsePaoFromAnyText(j.rawText || "");
-        const merged = [...new Set([...candidatesA, ...candidatesB])];
-
-        // 2) 선택 로직: 단일이면 그거, 다수면 "가장 그럴듯한 값" 선택(작은 값 우선)
-        //    (12M만 계속 뜨는 문제를 줄이기 위해 rawText 기반 후보도 합치고,
-        //     모델이 기본값처럼 12를 뱉는 케이스에서 다른 후보가 있으면 그걸 우선)
-        merged.sort((a,b)=>a-b);
+        const candidatesFromRaw = parsePaoFromAnyText(j.rawText || "");
+        const merged = [...new Set([...candidatesFromApi, ...candidatesFromRaw])].sort((a,b)=>a-b);
 
         state.paoCandidates = merged;
         state.rawText = (j.rawText || "").toString().slice(0,220);
 
-        // productName 자동 채우기 (있으면)
         const pn = normalizeProductName(j.productName || "");
         if(pn && !state.productName) state.productName = pn;
 
-        const picked = merged.length ? merged[0] : null;
+        const picked = pickBestPao(merged, candidatesFromApi, candidatesFromRaw);
         state.detectedPao = picked;
 
         if(!picked){
           el("analyzeHint").textContent =
-            "PAO not detected. Try to fill the frame with the PAO icon (e.g., 6M) and avoid reflections.";
+            "PAO not detected. Fill the frame with the PAO icon (e.g., 6M) and avoid reflections.";
           toast("PAO not detected. Try again closer.", 2800);
           renderScan();
           return;
         }
 
-        // 3) freshness 계산 호출
-        el("analyzeHint").textContent = `Detected ${picked}M. Calculating freshness…`;
+        // freshness 계산
+        el("analyzeHint").textContent = `Detected ${picked}M. Checking freshness…`;
 
         const fr = await fetch(ENDPOINT_FRESHNESS, {
           method: "POST",
@@ -1416,14 +1425,15 @@ height:12px;"></div>
         // 저장 버튼 활성화
         el("btnSave").disabled = false;
 
+        // Calculating 잔상 제거: 최종 결과로 덮어쓰기
         el("analyzeHint").textContent =
           `Detected ${picked}M · Expires ${fj.tossAt} · Days left ${fj.daysLeft}`;
 
       }catch(e){
         console.error(e);
         el("analyzeHint").textContent =
-          "Scan failed due to a network error. Please try again.";
-        toast("Scan failed (network).", 3000);
+          "Couldn’t analyze due to a network error. Please try again.";
+        toast("Network error. Try again.", 2800);
         return;
       }finally{
         state.busy = false;
@@ -1460,13 +1470,11 @@ height:12px;"></div>
       const safeCount = state.items.filter(it => it.status === "OK").length;
       const ratio = total ? Math.round((safeCount / total) * 100) : 0;
 
-      // gauge arc
       const circ = 2 * Math.PI * 46;
       const dash = (circ * ratio) / 100;
       const arc = el("gaugeArc");
       arc.setAttribute("stroke-dasharray", `${dash} ${circ - dash}`);
 
-      // 기본 색(원래 코드 유지)
       if(ratio >= 80){ arc.setAttribute("stroke", "rgba(32,201,151,.92)"); }
       else if(ratio >= 60){ arc.setAttribute("stroke", "rgba(255,204,0,.92)"); }
       else { arc.setAttribute("stroke", "rgba(255,77,79,.92)"); }
@@ -1599,6 +1607,7 @@ height:12px;"></div>
       state.paoCandidates = [];
       state.rawText = "";
       state.freshness = null;
+      el("analyzeHint").textContent = "";
       renderScan();
       await startCameraIfPossible();
     };
@@ -1616,6 +1625,7 @@ height:12px;"></div>
       state.paoCandidates = [];
       state.rawText = "";
       state.freshness = null;
+      el("analyzeHint").textContent = "";
       renderScan();
 
       scheduleAutoAnalyze();
@@ -1625,7 +1635,6 @@ height:12px;"></div>
 
     el("btnGoShelf").onclick = ()=> setScreen(Screen.SHELF);
 
-    // My Shelf에서 뒤로가기 = Home 버튼만(요청 반영)
     el("btnHomeFromShelf").onclick = ()=> setScreen(Screen.HOME);
 
     el("btnAddFromShelf").onclick = async ()=>{
@@ -1635,6 +1644,7 @@ height:12px;"></div>
       state.paoCandidates = [];
       state.rawText = "";
       state.freshness = null;
+      el("analyzeHint").textContent = "";
       renderScan();
       await startCameraIfPossible();
     };
@@ -1642,9 +1652,12 @@ height:12px;"></div>
     el("btnCapture").onclick = async ()=>{
       if(!state.stream) await startCameraIfPossible();
       if(!state.stream) return;
-      state.imageDataUrl = capturePhoto();
+      const shot = capturePhoto();
+      if(!shot) return;
+      state.imageDataUrl = shot;
+      el("analyzeHint").textContent = "";
       renderScan();
-      scheduleAutoAnalyze(); // 캡처 후 0.2초 자동 분석
+      scheduleAutoAnalyze();
     };
 
     el("btnChooseImage").onclick = ()=> el("fileInput").click();
@@ -1659,15 +1672,22 @@ height:12px;"></div>
       state.paoCandidates = [];
       state.rawText = "";
       state.freshness = null;
+      el("analyzeHint").textContent = "";
       renderScan();
 
-      scheduleAutoAnalyze(); // 업로드 후 0.2초 자동 분석
+      scheduleAutoAnalyze();
     };
 
     el("btnPickDate").onclick = ()=> openDatePicker();
     el("calPrev").onclick = ()=>{ cal.m--; if(cal.m<0){ cal.m=11; cal.y--; } renderCalendar(); };
     el("calNext").onclick = ()=>{ cal.m++; if(cal.m>11){ cal.m=0; cal.y++; } renderCalendar(); };
-    el("calLabel").onclick = ()=>{ cal.showYearSelect = !cal.showYearSelect; el("yearSelect").classList.toggle("show", cal.showYearSelect); };
+
+    // 연도 선택: 라벨(연/월)을 누르면 yearSelect 토글
+    el("calLabel").onclick = ()=>{
+      cal.showYearSelect = !cal.showYearSelect;
+      el("yearSelect").classList.toggle("show", cal.showYearSelect);
+    };
+
     el("dateClose").onclick = ()=> closeDatePicker();
     el("dateOk").onclick = ()=> { renderScan(); closeDatePicker(); };
 
@@ -1706,3 +1726,4 @@ height:12px;"></div>
   </script>
 </body>
 </html>
+
