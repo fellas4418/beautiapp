@@ -109,11 +109,6 @@ input[type="date"], input[type="text"], input[type="file"]{
 .badge.warn{background:rgba(255,204,0,.15);color:var(--warn)}
 .badge.err{background:rgba(255,77,79,.15);color:var(--danger)}
 
-.thumb{
-  width:48px;height:48px;border-radius:8px;
-  object-fit:cover;border:1px solid var(--border)
-}
-
 .muted{color:var(--muted);font-size:13px}
 </style>
 </head>
@@ -124,11 +119,7 @@ input[type="date"], input[type="text"], input[type="file"]{
   <div class="sub">Choose PAO and opening date</div>
 
   <div class="card">
-
-    <!-- 📸 Photo -->
-    <div class="row">
-      <input id="photoInput" type="file" accept="image/*">
-    </div>
+    <input type="file" accept="image/*">
 
     <div class="row">
       <input id="openedDate" type="date">
@@ -152,21 +143,20 @@ input[type="date"], input[type="text"], input[type="file"]{
 </div>
 
 <script>
-/* ===== State ===== */
-const PAO = [3,6,9,12,18,24,36];
-let selectedPao = null;
-let currentPhoto = null;   // ← 6단계 핵심
-const KEY = "keep_or_toss_final";
+const PAO=[3,6,9,12,18,24,36];
+let selectedPao=null;
+const KEY="keep_or_toss_core";
 
-/* ===== Utils ===== */
-const $ = id => document.getElementById(id);
-const todayStr = () => new Date().toISOString().slice(0,10);
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toISOString().slice(0,10);
 
 function addMonths(d,m){
-  const x=new Date(d); x.setMonth(x.getMonth()+m); return x;
+  const x=new Date(d);
+  x.setMonth(x.getMonth()+m);
+  return x;
 }
-function daysLeft(toss){
-  return Math.floor((toss-new Date())/86400000);
+function daysLeft(t){
+  return Math.floor((t-new Date())/86400000);
 }
 function statusByDays(d){
   if(d<0) return "err";
@@ -174,45 +164,25 @@ function statusByDays(d){
   return "ok";
 }
 
-/* ===== PAO Buttons ===== */
-const grid = $("paoGrid");
 PAO.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
-  b.className="paoBtn";
   b.onclick=()=>{
     selectedPao=m;
-    [...grid.children].forEach(x=>x.classList.remove("active"));
+    [...$("paoGrid").children].forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
     calc();
   };
-  grid.appendChild(b);
+  $("paoGrid").appendChild(b);
 });
 
-/* ===== OCR MOCK ===== */
-function setPaoFromOCR(pao){
-  if(!PAO.includes(pao)) return;
-  selectedPao = pao;
-  [...grid.children].forEach(btn=>{
-    btn.classList.toggle("active", btn.textContent === pao+"M");
-  });
-  calc();
-}
-
-/* ===== Result ===== */
 function calc(){
   if(!selectedPao) return;
-  const openedValue = $("openedDate").value;
-  if(!openedValue) return;
-
-  const opened = new Date(openedValue);
-  if(isNaN(opened)) return;
-
-  const toss = addMonths(opened,selectedPao);
-  const d = daysLeft(toss);
-  const st = statusByDays(d);
-
-  const r = $("result");
+  const opened=new Date($("openedDate").value);
+  const toss=addMonths(opened,selectedPao);
+  const d=daysLeft(toss);
+  const st=statusByDays(d);
+  const r=$("result");
   r.style.display="block";
   r.className="result "+st;
   r.innerHTML=`
@@ -226,7 +196,6 @@ function calc(){
     </div>`;
 }
 
-/* ===== Shelf ===== */
 function load(){return JSON.parse(localStorage.getItem(KEY)||"[]")}
 function save(v){localStorage.setItem(KEY,JSON.stringify(v))}
 
@@ -235,26 +204,24 @@ function render(){
   items.forEach(i=>{
     i.status=statusByDays(daysLeft(new Date(i.tossAt)));
   });
+  items.sort((a,b)=>({err:0,warn:1,ok:2}[a.status]-{err:0,warn:1,ok:2}[b.status]));
   $("count").textContent="Total: "+items.length;
-  const list=$("shelfList"); list.innerHTML="";
+  $("shelfList").innerHTML="";
   items.forEach(i=>{
     const d=document.createElement("div");
     d.className="item";
     d.innerHTML=`
-      <div style="display:flex;gap:10px">
-        ${i.photo?`<img class="thumb" src="${i.photo}">`:``}
-        <div>
-          <b>${i.name||"Unnamed"}</b>
-          <div class="badge ${i.status}">
-            ${i.status==="err"?"TOSS":i.status==="warn"?"SOON":"SAFE"}
-          </div>
-          <div class="muted">
-            Opened ${i.opened} · PAO ${i.pao}M · Toss ${i.tossAt}
-          </div>
+      <div>
+        <b>${i.name||"Unnamed"}</b>
+        <div class="badge ${i.status}">
+          ${i.status==="err"?"TOSS":i.status==="warn"?"SOON":"SAFE"}
+        </div>
+        <div class="muted">
+          Opened ${i.opened} · PAO ${i.pao}M · Toss ${i.tossAt}
         </div>
       </div>
       <button onclick="del('${i.id}')">Delete</button>`;
-    list.appendChild(d);
+    $("shelfList").appendChild(d);
   });
   save(items);
 }
@@ -264,15 +231,8 @@ function del(id){
   render();
 }
 
-/* ===== Events ===== */
-$("openedDate").value=todayStr();
+$("openedDate").value=today();
 $("openedDate").onchange=calc;
-
-$("photoInput").onchange=(e)=>{
-  const file=e.target.files?.[0];
-  if(!file) return;
-  currentPhoto = URL.createObjectURL(file);
-};
 
 $("addBtn").onclick=()=>{
   if(!selectedPao) return alert("Choose PAO");
@@ -285,19 +245,13 @@ $("addBtn").onclick=()=>{
     opened,
     pao:selectedPao,
     tossAt:toss,
-    photo: currentPhoto,
     status:"ok"
   });
-  currentPhoto=null;
-  $("photoInput").value="";
   save(items);
   render();
 };
 
-$("clearBtn").onclick=()=>{
-  save([]); render();
-};
-
+$("clearBtn").onclick=()=>{save([]);render();};
 render();
 </script>
 </body>
