@@ -743,8 +743,10 @@ const API_BASE = "https://skinguard.ohryee.workers.dev";
       localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
     }
 
-    function renderShelf(){
-      const items = loadShelf();
+    function renderShelf() {
+     let shelf = loadShelf();
+     shelf = refreshShelfStatus(shelf);
+
       $countPill.textContent = "Total: " + items.length;
       $shelfList.innerHTML = "";
 
@@ -946,6 +948,23 @@ function createShelfItem({ photoSrc, paoMonths, openedAt }) {
     createdAt: new Date().toISOString()
   };
 }
+
+function refreshShelfStatus(items) {
+  let changed = false;
+
+  const updated = items.map(item => {
+    const newStatus = calculateStatus(item.discardAt);
+    if (item.status !== newStatus) {
+      changed = true;
+      return { ...item, status: newStatus };
+    }
+    return item;
+  });
+
+  if (changed) saveShelf(updated);
+  return updated;
+}
+
 
 console.log(
   createShelfItem({
