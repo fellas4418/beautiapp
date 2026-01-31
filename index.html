@@ -28,15 +28,15 @@ body{
   border-radius:16px;
   padding:16px;
 }
-button{
+h1{margin:0 0 8px;font-size:26px;}
+input,button{
   background:#1f2430;
   border:1px solid var(--border);
   color:var(--text);
-  padding:12px 14px;
+  padding:12px;
   border-radius:12px;
-  font-weight:700;
-  cursor:pointer;
 }
+button{cursor:pointer;font-weight:700}
 .paoGrid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
@@ -47,98 +47,103 @@ button{
   border-color:var(--ok);
   box-shadow:0 0 0 2px rgba(32,201,151,.3) inset;
 }
-.preview{
-  margin-top:12px;
+.result{
+  margin-top:14px;
   border:1px solid var(--border);
-  border-radius:12px;
-  overflow:hidden;
+  border-radius:14px;
+  padding:14px;
+  text-align:center;
 }
-.preview img{width:100%;display:block;}
+.result.ok{color:var(--ok)}
 </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>Keep or Toss</h1>
-  <div class="card">
 
-    <input type="file" id="fileInput" accept="image/*">
-    <div class="preview" id="preview" style="display:none"></div>
+  <div class="card">
+    <input id="imageInput" type="file" accept="image/*">
+
+    <input id="openedDate" type="date" style="margin-top:10px">
 
     <div class="paoGrid" id="paoGrid"></div>
 
-    <div style="margin-top:12px;display:flex;gap:10px">
-      <button id="analyzeBtn">Analyze</button>
-    </div>
-
+    <div id="result" class="result" style="display:none"></div>
   </div>
 </div>
 
 <script>
+/* ===== CONFIG ===== */
+const OCR_ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev";
+
 /* ===== STATE ===== */
 const PAO = [3,6,9,12,18,24,36];
 let selectedPao = null;
-let currentImageBase64 = null;
+
+/* ===== DOM ===== */
+const $ = id => document.getElementById(id);
 
 /* ===== PAO BUTTONS ===== */
-const grid = document.getElementById("paoGrid");
+const grid = $("paoGrid");
 PAO.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
   b.className="paoBtn";
-  b.onclick=()=>selectPAO(m);
+  b.onclick=()=>selectPao(m);
   grid.appendChild(b);
 });
 
-function selectPAO(m){
+function selectPao(m){
   selectedPao=m;
   [...grid.children].forEach(x=>x.classList.remove("active"));
   [...grid.children].find(b=>b.textContent===m+"M")?.classList.add("active");
-  console.log("PAO selected:", m);
+  calc();
 }
 
-/* ===== IMAGE → BASE64 ===== */
-document.getElementById("fileInput").onchange = e => {
-  const file = e.target.files[0];
-  if (!file) return;
+/* ===== DATE ===== */
+$("openedDate").value=new Date().toISOString().slice(0,10);
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    currentImageBase64 = reader.result.split(",")[1];
-    console.log("base64 length:", currentImageBase64.length);
+/* ===== CALC ===== */
+function addMonths(d,m){
+  const x=new Date(d); x.setMonth(x.getMonth()+m); return x;
+}
+function calc(){
+  if(!selectedPao) return;
+  const opened=new Date($("openedDate").value);
+  const toss=addMonths(opened,selectedPao);
+  const r=$("result");
+  r.style.display="block";
+  r.className="result ok";
+  r.innerHTML=`SAFE TO USE<br>${selectedPao}M · Toss ${toss.toISOString().slice(0,10)}`;
+}
 
-    const img = document.createElement("img");
-    img.src = reader.result;
-    const p = document.getElementById("preview");
-    p.innerHTML = "";
-    p.appendChild(img);
-    p.style.display="block";
-  };
-  reader.readAsDataURL(file);
+/* ===== IMAGE → OCR (자동) ===== */
+$("imageInput").onchange=async e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+
+  const base64 = await toBase64(file);
+  console.log("base64 length:", base64.length);
+
+  const res = await fetch(OCR_ENDPOINT,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ imageBase64: base64 })
+  }).then(r=>r.json()).catch(()=>null);
+
+  if(res?.pao){
+    selectPao(res.pao);
+  }
 };
 
-/* ===== OCR FETCH ===== */
-document.getElementById("analyzeBtn").onclick = async () => {
-  if (!currentImageBase64) {
-    alert("이미지 먼저 선택");
-    return;
-  }
-
-  const res = await fetch("https://pao-ocr-worker.ohryee.workers.dev/", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ imageBase64: currentImageBase64 })
+function toBase64(file){
+  return new Promise(res=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(",")[1]);
+    r.readAsDataURL(file);
   });
-
-  const json = await res.json();
-  console.log("OCR RESULT:", json);
-
-  if (json.pao) {
-    selectPAO(json.pao);
-  } else {
-    alert("PAO 인식 실패");
-  }
-};
+}
 </script>
 </body>
 </html>
