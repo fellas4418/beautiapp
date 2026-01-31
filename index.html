@@ -625,19 +625,33 @@
     }
 
     function humanizeScanError(httpStatus, payload){
-      const e = (payload && typeof payload === "object") ? payload : {};
-      const code = String(e.error || e.code || "").trim();
-      const msg = String(e.message || "").trim();
+  const e = (payload && typeof payload === "object") ? payload : {};
+  const code = String(e.error || e.code || "").trim();
+  const upstreamStatus = Number(e.status || httpStatus || 0);
+  const model = String(e.model || "").trim();
+  const msg = String(e.message || "").trim();
 
-      if (code === "NO_API_KEY") return "Scanner is not configured yet (missing API key).";
-      if (code === "IMAGE_TOO_LARGE" || httpStatus === 413) return "Photo is too large. Please try again (it should auto-compress).";
-      if (httpStatus === 429) return "Scanner is busy. Please try again in a moment.";
-      if (httpStatus === 408) return "Scanner timed out. Please try again.";
-      if (httpStatus >= 500 && httpStatus <= 599) return "Scanner is temporarily unavailable. Please try again.";
-      if (code) return "Scan failed (" + code + ").";
-      if (msg) return "Scan failed. " + msg;
-      return "PAO not detected. Please tap a PAO button below.";
-    }
+  if (code === "NO_API_KEY") return "Scanner is not configured yet (missing API key).";
+  if (code === "IMAGE_TOO_LARGE" || upstreamStatus === 413) return "Photo is too large. Try again (auto-compress should help).";
+
+  if (upstreamStatus === 401) return "Scanner auth failed (401). Check GEMINI_API_KEY.";
+  if (upstreamStatus === 403) return "Scanner permission failed (403). Check API key permissions / billing / model access.";
+  if (upstreamStatus === 429) return "Scanner is busy (429). Please try again in a moment.";
+  if (upstreamStatus === 408) return "Scanner timed out. Please try again.";
+  if (upstreamStatus >= 500 && upstreamStatus <= 599) return "Scanner is temporarily unavailable. Please try again.";
+
+  if (code === "UPSTREAM_ERROR"){
+    const m = model ? (" model=" + model) : "";
+    const tail = msg ? (" " + msg.slice(0, 180)) : "";
+    return `Scan failed (upstream ${upstreamStatus}${m}).${tail}`;
+  }
+
+  if (code) return "Scan failed (" + code + ").";
+  if (msg) return "Scan failed. " + msg;
+
+  return "PAO not detected. Please tap a PAO button below.";
+}
+
 
     async function runOcr(){
       if (ocrBusy) return;
