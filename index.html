@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Keep or Toss</title>
+<title>Keep or Toss – Step 2</title>
 
 <style>
 :root{
@@ -12,9 +12,6 @@
   --text:#e8e8ea;
   --muted:#a8abb4;
   --border:rgba(255,255,255,.10);
-  --ok:#20c997;
-  --warn:#ffcc00;
-  --danger:#ff4d4f;
 }
 *{box-sizing:border-box;}
 body{
@@ -32,237 +29,89 @@ body{
 }
 h1{margin:0 0 6px;font-size:26px;}
 .sub{color:var(--muted);font-size:14px;margin-bottom:14px}
-.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-button{
-  background:#1f2430;
-  border:1px solid var(--border);
-  color:var(--text);
-  padding:12px 14px;
-  border-radius:12px;
-  font-weight:700;
-  cursor:pointer;
-}
-input[type="date"], input[type="text"], input[type="file"]{
+
+input[type="file"]{
   width:100%;
-  background:transparent;
-  border:1px solid var(--border);
-  border-radius:12px;
   padding:12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#1f2430;
   color:var(--text);
 }
-.paoGrid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  margin-top:10px;
+
+#photoPreviewWrap{
+  margin-top:12px;
+  display:none;
 }
-.paoGrid button.active{
-  border-color:var(--ok);
-  box-shadow:0 0 0 2px rgba(32,201,151,.3) inset;
-}
-.result{
-  margin-top:14px;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:14px;
-  text-align:center;
-}
-.result.ok{color:var(--ok)}
-.result.warn{color:var(--warn)}
-.result.err{color:var(--danger)}
-.meta{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-top:10px;
-}
-.meta div{
-  border:1px solid var(--border);
+#photoPreview{
+  max-width:100%;
   border-radius:12px;
-  padding:10px;
 }
-.shelf{margin-top:18px;}
-.item{
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:12px;
+.muted{
   margin-top:10px;
-  display:flex;
-  justify-content:space-between;
+  font-size:13px;
+  color:var(--muted);
 }
-.badge{
-  font-size:12px;
-  padding:4px 8px;
-  border-radius:999px;
-  font-weight:700;
-}
-.badge.ok{background:rgba(32,201,151,.15);color:var(--ok)}
-.badge.warn{background:rgba(255,204,0,.15);color:var(--warn)}
-.badge.err{background:rgba(255,77,79,.15);color:var(--danger)}
-.muted{color:var(--muted);font-size:13px}
 </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>Keep or Toss</h1>
-  <div class="sub">Choose PAO and opening date</div>
+  <div class="sub">Step 2 · Photo select → preview → base64</div>
 
   <div class="card">
-    <div class="row">
-      <input id="fileInput" type="file" accept="image/*">
+    <input id="photoInput" type="file" accept="image/*" />
+
+    <div id="photoPreviewWrap">
+      <img id="photoPreview" />
     </div>
 
-    <div class="row">
-      <input id="openedDate" type="date">
-    </div>
-
-    <div class="paoGrid" id="paoGrid"></div>
-
-    <div id="result" class="result" style="display:none"></div>
-
-    <div class="row">
-      <input id="productName" type="text" placeholder="Product name">
-      <button id="addBtn">Add to My Shelf</button>
-      <button id="clearBtn">Clear</button>
-    </div>
-
-    <div class="shelf">
-      <div id="count" class="muted"></div>
-      <div id="shelfList"></div>
+    <div class="muted">
+      Open DevTools → Console<br>
+      base64 length 로그가 나오면 성공
     </div>
   </div>
 </div>
 
 <script>
-/* ===== State ===== */
-const PAO = [3,6,9,12,18,24,36];
-let selectedPao = null;
-const KEY = "keep_or_toss_final";
+const photoInput = document.getElementById("photoInput");
+const photoPreview = document.getElementById("photoPreview");
+const photoPreviewWrap = document.getElementById("photoPreviewWrap");
 
-/* ===== Utils ===== */
-const $ = id => document.getElementById(id);
-const todayStr = () => new Date().toISOString().slice(0,10);
-function addMonths(d,m){ const x=new Date(d); x.setMonth(x.getMonth()+m); return x; }
-function daysLeft(toss){ return Math.floor((toss-new Date())/86400000); }
-function statusByDays(d){ if(d<0) return "err"; if(d<=30) return "warn"; return "ok"; }
+let currentBase64 = null;
 
-/* ===== PAO Buttons ===== */
-const grid = $("paoGrid");
-PAO.forEach(m=>{
-  const b=document.createElement("button");
-  b.textContent=m+"M";
-  b.onclick=()=>{
-    selectedPao=m;
-    [...grid.children].forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    calc();
-  };
-  grid.appendChild(b);
-});
+photoInput.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-/* ===== Calc ===== */
-function calc(){
-  if(!selectedPao || !$("openedDate").value) return;
-  const opened=new Date($("openedDate").value);
-  const toss=addMonths(opened,selectedPao);
-  const d=daysLeft(toss);
-  const st=statusByDays(d);
-  const r=$("result");
-  r.style.display="block";
-  r.className="result "+st;
-  r.innerHTML=`
-    <div style="font-size:22px;font-weight:800">
-      ${st==="err"?"TOSS IT":st==="warn"?"USE SOON":"SAFE TO USE"}
-    </div>
-    <div class="meta">
-      <div>PAO<br><b>${selectedPao}M</b></div>
-      <div>Days left<br><b>${d}</b></div>
-      <div>Toss at<br><b>${toss.toISOString().slice(0,10)}</b></div>
-    </div>`;
-}
+  // 1. 미리보기
+  const previewUrl = URL.createObjectURL(file);
+  photoPreview.src = previewUrl;
+  photoPreviewWrap.style.display = "block";
 
-/* ===== Shelf ===== */
-function load(){return JSON.parse(localStorage.getItem(KEY)||"[]")}
-function save(v){localStorage.setItem(KEY,JSON.stringify(v))}
-function render(){
-  let items=load();
-  items.forEach(i=>{
-    i.status=statusByDays(daysLeft(new Date(i.tossAt)));
-  });
-  items.sort((a,b)=>({err:0,warn:1,ok:2}[a.status]-{err:0,warn:1,ok:2}[b.status]));
-  $("count").textContent="Total: "+items.length;
-  const list=$("shelfList"); list.innerHTML="";
-  items.forEach(i=>{
-    const d=document.createElement("div");
-    d.className="item";
-    d.innerHTML=`
-      <div>
-        <b>${i.name||"Unnamed"}</b>
-        <div class="badge ${i.status}">
-          ${i.status==="err"?"TOSS":i.status==="warn"?"SOON":"SAFE"}
-        </div>
-        <div class="muted">
-          Opened ${i.opened} · PAO ${i.pao}M · Toss ${i.tossAt}
-        </div>
-      </div>
-      <button onclick="del('${i.id}')">Delete</button>`;
-    list.appendChild(d);
-  });
-  save(items);
-}
-function del(id){ save(load().filter(i=>i.id!==id)); render(); }
+  // 2. base64 변환
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const maxW = 1200;
+      const scale = Math.min(1, maxW / img.width);
 
-/* ===== OCR (PAO only) ===== */
-async function runPaoOcr(file){
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=async()=>{
-    const base64=reader.result.split(",")[1];
-    const res=await fetch("https://pao-ocr-worker.ohryee.workers.dev/",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ imageBase64: base64 })
-    });
-    const data=await res.json();
-    if(data?.pao){
-      selectedPao=data.pao;
-      [...grid.children].forEach(b=>{
-        b.classList.toggle("active", b.textContent===data.pao+"M");
-      });
-      calc();
-    }
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      currentBase64 = canvas.toDataURL("image/jpeg", 0.85);
+      console.log("base64 length:", currentBase64.length);
+    };
+    img.src = reader.result;
   };
   reader.readAsDataURL(file);
-}
-
-/* ===== Events ===== */
-$("openedDate").value=todayStr();
-$("openedDate").onchange=calc;
-
-$("fileInput").onchange=e=>{
-  runPaoOcr(e.target.files[0]);
-};
-
-$("addBtn").onclick=()=>{
-  if(!selectedPao) return alert("Choose PAO");
-  const opened=$("openedDate").value;
-  const toss=addMonths(new Date(opened),selectedPao).toISOString().slice(0,10);
-  const items=load();
-  items.unshift({
-    id:Date.now()+"",
-    name:$("productName").value,
-    opened,
-    pao:selectedPao,
-    tossAt:toss,
-    status:"ok"
-  });
-  save(items); render();
-};
-
-$("clearBtn").onclick=()=>{ save([]); render(); };
-
-render();
+});
 </script>
 </body>
 </html>
