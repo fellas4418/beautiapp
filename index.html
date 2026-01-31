@@ -167,6 +167,7 @@ const grid = $("paoGrid");
 PAO.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
+  b.className="paoBtn";
   b.onclick=()=>{
     selectedPao=m;
     [...grid.children].forEach(x=>x.classList.remove("active"));
@@ -175,6 +176,19 @@ PAO.forEach(m=>{
   };
   grid.appendChild(b);
 });
+
+/* ===== OCR Hook (5단계 준비용) ===== */
+function setPaoFromOCR(pao){
+  if(!PAO.includes(pao)) return;
+
+  selectedPao = pao;
+
+  [...grid.children].forEach(btn=>{
+    btn.classList.toggle("active", btn.textContent === pao + "M");
+  });
+
+  calc();
+}
 
 /* ===== Result ===== */
 function calc(){
