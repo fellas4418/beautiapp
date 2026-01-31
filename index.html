@@ -112,6 +112,29 @@ photoInput.addEventListener("change", e => {
   };
   reader.readAsDataURL(file);
 });
+function calculateDiscardAt(openedAt, paoMonths) {
+  const d = new Date(openedAt + "T12:00:00");
+  if (isNaN(d)) return null;
+
+  const result = new Date(d);
+  result.setMonth(result.getMonth() + Number(paoMonths));
+  return result.toISOString().slice(0, 10);
+}
+
+function calculateDaysLeft(discardAt) {
+  if (!discardAt) return null;
+  const today = new Date();
+  const target = new Date(discardAt + "T12:00:00");
+  return Math.floor((target - today) / 86400000);
+}
+
+function calculateStatus(discardAt) {
+  const days = calculateDaysLeft(discardAt);
+  if (days === null) return "unknown";
+  if (days < 0) return "toss";
+  if (days <= 30) return "warning";
+  return "safe";
+}
 </script>
 </body>
 </html>
