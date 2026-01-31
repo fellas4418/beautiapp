@@ -31,37 +31,20 @@ body{
   border-radius:16px;
   padding:14px;
 }
-.row{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-.btn{
-  flex:1;
-  padding:14px;
-  background:var(--btn);
-  border:1px solid var(--border);
-  border-radius:12px;
-  color:var(--text);
-  cursor:pointer;
-}
-.dateInput{
-  width:100%;
-  padding:12px;
+input,button{
   background:#0000;
+  color:var(--text);
   border:1px solid var(--border);
   border-radius:12px;
-  color:var(--text);
+  padding:12px;
 }
+button{cursor:pointer}
+.row{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
 .paoGrid{
   margin-top:12px;
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:8px;
-}
-.paoBtn{
-  padding:12px 0;
-  background:#0000;
-  border:1px solid var(--border);
-  border-radius:12px;
-  color:var(--text);
-  cursor:pointer;
 }
 .paoBtn.active{border-color:var(--ok)}
 .bigStatus{
@@ -75,12 +58,6 @@ body{
 .bigStatus.ok{color:var(--ok)}
 .bigStatus.warn{color:var(--warn)}
 .bigStatus.err{color:var(--danger)}
-
-.shelf{
-  margin-top:20px;
-  border-top:1px solid var(--border);
-  padding-top:14px;
-}
 .item{
   margin-top:10px;
   padding:12px;
@@ -88,25 +65,17 @@ body{
   border-radius:12px;
   display:flex;
   justify-content:space-between;
-  gap:10px;
 }
 .badge{
+  display:inline-block;
+  margin-top:6px;
   padding:4px 8px;
   border-radius:999px;
   font-size:12px;
-  border:1px solid var(--border);
 }
 .badge.ok{color:var(--ok)}
 .badge.warn{color:var(--warn)}
 .badge.err{color:var(--danger)}
-.miniBtn{
-  padding:8px 10px;
-  background:var(--btn);
-  border:1px solid var(--border);
-  border-radius:10px;
-  color:var(--text);
-  cursor:pointer;
-}
 </style>
 </head>
 
@@ -115,184 +84,180 @@ body{
   <h1>Keep or Toss</h1>
 
   <div class="card">
-    <input id="openedDate" class="dateInput" type="date" />
+    <input id="openedDate" type="date" />
 
-    <div class="paoGrid" id="paoGrid"></div>
+    <div id="paoGrid" class="paoGrid"></div>
 
     <div id="bigStatus" class="bigStatus">Choose PAO</div>
 
     <div class="row">
-      <button id="btnAdd" class="btn">Add to My Shelf</button>
-      <button id="btnClear" class="btn">Clear</button>
+      <button id="btnAdd">Add to My Shelf</button>
+      <button id="btnClear">Clear</button>
     </div>
 
-    <div class="shelf">
-      <h3 id="count">Total: 0</h3>
-      <div id="shelfList"></div>
-    </div>
+    <h3 id="count">Total: 0</h3>
+    <div id="shelfList"></div>
   </div>
 </div>
 
-<script>
-/* ========= CONFIG ========= */
-const PAO_OPTIONS = [3,6,9,12,18,24];
-const SHELF_KEY = "keep_or_toss_shelf";
-
-/* ========= STATE ========= */
-let selectedPao = null;
-
-/* ========= ENGINE ========= */
-function createId(){
-  return Date.now()+"-"+Math.random().toString(36).slice(2,7);
-}
-function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
-}
-function diffDays(a,b){
-  return Math.floor((b-a)/(1000*60*60*24));
-}
-function calcStatus(discardAt){
-  const today=new Date().toISOString().slice(0,10);
-  if(today>discardAt) return "toss";
-  const diff=(new Date(discardAt)-new Date(today))/(1000*60*60*24);
-  if(diff<=30) return "warning";
-  return "safe";
-}
-function createItem(pao,opened){
-  const discard=addMonths(new Date(opened),pao)
-    .toISOString().slice(0,10);
-  return{
-    id:createId(),
-    openedAt:opened,
-    paoMonths:pao,
-    discardAt:discard,
-    status:calcStatus(discard),
-    createdAt:new Date().toISOString()
-  };
-}
-
-/* ========= STORAGE ========= */
-function loadShelf(){
-  try{
-    const r=localStorage.getItem(SHELF_KEY);
-    return r?JSON.parse(r):[];
-  }catch{return[]}
-}
-function saveShelf(arr){
-  localStorage.setItem(SHELF_KEY,JSON.stringify(arr));
-}
-function refreshStatus(items){
-  let changed=false;
-  const next=items.map(i=>{
-    const s=calcStatus(i.discardAt);
-    if(i.status!==s){changed=true;return{...i,status:s}}
-    return i;
-  });
-  if(changed) saveShelf(next);
-  return next;
-}
 
 <script>
-/* ========= RENDER ========= */
-function renderShelf(){
-  let shelf=loadShelf();
-  shelf=refreshStatus(shelf);
-
-  const order={toss:0,warning:1,safe:2};
-  shelf.sort((a,b)=>{
-    if(order[a.status]!==order[b.status])
-      return order[a.status]-order[b.status];
-    return new Date(b.createdAt)-new Date(a.createdAt);
-  });
-
-  document.getElementById("count").textContent="Total: "+shelf.length;
-  const list=document.getElementById("shelfList");
-  list.innerHTML="";
-
-  if(!shelf.length){
-    list.innerHTML="<p style='color:#888'>No items yet</p>";
-    return;
+  /* ===== CONFIG ===== */
+  const PAO_OPTIONS = [3,6,9,12,18,24,36];
+  const SHELF_KEY = "keep_or_toss_shelf";
+  
+  /* ===== STATE ===== */
+  let selectedPao = null;
+  
+  /* ===== ENGINE ===== */
+  function createId(){
+    return Date.now()+"-"+Math.random().toString(36).slice(2,7);
   }
-
-  shelf.forEach(i=>{
-    const row=document.createElement("div");
-    row.className="item";
-
-    const left=document.createElement("div");
-    left.innerHTML=`
-      <div><strong>PAO ${i.paoMonths}M</strong></div>
-      <div>Opened: ${i.openedAt}</div>
-      <div>Toss at: ${i.discardAt}</div>
-      <span class="badge ${i.status==="toss"?"err":i.status==="warning"?"warn":"ok"}">
-        ${i.status.toUpperCase()}
-      </span>
-    `;
-
-    const del=document.createElement("button");
-    del.className="miniBtn";
-    del.textContent="Delete";
-    del.onclick=()=>{
-      saveShelf(loadShelf().filter(x=>x.id!==i.id));
-      renderShelf();
+  function addMonths(d,m){
+    const x=new Date(d);
+    x.setMonth(x.getMonth()+m);
+    return x;
+  }
+  function diffDays(a,b){
+    return Math.floor((b-a)/(1000*60*60*24));
+  }
+  function calcStatus(discardAt){
+    const today=new Date().toISOString().slice(0,10);
+    if(today>discardAt) return "toss";
+    const diff=(new Date(discardAt)-new Date(today))/(1000*60*60*24);
+    if(diff<=30) return "warning";
+    return "safe";
+  }
+  function createItem(pao,opened){
+    const discard=addMonths(new Date(opened),pao)
+      .toISOString().slice(0,10);
+    return{
+      id:createId(),
+      openedAt:opened,
+      paoMonths:pao,
+      discardAt:discard,
+      status:calcStatus(discard),
+      createdAt:new Date().toISOString()
     };
-
-    row.append(left,del);
-    list.appendChild(row);
+  }
+  
+  /* ===== STORAGE ===== */
+  function loadShelf(){
+    try{
+      const r=localStorage.getItem(SHELF_KEY);
+      return r?JSON.parse(r):[];
+    }catch{return[]}
+  }
+  function saveShelf(arr){
+    localStorage.setItem(SHELF_KEY,JSON.stringify(arr));
+  }
+  function refreshStatus(list){
+    let changed=false;
+    const next=list.map(i=>{
+      const s=calcStatus(i.discardAt);
+      if(i.status!==s){changed=true;return{...i,status:s}}
+      return i;
+    });
+    if(changed) saveShelf(next);
+    return next;
+  }
+  
+  /* ===== RENDER ===== */
+  function renderShelf(){
+    let shelf=loadShelf();
+    shelf=refreshStatus(shelf);
+  
+    const order={toss:0,warning:1,safe:2};
+    shelf.sort((a,b)=>{
+      if(order[a.status]!==order[b.status])
+        return order[a.status]-order[b.status];
+      return new Date(b.createdAt)-new Date(a.createdAt);
+    });
+  
+    document.getElementById("count").textContent="Total: "+shelf.length;
+    const list=document.getElementById("shelfList");
+    list.innerHTML="";
+  
+    if(!shelf.length){
+      list.innerHTML="<p style='color:#888'>No items yet</p>";
+      return;
+    }
+  
+    shelf.forEach(i=>{
+      const row=document.createElement("div");
+      row.className="item";
+  
+      const left=document.createElement("div");
+      left.innerHTML=`
+        <div>Opened: ${i.openedAt}</div>
+        <div>PAO: ${i.paoMonths}M · Toss: ${i.discardAt}</div>
+        <span class="badge ${i.status}">
+          ${i.status.toUpperCase()}
+        </span>
+      `;
+  
+      const del=document.createElement("button");
+      del.textContent="Delete";
+      del.onclick=()=>{
+        saveShelf(loadShelf().filter(x=>x.id!==i.id));
+        renderShelf();
+      };
+  
+      row.append(left,del);
+      list.appendChild(row);
+    });
+  }
+  
+  /* ===== UI ===== */
+  function renderPao(){
+    const g=document.getElementById("paoGrid");
+    g.innerHTML="";
+    PAO_OPTIONS.forEach(m=>{
+      const b=document.createElement("button");
+      b.textContent=m+"M";
+      b.className=(selectedPao===m?"paoBtn active":"paoBtn");
+      b.onclick=()=>{
+        selectedPao=m;
+        renderPao();
+        updateStatus();
+      };
+      g.appendChild(b);
+    });
+  }
+  function updateStatus(){
+    const box=document.getElementById("bigStatus");
+    if(!selectedPao){box.textContent="Choose PAO";return}
+    const opened=document.getElementById("openedDate").value;
+    const discard=addMonths(new Date(opened),selectedPao);
+    const days=diffDays(new Date(),discard);
+    if(days<0){box.className="bigStatus err";box.textContent="TOSS IT"}
+    else if(days<=30){box.className="bigStatus warn";box.textContent="USE SOON"}
+    else{box.className="bigStatus ok";box.textContent="SAFE TO USE"}
+  }
+  
+  /* ===== EVENTS ===== */
+  document.getElementById("btnAdd").onclick=()=>{
+    if(!selectedPao) return alert("Choose PAO");
+    const opened=document.getElementById("openedDate").value;
+    const shelf=loadShelf();
+    shelf.unshift(createItem(selectedPao,opened));
+    saveShelf(shelf);
+    renderShelf();
+  };
+  document.getElementById("btnClear").onclick=()=>{
+    saveShelf([]);
+    renderShelf();
+  };
+  
+  /* ===== INIT ===== */
+  document.addEventListener("DOMContentLoaded",()=>{
+    document.getElementById("openedDate").value=
+      new Date().toISOString().slice(0,10);
+    renderPao();
+    renderShelf();
   });
-}
+  </script>
+  </body>
+  </html>
 
-/* ========= UI ========= */
-function renderPao(){
-  const g=document.getElementById("paoGrid");
-  g.innerHTML="";
-  PAO_OPTIONS.forEach(m=>{
-    const b=document.createElement("button");
-    b.className="paoBtn"+(selectedPao===m?" active":"");
-    b.textContent=m+"M";
-    b.onclick=()=>{
-      selectedPao=m;
-      renderPao();
-      updateStatus();
-    };
-    g.appendChild(b);
-  });
-}
-
-function updateStatus(){
-  const box=document.getElementById("bigStatus");
-  if(!selectedPao){box.textContent="Choose PAO";return}
-  const opened=document.getElementById("openedDate").value;
-  const discard=addMonths(new Date(opened),selectedPao);
-  const days=diffDays(new Date(),discard);
-  if(days<0){box.className="bigStatus err";box.textContent="TOSS IT"}
-  else if(days<=30){box.className="bigStatus warn";box.textContent="USE SOON"}
-  else{box.className="bigStatus ok";box.textContent="SAFE TO USE"}
-}
-
-/* ========= EVENTS ========= */
-document.getElementById("btnAdd").onclick=()=>{
-  if(!selectedPao) return alert("Choose PAO");
-  const opened=document.getElementById("openedDate").value;
-  const shelf=loadShelf();
-  shelf.unshift(createItem(selectedPao,opened));
-  saveShelf(shelf);
-  renderShelf();
-};
-document.getElementById("btnClear").onclick=()=>{
-  saveShelf([]);
-  renderShelf();
-};
-
-/* ========= INIT ========= */
-document.addEventListener("DOMContentLoaded",()=>{
-  document.getElementById("openedDate").value=
-    new Date().toISOString().slice(0,10);
-  renderPao();
-  renderShelf();
-});
-</script>
-</body>
-</html>
-
+  
