@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Keep or Toss – Step 2</title>
+<title>Keep or Toss</title>
 
 <style>
 :root{
@@ -12,6 +12,7 @@
   --text:#e8e8ea;
   --muted:#a8abb4;
   --border:rgba(255,255,255,.10);
+  --ok:#20c997;
 }
 *{box-sizing:border-box;}
 body{
@@ -27,114 +28,117 @@ body{
   border-radius:16px;
   padding:16px;
 }
-h1{margin:0 0 6px;font-size:26px;}
-.sub{color:var(--muted);font-size:14px;margin-bottom:14px}
-
-input[type="file"]{
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid var(--border);
+button{
   background:#1f2430;
+  border:1px solid var(--border);
   color:var(--text);
-}
-
-#photoPreviewWrap{
-  margin-top:12px;
-  display:none;
-}
-#photoPreview{
-  max-width:100%;
+  padding:12px 14px;
   border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
 }
-.muted{
-  margin-top:10px;
-  font-size:13px;
-  color:var(--muted);
+.paoGrid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:12px;
 }
+.paoBtn.active{
+  border-color:var(--ok);
+  box-shadow:0 0 0 2px rgba(32,201,151,.3) inset;
+}
+.preview{
+  margin-top:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+}
+.preview img{width:100%;display:block;}
 </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>Keep or Toss</h1>
-  <div class="sub">Step 2 · Photo select → preview → base64</div>
-
   <div class="card">
-    <input id="photoInput" type="file" accept="image/*" />
 
-    <div id="photoPreviewWrap">
-      <img id="photoPreview" />
+    <input type="file" id="fileInput" accept="image/*">
+    <div class="preview" id="preview" style="display:none"></div>
+
+    <div class="paoGrid" id="paoGrid"></div>
+
+    <div style="margin-top:12px;display:flex;gap:10px">
+      <button id="analyzeBtn">Analyze</button>
     </div>
 
-    <div class="muted">
-      Open DevTools → Console<br>
-      base64 length 로그가 나오면 성공
-    </div>
   </div>
 </div>
 
 <script>
-const photoInput = document.getElementById("photoInput");
-const photoPreview = document.getElementById("photoPreview");
-const photoPreviewWrap = document.getElementById("photoPreviewWrap");
+/* ===== STATE ===== */
+const PAO = [3,6,9,12,18,24,36];
+let selectedPao = null;
+let currentImageBase64 = null;
 
-let currentBase64 = null;
+/* ===== PAO BUTTONS ===== */
+const grid = document.getElementById("paoGrid");
+PAO.forEach(m=>{
+  const b=document.createElement("button");
+  b.textContent=m+"M";
+  b.className="paoBtn";
+  b.onclick=()=>selectPAO(m);
+  grid.appendChild(b);
+});
 
-photoInput.addEventListener("change", e => {
+function selectPAO(m){
+  selectedPao=m;
+  [...grid.children].forEach(x=>x.classList.remove("active"));
+  [...grid.children].find(b=>b.textContent===m+"M")?.classList.add("active");
+  console.log("PAO selected:", m);
+}
+
+/* ===== IMAGE → BASE64 ===== */
+document.getElementById("fileInput").onchange = e => {
   const file = e.target.files[0];
   if (!file) return;
 
-  // 1. 미리보기
-  const previewUrl = URL.createObjectURL(file);
-  photoPreview.src = previewUrl;
-  photoPreviewWrap.style.display = "block";
-
-  // 2. base64 변환
   const reader = new FileReader();
   reader.onload = () => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const maxW = 1200;
-      const scale = Math.min(1, maxW / img.width);
+    currentImageBase64 = reader.result.split(",")[1];
+    console.log("base64 length:", currentImageBase64.length);
 
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      currentBase64 = canvas.toDataURL("image/jpeg", 0.85);
-      console.log("base64 length:", currentBase64.length);
-    };
+    const img = document.createElement("img");
     img.src = reader.result;
+    const p = document.getElementById("preview");
+    p.innerHTML = "";
+    p.appendChild(img);
+    p.style.display="block";
   };
   reader.readAsDataURL(file);
-});
-function calculateDiscardAt(openedAt, paoMonths) {
-  const d = new Date(openedAt + "T12:00:00");
-  if (isNaN(d)) return null;
+};
 
-  const result = new Date(d);
-  result.setMonth(result.getMonth() + Number(paoMonths));
-  return result.toISOString().slice(0, 10);
-}
+/* ===== OCR FETCH ===== */
+document.getElementById("analyzeBtn").onclick = async () => {
+  if (!currentImageBase64) {
+    alert("이미지 먼저 선택");
+    return;
+  }
 
-function calculateDaysLeft(discardAt) {
-  if (!discardAt) return null;
-  const today = new Date();
-  const target = new Date(discardAt + "T12:00:00");
-  return Math.floor((target - today) / 86400000);
-}
+  const res = await fetch("https://pao-ocr-worker.ohryee.workers.dev/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ imageBase64: currentImageBase64 })
+  });
 
-function calculateStatus(discardAt) {
-  const days = calculateDaysLeft(discardAt);
-  if (days === null) return "unknown";
-  if (days < 0) return "toss";
-  if (days <= 30) return "warning";
-  return "safe";
-}
+  const json = await res.json();
+  console.log("OCR RESULT:", json);
+
+  if (json.pao) {
+    selectPAO(json.pao);
+  } else {
+    alert("PAO 인식 실패");
+  }
+};
 </script>
 </body>
 </html>
