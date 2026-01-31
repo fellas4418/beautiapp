@@ -193,14 +193,21 @@ function setPaoFromOCR(pao){
 /* ===== Result ===== */
 function calc(){
   if(!selectedPao) return;
-  const opened=new Date($("openedDate").value);
-  const toss=addMonths(opened,selectedPao);
-  const d=daysLeft(toss);
-  const st=statusByDays(d);
-  const r=$("result");
-  r.style.display="block";
-  r.className="result "+st;
-  r.innerHTML=`
+
+  const openedValue = $("openedDate").value;
+  if(!openedValue) return; // ← 이 줄이 핵심
+
+  const opened = new Date(openedValue);
+  if (isNaN(opened.getTime())) return; // ← 안전장치
+
+  const toss = addMonths(opened, selectedPao);
+  const d = daysLeft(toss);
+  const st = statusByDays(d);
+
+  const r = $("result");
+  r.style.display = "block";
+  r.className = "result " + st;
+  r.innerHTML = `
     <div style="font-size:22px;font-weight:800">
       ${st==="err"?"TOSS IT":st==="warn"?"USE SOON":"SAFE TO USE"}
     </div>
@@ -210,6 +217,7 @@ function calc(){
       <div>Toss at<br><b>${toss.toISOString().slice(0,10)}</b></div>
     </div>`;
 }
+
 
 /* ===== Shelf ===== */
 function load(){return JSON.parse(localStorage.getItem(KEY)||"[]")}
