@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Check Cosmetic Freshness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Keep or Toss</title>
+  <meta name="theme-color" content="#0b0c10" />
   <style>
     :root{
       --bg:#0b0c10;
@@ -11,12 +12,16 @@
       --text:#e8e8ea;
       --muted:#a8abb4;
       --border:rgba(255,255,255,.10);
+      --btn:#2b6cff;
       --btn2:#1f2430;
       --danger:#ff4d4f;
       --ok:#20c997;
       --warn:#ffcc00;
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --radius: 18px;
     }
     *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -70,10 +75,6 @@
       justify-content:center;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
-    }
-    .btn:disabled{
-      opacity: .55;
-      cursor: not-allowed;
     }
 
     .dateRow{ display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; }
@@ -144,7 +145,6 @@
       color: var(--muted);
       display:none;
       white-space: pre-wrap;
-      word-break: break-word;
     }
     .statusLine.show{ display:block; }
     .statusLine.ok{ color: var(--ok); border-color: rgba(32,201,151,.55); background: rgba(32,201,151,.10); }
@@ -336,8 +336,8 @@
 <body>
   <div class="wrap">
     <div class="header">
-      <h1 class="title">Check Your Cosmetic Freshness</h1>
-      <p class="sub">Take a photo to auto-detect PAO. Or tap PAO manually.</p>
+      <h1 class="title">Keep or Toss</h1>
+      <p class="sub">Take a photo if you want auto-detect. Or tap a PAO button to calculate right away.</p>
     </div>
 
     <div class="card">
@@ -411,12 +411,13 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    const API_BASE = "https://skinguard.ohryee.workers.dev";
+
+const API_BASE = "https://skinguard.ohryee.workers.dev";
     const OCR_META_ENDPOINT = API_BASE + "/ocr-meta";
 
     const PAO_OPTIONS = [3, 6, 9, 12, 18, 24, 36];
-    const STORAGE_KEY = "skinguard_shelf_v1";
-    const LAST_NAME_KEY = "skinguard_last_name";
+    const STORAGE_KEY = "skinguard_shelf_v2";
+    const LAST_NAME_KEY = "skinguard_last_name_v2";
 
     const $imageCamera = document.getElementById("imageCamera");
     const $imageGallery = document.getElementById("imageGallery");
@@ -604,10 +605,45 @@
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), ms);
       try{
-        return await fetch(url, { ...options, signal: controller.signal });
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        return res;
       } finally{
         clearTimeout(id);
       }
+    }
+
+    async function readJsonSafe(res){
+      const txt = await res.text().catch(() => "");
+      if (!txt) return { text: "", json: null };
+      try{ return { text: txt, json: JSON.parse(txt) }; }
+      catch{ return { text: txt, json: null }; }
+    }
+
+    function humanizeScanError(httpStatus, payload){
+      const e = (payload && typeof payload === "object") ? payload : {};
+      const code = String(e.error || e.code || "").trim();
+      const upstreamStatus = Number(e.status || httpStatus || 0);
+      const model = String(e.model || "").trim();
+      const msg = String(e.message || "").trim();
+
+      const m = model ? (" model=" + model) : "";
+      const tail = msg ? ("\n" + msg.slice(0, 240)) : "";
+
+      if (code === "NO_API_KEY") return "Scanner is not configured (missing API key).";
+      if (code === "IMAGE_TOO_LARGE" || upstreamStatus === 413) return "Photo is too large. Try again.";
+
+      if (upstreamStatus === 401) return "Scanner auth failed (401). Check GEMINI_API_KEY.";
+      if (upstreamStatus === 403) {
+        return "Scanner blocked (403)." + m + tail + "\nThis usually means billing/permission/policy for generateContent.";
+      }
+      if (upstreamStatus === 429) return "Scanner is busy (429). Try again in a moment.";
+      if (upstreamStatus === 408) return "Scanner timed out. Try again.";
+      if (upstreamStatus >= 500 && upstreamStatus <= 599) return "Scanner is temporarily unavailable. Try again.";
+
+      if (code) return "Scan failed (" + code + ")." + tail;
+      if (msg) return "Scan failed." + tail;
+
+      return "PAO not detected. Please tap a PAO button below.";
     }
 
     function maybeFillProductName(name){
@@ -615,8 +651,7 @@
       if (!clean) return;
 
       const current = String($productName.value || "").trim();
-      const lastAuto = localStorage.getItem(LAST_NAME_KEY) || "";
-      if (!current || current === lastAuto) {
+      if (!current || current === localStorage.getItem(LAST_NAME_KEY)) {
         $productName.value = clean;
       }
 
@@ -624,36 +659,7 @@
       toast("Product name filled");
     }
 
-    function humanizeScanError(httpStatus, payload){
-  const e = (payload && typeof payload === "object") ? payload : {};
-  const code = String(e.error || e.code || "").trim();
-  const upstreamStatus = Number(e.status || httpStatus || 0);
-  const model = String(e.model || "").trim();
-  const msg = String(e.message || "").trim();
-
-  if (code === "NO_API_KEY") return "Scanner is not configured yet (missing API key).";
-  if (code === "IMAGE_TOO_LARGE" || upstreamStatus === 413) return "Photo is too large. Try again (auto-compress should help).";
-
-  if (upstreamStatus === 401) return "Scanner auth failed (401). Check GEMINI_API_KEY.";
-  if (upstreamStatus === 403) return "Scanner permission failed (403). Check API key permissions / billing / model access.";
-  if (upstreamStatus === 429) return "Scanner is busy (429). Please try again in a moment.";
-  if (upstreamStatus === 408) return "Scanner timed out. Please try again.";
-  if (upstreamStatus >= 500 && upstreamStatus <= 599) return "Scanner is temporarily unavailable. Please try again.";
-
-  if (code === "UPSTREAM_ERROR"){
-    const m = model ? (" model=" + model) : "";
-    const tail = msg ? (" " + msg.slice(0, 180)) : "";
-    return `Scan failed (upstream ${upstreamStatus}${m}).${tail}`;
-  }
-
-  if (code) return "Scan failed (" + code + ").";
-  if (msg) return "Scan failed. " + msg;
-
-  return "PAO not detected. Please tap a PAO button below.";
-}
-
-
-    async function runOcr(){
+    async function runScan(){
       if (ocrBusy) return;
       if (!selectedFile){
         setStatus("Please select a photo first.", "warn");
@@ -671,23 +677,25 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }, 18000);
+        }, 20000);
+
+        const parsed = await readJsonSafe(res);
+        const data = parsed.json;
 
         if (!res.ok){
-          let errPayload = null;
-          try { errPayload = await res.json(); } catch {}
-          const msg = humanizeScanError(res.status, errPayload);
-          setStatus(msg + "\nYou can still select PAO below.", "warn");
+          setStatus(humanizeScanError(res.status, data), "warn");
           return;
         }
 
-        const data = await res.json().catch(() => ({}));
+        if (!data || data.ok !== true){
+          setStatus(humanizeScanError(res.status, data), "warn");
+          return;
+        }
+
         const candidates = Array.isArray(data?.paoCandidates) ? data.paoCandidates : [];
         const productName = String(data?.productName || "").trim();
 
-        if (productName) {
-          maybeFillProductName(productName);
-        }
+        if (productName) maybeFillProductName(productName);
 
         if (candidates.length >= 1){
           const m = Number(candidates[0]);
@@ -701,9 +709,9 @@
           }
         }
 
-        setStatus("PAO not detected. Please tap a PAO button below.", "warn");
+        setStatus("PAO not found. Tap a PAO button below.", "warn");
       } catch(e){
-        setStatus("PAO not detected. Please tap a PAO button below.", "warn");
+        setStatus("Photo scan failed. Tap a PAO button below.\n" + String(e?.message || e), "warn");
       } finally{
         showOverlay(false);
         ocrBusy = false;
@@ -719,9 +727,8 @@
       $imgPreview.src = previewUrl;
       $imgWrap.style.display = "block";
 
-      runOcr();
+      runScan();
     }
-
     function loadShelf(){
       try{
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -812,7 +819,7 @@
     function addCurrentToShelf(){
       if (!selectedPao){
         toast("Select a PAO first.");
-        setStatus("Please tap a PAO button first.", "warn");
+        setStatus("Tap a PAO button first.", "warn");
         return;
       }
 
@@ -837,6 +844,7 @@
     }
 
     window.addEventListener("DOMContentLoaded", () => {
+      // opened date default = today
       const now = new Date();
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth()+1).padStart(2,"0");
@@ -849,6 +857,7 @@
         if (selectedPao) computeFreshness();
       });
 
+      // product name default = last used
       const lastName = localStorage.getItem(LAST_NAME_KEY) || "";
       if (lastName) $productName.value = lastName;
 
@@ -858,6 +867,7 @@
 
       $imageCamera.addEventListener("change", (e) => handleImagePicked(e.target.files?.[0]));
       $imageGallery.addEventListener("change", (e) => handleImagePicked(e.target.files?.[0]));
+      $btnAnalyze.addEventListener("click", () => runOcr());
 
       $btnAddShelf.addEventListener("click", () => addCurrentToShelf());
       $btnClearShelf.addEventListener("click", () => {
