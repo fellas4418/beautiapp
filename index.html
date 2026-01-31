@@ -44,7 +44,7 @@ button{
   cursor:pointer;
 }
 
-input[type="date"], input[type="text"]{
+input[type="date"], input[type="text"], input[type="file"]{
   width:100%;
   background:transparent;
   border:1px solid var(--border);
@@ -119,6 +119,12 @@ input[type="date"], input[type="text"]{
   <div class="sub">Choose PAO and opening date</div>
 
   <div class="card">
+
+    <!-- 📸 Photo (OCR entry point) -->
+    <div class="row">
+      <input id="photoInput" type="file" accept="image/*">
+    </div>
+
     <div class="row">
       <input id="openedDate" type="date">
     </div>
@@ -177,17 +183,23 @@ PAO.forEach(m=>{
   grid.appendChild(b);
 });
 
-/* ===== OCR Hook (5단계 준비용) ===== */
+/* ===== OCR Hook (5단계) ===== */
 function setPaoFromOCR(pao){
   if(!PAO.includes(pao)) return;
-
   selectedPao = pao;
-
   [...grid.children].forEach(btn=>{
-    btn.classList.toggle("active", btn.textContent === pao + "M");
+    btn.classList.toggle("active", btn.textContent === pao+"M");
   });
-
   calc();
+}
+
+/* ===== MOCK OCR (구조 검증용) ===== */
+async function runPaoOCR(file){
+  if(!file) return;
+
+  // 🔴 MOCK: 항상 6M 감지했다고 가정
+  const detectedPao = 6;
+  setPaoFromOCR(detectedPao);
 }
 
 /* ===== Result ===== */
@@ -195,19 +207,19 @@ function calc(){
   if(!selectedPao) return;
 
   const openedValue = $("openedDate").value;
-  if(!openedValue) return; // ← 이 줄이 핵심
+  if(!openedValue) return;
 
   const opened = new Date(openedValue);
-  if (isNaN(opened.getTime())) return; // ← 안전장치
+  if(isNaN(opened.getTime())) return;
 
-  const toss = addMonths(opened, selectedPao);
+  const toss = addMonths(opened,selectedPao);
   const d = daysLeft(toss);
   const st = statusByDays(d);
 
   const r = $("result");
-  r.style.display = "block";
-  r.className = "result " + st;
-  r.innerHTML = `
+  r.style.display="block";
+  r.className="result "+st;
+  r.innerHTML=`
     <div style="font-size:22px;font-weight:800">
       ${st==="err"?"TOSS IT":st==="warn"?"USE SOON":"SAFE TO USE"}
     </div>
@@ -217,7 +229,6 @@ function calc(){
       <div>Toss at<br><b>${toss.toISOString().slice(0,10)}</b></div>
     </div>`;
 }
-
 
 /* ===== Shelf ===== */
 function load(){return JSON.parse(localStorage.getItem(KEY)||"[]")}
@@ -258,6 +269,11 @@ function del(id){
 /* ===== Events ===== */
 $("openedDate").value=todayStr();
 $("openedDate").onchange=calc;
+
+$("photoInput").onchange=(e)=>{
+  const file=e.target.files?.[0];
+  if(file) runPaoOCR(file);
+};
 
 $("addBtn").onclick=()=>{
   if(!selectedPao) return alert("Choose PAO");
