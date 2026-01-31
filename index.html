@@ -109,6 +109,11 @@ input[type="date"], input[type="text"], input[type="file"]{
 .badge.warn{background:rgba(255,204,0,.15);color:var(--warn)}
 .badge.err{background:rgba(255,77,79,.15);color:var(--danger)}
 
+.thumb{
+  width:48px;height:48px;border-radius:8px;
+  object-fit:cover;border:1px solid var(--border)
+}
+
 .muted{color:var(--muted);font-size:13px}
 </style>
 </head>
@@ -120,7 +125,7 @@ input[type="date"], input[type="text"], input[type="file"]{
 
   <div class="card">
 
-    <!-- 📸 Photo (OCR entry point) -->
+    <!-- 📸 Photo -->
     <div class="row">
       <input id="photoInput" type="file" accept="image/*">
     </div>
@@ -150,6 +155,7 @@ input[type="date"], input[type="text"], input[type="file"]{
 /* ===== State ===== */
 const PAO = [3,6,9,12,18,24,36];
 let selectedPao = null;
+let currentPhoto = null;   // ← 6단계 핵심
 const KEY = "keep_or_toss_final";
 
 /* ===== Utils ===== */
@@ -183,7 +189,7 @@ PAO.forEach(m=>{
   grid.appendChild(b);
 });
 
-/* ===== OCR Hook (5단계) ===== */
+/* ===== OCR MOCK ===== */
 function setPaoFromOCR(pao){
   if(!PAO.includes(pao)) return;
   selectedPao = pao;
@@ -193,24 +199,19 @@ function setPaoFromOCR(pao){
   calc();
 }
 
-/* ===== MOCK OCR (구조 검증용) ===== */
 async function runPaoOCR(file){
-  if(!file) return;
-
-  // 🔴 MOCK: 항상 6M 감지했다고 가정
-  const detectedPao = 6;
-  setPaoFromOCR(detectedPao);
+  // MOCK: 항상 6M
+  setPaoFromOCR(6);
 }
 
 /* ===== Result ===== */
 function calc(){
   if(!selectedPao) return;
-
   const openedValue = $("openedDate").value;
   if(!openedValue) return;
 
   const opened = new Date(openedValue);
-  if(isNaN(opened.getTime())) return;
+  if(isNaN(opened)) return;
 
   const toss = addMonths(opened,selectedPao);
   const d = daysLeft(toss);
@@ -239,20 +240,22 @@ function render(){
   items.forEach(i=>{
     i.status=statusByDays(daysLeft(new Date(i.tossAt)));
   });
-  items.sort((a,b)=>({err:0,warn:1,ok:2}[a.status]-{err:0,warn:1,ok:2}[b.status]));
   $("count").textContent="Total: "+items.length;
   const list=$("shelfList"); list.innerHTML="";
   items.forEach(i=>{
     const d=document.createElement("div");
     d.className="item";
     d.innerHTML=`
-      <div>
-        <b>${i.name||"Unnamed"}</b>
-        <div class="badge ${i.status}">
-          ${i.status==="err"?"TOSS":i.status==="warn"?"SOON":"SAFE"}
-        </div>
-        <div class="muted">
-          Opened ${i.opened} · PAO ${i.pao}M · Toss ${i.tossAt}
+      <div style="display:flex;gap:10px">
+        ${i.photo?`<img class="thumb" src="${i.photo}">`:``}
+        <div>
+          <b>${i.name||"Unnamed"}</b>
+          <div class="badge ${i.status}">
+            ${i.status==="err"?"TOSS":i.status==="warn"?"SOON":"SAFE"}
+          </div>
+          <div class="muted">
+            Opened ${i.opened} · PAO ${i.pao}M · Toss ${i.tossAt}
+          </div>
         </div>
       </div>
       <button onclick="del('${i.id}')">Delete</button>`;
@@ -272,7 +275,9 @@ $("openedDate").onchange=calc;
 
 $("photoInput").onchange=(e)=>{
   const file=e.target.files?.[0];
-  if(file) runPaoOCR(file);
+  if(!file) return;
+  currentPhoto = URL.createObjectURL(file);
+  runPaoOCR(file);
 };
 
 $("addBtn").onclick=()=>{
@@ -286,8 +291,11 @@ $("addBtn").onclick=()=>{
     opened,
     pao:selectedPao,
     tossAt:toss,
+    photo: currentPhoto,
     status:"ok"
   });
+  currentPhoto=null;
+  $("photoInput").value="";
   save(items);
   render();
 };
