@@ -816,32 +816,26 @@ const API_BASE = "https://skinguard.ohryee.workers.dev";
       });
     }
 
-    function addCurrentToShelf(){
-      if (!selectedPao){
-        toast("Select a PAO first.");
-        setStatus("Tap a PAO button first.", "warn");
-        return;
-      }
+    function addCurrentToShelf() {
+  if (!selectedPao) {
+    toast("Choose PAO first");
+    return;
+  }
 
-      const name = ($productName.value || "").trim();
-      if (name) localStorage.setItem(LAST_NAME_KEY, name);
+  const item = createShelfItem({
+    photoSrc: currentImageSrc || "",
+    paoMonths: selectedPao,
+    openedAt: $openedDate.value
+  });
 
-      const opened = getOpenedDate();
+  const shelf = loadShelf();
+  shelf.unshift(item); // 최신이 위로
+  saveShelf(shelf);
 
-      const item = {
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
-        name,
-        openedAt: opened.toISOString(),
-        paoMonths: selectedPao,
-        createdAt: new Date().toISOString(),
-      };
+  renderShelf();
+  toast("Added to My Shelf");
+}
 
-      const items = loadShelf();
-      items.unshift(item);
-      saveShelf(items);
-      renderShelf();
-      toast("Added to My Shelf");
-    }
 
     window.addEventListener("DOMContentLoaded", () => {
       // opened date default = today
@@ -856,7 +850,7 @@ const API_BASE = "https://skinguard.ohryee.workers.dev";
         updateOpenedDow();
         if (selectedPao) computeFreshness();
       });
-
+ 
       // product name default = last used
       const lastName = localStorage.getItem(LAST_NAME_KEY) || "";
       if (lastName) $productName.value = lastName;
@@ -876,6 +870,45 @@ const API_BASE = "https://skinguard.ohryee.workers.dev";
         toast("Cleared");
       });
     });
+    
+    // ===== 2단계: Shelf Storage (DOMContentLoaded 바깥) =====
+const SHELF_KEY = "keep_or_toss_shelf";
+
+function loadShelf() {
+  try {
+    const raw = localStorage.getItem(SHELF_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveShelf(items) {
+  localStorage.setItem(SHELF_KEY, JSON.stringify(items));
+}
+
+// ===== 2단계: Add current item to shelf =====
+function addCurrentToShelf() {
+  if (!selectedPao) {
+    toast("Choose PAO first");
+    return;
+  }
+
+  const item = createShelfItem({
+    photoSrc: currentImageSrc || "",
+    paoMonths: selectedPao,
+    openedAt: $openedDate.value
+  });
+
+  const shelf = loadShelf();
+  shelf.unshift(item);
+  saveShelf(shelf);
+
+  renderShelf();
+  toast("Added to My Shelf");
+}
+
+
     function createId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
