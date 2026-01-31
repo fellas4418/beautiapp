@@ -119,12 +119,13 @@ input[type="date"], input[type="text"], input[type="file"]{
   <div class="sub">Choose PAO and opening date</div>
 
   <div class="card">
-    <input id="photoInput" type="file" accept="image/*">
+    <input id="fileInput" type="file" accept="image/*">
 
     <div class="row">
       <input id="openedDate" type="date">
     </div>
 
+    <div id="paoHint" class="muted" style="margin-top:10px"></div>
     <div class="paoGrid" id="paoGrid"></div>
 
     <div id="result" class="result" style="display:none"></div>
@@ -143,46 +144,36 @@ input[type="date"], input[type="text"], input[type="file"]{
 </div>
 
 <script>
-/* ===== Core State ===== */
-const PAO=[3,6,9,12,18,24,36];
-let selectedPao=null;
-const KEY="keep_or_toss_core";
+/* ===== Config ===== */
+const PAO = [3,6,9,12,18,24,36];
+const KEY = "keep_or_toss_final";
+const PAO_OCR_ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev";
 
-/* ===== Helpers ===== */
-const $=id=>document.getElementById(id);
-const today=()=>new Date().toISOString().slice(0,10);
+/* ===== State ===== */
+let selectedPao = null;
 
-function addMonths(d,m){
-  const x=new Date(d);
-  x.setMonth(x.getMonth()+m);
-  return x;
-}
-function daysLeft(t){
-  return Math.floor((t-new Date())/86400000);
-}
-function statusByDays(d){
-  if(d<0) return "err";
-  if(d<=30) return "warn";
-  return "ok";
-}
+/* ===== Utils ===== */
+const $ = id => document.getElementById(id);
+const todayStr = () => new Date().toISOString().slice(0,10);
 
-/* ===== PAO UI ===== */
+function addMonths(d,m){ const x=new Date(d); x.setMonth(x.getMonth()+m); return x; }
+function daysLeft(toss){ return Math.floor((toss-new Date())/86400000); }
+function statusByDays(d){ if(d<0) return "err"; if(d<=30) return "warn"; return "ok"; }
+
+/* ===== PAO Buttons ===== */
+const grid = $("paoGrid");
 PAO.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
   b.className="paoBtn";
   b.onclick=()=>{
-    selectPao(m);
+    selectedPao=m;
+    [...grid.children].forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    calc();
   };
-  $("paoGrid").appendChild(b);
+  grid.appendChild(b);
 });
-
-function selectPao(m){
-  selectedPao=m;
-  [...$("paoGrid").children].forEach(x=>x.classList.remove("active"));
-  [...$("paoGrid").children].find(x=>x.textContent===m+"M")?.classList.add("active");
-  calc();
-}
 
 /* ===== Result ===== */
 function calc(){
@@ -211,12 +202,10 @@ function save(v){localStorage.setItem(KEY,JSON.stringify(v))}
 
 function render(){
   let items=load();
-  items.forEach(i=>{
-    i.status=statusByDays(daysLeft(new Date(i.tossAt)));
-  });
+  items.forEach(i=>i.status=statusByDays(daysLeft(new Date(i.tossAt))));
   items.sort((a,b)=>({err:0,warn:1,ok:2}[a.status]-{err:0,warn:1,ok:2}[b.status]));
   $("count").textContent="Total: "+items.length;
-  $("shelfList").innerHTML="";
+  const list=$("shelfList"); list.innerHTML="";
   items.forEach(i=>{
     const d=document.createElement("div");
     d.className="item";
@@ -231,7 +220,7 @@ function render(){
         </div>
       </div>
       <button onclick="del('${i.id}')">Delete</button>`;
-    $("shelfList").appendChild(d);
+    list.appendChild(d);
   });
   save(items);
 }
@@ -241,8 +230,40 @@ function del(id){
   render();
 }
 
-/* ===== Add / Clear ===== */
-$("openedDate").value=today();
+/* ===== PAO OCR Recommendation ===== */
+$("fileInput").onchange = async e => {
+  const file=e.target.files[0];
+  if(!file) return;
+  $("paoHint").textContent="Checking PAO recommendation...";
+  try{
+    const base64=await fileToBase64(file);
+    const res=await fetch(PAO_OCR_ENDPOINT,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({imageBase64:base64})
+    });
+    const data=await res.json();
+    if(data.ok && data.pao){
+      $("paoHint").textContent=`Recommended PAO: ${data.pao}M`;
+    }else{
+      $("paoHint").textContent="";
+    }
+  }catch{
+    $("paoHint").textContent="";
+  }
+};
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(",")[1]);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ===== Events ===== */
+$("openedDate").value=todayStr();
 $("openedDate").onchange=calc;
 
 $("addBtn").onclick=()=>{
@@ -262,20 +283,7 @@ $("addBtn").onclick=()=>{
   render();
 };
 
-$("clearBtn").onclick=()=>{save([]);render();};
-
-/* ===== 5단계: Mock PAO OCR ===== */
-$("photoInput").onchange=()=>{
-  const detected = mockDetectPAOFromImage();
-  if(detected){
-    selectPao(detected);
-  }
-};
-
-function mockDetectPAOFromImage(){
-  const samples=[3,6,9,12,null];
-  return samples[Math.floor(Math.random()*samples.length)];
-}
+$("clearBtn").onclick=()=>{ save([]); render(); };
 
 render();
 </script>
