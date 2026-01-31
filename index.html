@@ -895,7 +895,7 @@ function addCurrentToShelf() {
   }
 
   const item = createShelfItem({
-    photoSrc: currentImageSrc || "",
+    photoSrc: "",          // ← 반드시 이대로
     paoMonths: selectedPao,
     openedAt: $openedDate.value
   });
@@ -907,6 +907,7 @@ function addCurrentToShelf() {
   renderShelf();
   toast("Added to My Shelf");
 }
+
 
 
     function createId() {
