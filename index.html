@@ -876,6 +876,50 @@ const API_BASE = "https://skinguard.ohryee.workers.dev";
         toast("Cleared");
       });
     });
+    function createId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function calculateDiscardAt(openedAt, paoMonths) {
+  const d = new Date(openedAt);
+  d.setMonth(d.getMonth() + paoMonths);
+  return d.toISOString().slice(0, 10);
+}
+
+function calculateStatus(discardAt) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (today > discardAt) return "toss";
+
+  const diff =
+    (new Date(discardAt) - new Date(today)) / (1000 * 60 * 60 * 24);
+
+  if (diff <= 30) return "warning";
+  return "safe";
+}
+
+function createShelfItem({ photoSrc, paoMonths, openedAt }) {
+  const opened = openedAt || new Date().toISOString().slice(0, 10);
+  const discardAt = calculateDiscardAt(opened, paoMonths);
+
+  return {
+    id: createId(),
+    photo: { src: photoSrc || "", takenAt: opened },
+    productName: null,
+    openedAt: opened,
+    paoMonths,
+    discardAt,
+    status: calculateStatus(discardAt),
+    createdAt: new Date().toISOString()
+  };
+}
+
+console.log(
+  createShelfItem({
+    photoSrc: "test-image",
+    paoMonths: 6
+  })
+);
+
   </script>
 </body>
 </html>
