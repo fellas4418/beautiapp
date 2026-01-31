@@ -746,6 +746,15 @@ const API_BASE = "https://skinguard.ohryee.workers.dev";
     function renderShelf() {
      let shelf = loadShelf();
      shelf = refreshShelfStatus(shelf);
+     const order = { toss: 0, warning: 1, safe: 2 };
+
+     shelf.sort((a, b) => {
+      if (order[a.status] !== order[b.status]) {
+    return order[a.status] - order[b.status];
+    }
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
 
       $countPill.textContent = "Total: " + items.length;
       $shelfList.innerHTML = "";
