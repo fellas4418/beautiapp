@@ -702,7 +702,7 @@ const API_BASE = "https://skinguard.ohryee.workers.dev";
           if (PAO_OPTIONS.includes(m)){
             selectedPao = m;
             renderPaoButtons();
-            setStatus("Detected " + m + "M. Calculating...", "ok");
+            setStatus("Detected " + m + "M. Checking freshness…", "ok");
             computeFreshness();
             toast("Detected " + m + "M");
             return;
