@@ -1,70 +1,170 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PAO OCR ONLY TEST</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
-  <style>
-    body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
-    .wrap{max-width:420px;margin:0 auto;padding:16px}
-    .card{background:#111318;border-radius:16px;padding:14px}
-    img{width:100%;border-radius:12px;margin-top:10px}
-    .result{margin-top:12px;font-weight:800}
-    .ok{color:#20c997}
-    .err{color:#ff4d4f}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Keep or Toss</title>
+<style>
+  body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
+  .wrap{max-width:420px;margin:0 auto;padding:16px}
+  .card{background:#111318;border-radius:16px;padding:14px}
+  img{width:100%;border-radius:12px;margin-top:10px}
+  .pao{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  button{padding:10px;border-radius:10px;border:none;background:#1f2430;color:#fff;font-weight:700}
+  button.active{outline:2px solid #20c997}
+  .row{display:flex;gap:8px;margin-top:10px}
+  .result{margin-top:12px;font-weight:800}
+  .ok{color:#20c997}.warn{color:#ffcc00}.err{color:#ff4d4f}
+  input[type="date"],input[type="text"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;border:none}
+  .shelf{margin-top:14px}
+  .item{background:#0f1116;border-radius:12px;padding:10px;margin-top:8px}
+  .muted{opacity:.7;font-size:12px}
+</style>
 </head>
 
 <body>
-  <div class="wrap">
-    <h2>PAO OCR ONLY TEST</h2>
+<div class="wrap">
+  <h2>Keep or Toss</h2>
 
-    <div class="card">
-      <input type="file" id="fileInput" accept="image/*">
-      <img id="preview" style="display:none">
-      <div id="result" class="result"></div>
+  <div class="card">
+    <input type="file" id="fileInput" accept="image/*">
+    <img id="preview" style="display:none">
+
+    <input type="date" id="opened">
+    <input type="text" id="productName" placeholder="Product name (optional)">
+
+    <div class="pao" id="paoBtns"></div>
+
+    <div class="row">
+      <button id="addBtn">Add to Shelf</button>
+      <button id="clearBtn">Clear Shelf</button>
+    </div>
+
+    <div id="result" class="result"></div>
+
+    <div class="shelf">
+      <div class="muted">My Shelf</div>
+      <div id="shelfList"></div>
     </div>
   </div>
+</div>
 
 <script>
-const fileInput = document.getElementById("fileInput");
-const preview = document.getElementById("preview");
-const result = document.getElementById("result");
+/* ====== STATE ====== */
+const PAOS=[3,6,9,12,18,24,36];
+let selectedPAO=null;
+let currentItem=null;
 
-fileInput.onchange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+/* ====== DOM ====== */
+const openedInput=document.getElementById("opened");
+const paoBox=document.getElementById("paoBtns");
+const result=document.getElementById("result");
+const shelfList=document.getElementById("shelfList");
+const productNameInput=document.getElementById("productName");
+const preview=document.getElementById("preview");
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    preview.src = reader.result;
-    preview.style.display = "block";
+/* ====== INIT ====== */
+openedInput.value=new Date().toISOString().slice(0,10);
+PAOS.forEach(m=>{
+  const b=document.createElement("button");
+  b.textContent=m+"M";
+  b.onclick=()=>{selectPAO(m);updateResult();};
+  paoBox.appendChild(b);
+});
+renderShelf();
+
+/* ====== HELPERS ====== */
+function selectPAO(m){
+  selectedPAO=m;
+  [...paoBox.children].forEach(b=>b.classList.toggle("active",b.textContent===m+"M"));
+}
+function addMonths(dateStr,months){
+  const [y,m,d]=dateStr.split("-").map(Number);
+  const dt=new Date(y,m-1,d);
+  dt.setMonth(dt.getMonth()+months);
+  return dt;
+}
+function updateResult(){
+  if(!openedInput.value||!selectedPAO){
+    result.className="result warn";
+    result.textContent="PAO를 선택하세요";
+    return;
+  }
+  const tossDate=addMonths(openedInput.value,selectedPAO);
+  const today=new Date();
+  const daysLeft=Math.floor((tossDate-today)/86400000);
+  let cls="ok",txt="SAFE TO USE";
+  if(daysLeft<0){cls="err";txt="TOSS IT";}
+  else if(daysLeft<=30){cls="warn";txt="USE SOON";}
+  result.className="result "+cls;
+  result.textContent=`${txt} · ${selectedPAO}M · Toss at ${tossDate.toISOString().slice(0,10)}`;
+
+  currentItem={
+    name: productNameInput.value || "Untitled",
+    openedAt: openedInput.value,
+    pao: selectedPAO,
+    tossAt: tossDate.toISOString().slice(0,10),
+    status: txt
+  };
+}
+
+/* ====== ★ 핵심: addCurrentToShelf 통째 교체 ★ ====== */
+function addCurrentToShelf(){
+  if(!currentItem){
+    alert("먼저 사진/PAO/날짜를 설정하세요");
+    return;
+  }
+  const shelf=JSON.parse(localStorage.getItem("shelf")||"[]");
+  shelf.unshift({
+    id: crypto.randomUUID(),
+    ...currentItem,
+    createdAt: new Date().toISOString()
+  });
+  localStorage.setItem("shelf",JSON.stringify(shelf));
+  renderShelf();
+}
+
+/* ====== SHELF ====== */
+function renderShelf(){
+  const shelf=JSON.parse(localStorage.getItem("shelf")||"[]");
+  shelfList.innerHTML="";
+  shelf.forEach(it=>{
+    const d=document.createElement("div");
+    d.className="item";
+    d.innerHTML=`
+      <div><b>${it.name}</b></div>
+      <div class="muted">${it.pao}M · Opened ${it.openedAt}</div>
+      <div class="muted">Toss ${it.tossAt} · ${it.status}</div>
+    `;
+    shelfList.appendChild(d);
+  });
+}
+
+/* ====== EVENTS ====== */
+document.getElementById("addBtn").onclick=addCurrentToShelf;
+document.getElementById("clearBtn").onclick=()=>{
+  localStorage.removeItem("shelf");renderShelf();
+};
+openedInput.onchange=updateResult;
+
+/* ====== OCR (기존 유지) ====== */
+document.getElementById("fileInput").onchange=async e=>{
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async()=>{
+    preview.src=reader.result; preview.style.display="block";
+    const base64=reader.result.split(",")[1];
+    const res=await fetch("https://pao-ocr-worker.ohryee.workers.dev/ocr-meta",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({imageBase64:base64})
+    });
+    const j=await res.json();
+    if(j?.paoCandidates?.length){
+      selectPAO(j.paoCandidates[0]);
+      updateResult();
+    }
   };
   reader.readAsDataURL(file);
-
-  result.textContent = "OCR 중...";
-
-  const { data } = await Tesseract.recognize(
-    file,
-    "eng",
-    { logger: m => console.log(m) }
-  );
-
-  const text = data.text.toUpperCase();
-  console.log("OCR RAW:", text);
-
-  const match = text.match(/(3|6|9|12|18|24|36)\s*M/);
-
-  if (match) {
-    result.className = "result ok";
-    result.textContent = `PAO 인식 성공: ${match[1]}M`;
-  } else {
-    result.className = "result err";
-    result.textContent = "PAO 인식 실패";
-  }
 };
 </script>
 </body>
