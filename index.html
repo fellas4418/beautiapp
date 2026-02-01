@@ -6,145 +6,102 @@
 <title>Keep or Toss</title>
 
 <style>
-:root{
-  --bg:#0b0c10;
-  --card:#111318;
-  --text:#e8e8ea;
-  --muted:#a8abb4;
-  --border:rgba(255,255,255,.10);
-  --ok:#20c997;
-  --warn:#ffcc00;
-  --danger:#ff4d4f;
-}
-*{box-sizing:border-box;}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
-  background:var(--bg);
-  color:var(--text);
-}
-.wrap{max-width:420px;margin:0 auto;padding:16px;}
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:14px;
-}
-h1{margin:0 0 8px;font-size:22px}
+body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
+.wrap{max-width:420px;margin:0 auto;padding:16px}
+.card{background:#111318;border-radius:16px;padding:14px}
 img{width:100%;border-radius:12px;margin-top:10px}
-input,button{
-  width:100%;
-  background:#1f2430;
-  border:1px solid var(--border);
-  color:var(--text);
-  padding:12px;
-  border-radius:12px;
-  margin-top:10px;
-}
-button.active{
-  border-color:var(--ok);
-  box-shadow:0 0 0 2px rgba(32,201,151,.4) inset;
-}
-.pao{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  margin-top:10px;
-}
-.result{
-  margin-top:12px;
-  text-align:center;
-  font-weight:800;
-}
-.result.ok{color:var(--ok)}
-.result.warn{color:var(--warn)}
-.result.err{color:var(--danger)}
+.pao{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+button{padding:10px;border-radius:10px;border:none;background:#1f2430;color:#fff;font-weight:700}
+button.active{outline:2px solid #20c997}
+.result{margin-top:12px;font-weight:800}
+.ok{color:#20c997}.warn{color:#ffcc00}.err{color:#ff4d4f}
 </style>
 </head>
 
 <body>
 <div class="wrap">
-  <h1>Keep or Toss</h1>
+  <h2>Keep or Toss</h2>
 
   <div class="card">
     <input type="file" id="file" accept="image/*">
     <img id="preview" style="display:none">
 
-    <input type="date" id="opened">
+    <input type="date" id="date" style="margin-top:10px;width:100%">
 
-    <div class="pao" id="pao"></div>
+    <div class="pao" id="paoBtns"></div>
 
     <div id="result" class="result"></div>
   </div>
 </div>
 
 <script>
-const PAOS = [3,6,9,12,18,24,36];
-const paoWrap = document.getElementById("pao");
-const openedInput = document.getElementById("opened");
-const result = document.getElementById("result");
-let selectedPao = null;
+const PAOS=[3,6,9,12,18,24,36];
+let selected=null;
+let opened=null;
 
-// 날짜 기본값
-openedInput.value = new Date().toISOString().slice(0,10);
-
-// PAO 버튼 생성
+const paoBox=document.getElementById("paoBtns");
 PAOS.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
-  b.onclick=()=>selectPao(m);
-  paoWrap.appendChild(b);
+  b.onclick=()=>{
+    selectPAO(m);
+    calc();
+  };
+  paoBox.appendChild(b);
 });
 
-function selectPao(m){
-  selectedPao=m;
-  [...paoWrap.children].forEach(b=>b.classList.remove("active"));
-  [...paoWrap.children].find(b=>b.textContent===m+"M")?.classList.add("active");
-  calc();
+function selectPAO(m){
+  selected=m;
+  [...paoBox.children].forEach(b=>{
+    b.classList.toggle("active",b.textContent===m+"M");
+  });
+}
+
+function addMonths(d,m){
+  const x=new Date(d);x.setMonth(x.getMonth()+m);return x;
 }
 
 function calc(){
-  if(!selectedPao||!openedInput.value) return;
-  const o=new Date(openedInput.value);
-  const t=new Date(o); t.setMonth(t.getMonth()+selectedPao);
-  const d=Math.floor((t-new Date())/86400000);
-  let st="ok",txt="SAFE";
-  if(d<0){st="err";txt="TOSS";}
-  else if(d<=30){st="warn";txt="USE SOON";}
-  result.className="result "+st;
-  result.textContent=`${txt} · Toss ${t.toISOString().slice(0,10)}`;
+  if(!selected||!opened)return;
+  const toss=addMonths(opened,selected);
+  const days=Math.floor((toss-new Date())/86400000);
+  const r=document.getElementById("result");
+  let cls="ok",txt="SAFE TO USE";
+  if(days<0){cls="err";txt="TOSS IT";}
+  else if(days<=30){cls="warn";txt="USE SOON";}
+  r.className="result "+cls;
+  r.textContent=`${txt} · ${selected}M · ${toss.toISOString().slice(0,10)}`;
 }
 
-// ===== 이미지 → base64 → OCR → 자동 PAO =====
-document.getElementById("file").onchange=e=>{
-  const f=e.target.files[0];
-  if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{
-    const b64=r.result.split(",")[1];
-    const img=document.getElementById("preview");
-    img.src=r.result;
-    img.style.display="block";
-    runOCR(b64);
-  };
-  r.readAsDataURL(f);
+document.getElementById("date").onchange=e=>{
+  opened=new Date(e.target.value);
+  calc();
 };
 
-async function runOCR(base64){
-  try{
-    const res=await fetch("https://pao-ocr-worker.ohryee.workers.dev/",{
+document.getElementById("file").onchange=async e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+
+  const reader=new FileReader();
+  reader.onload=async()=>{
+    const base64=reader.result.split(",")[1];
+    const img=document.getElementById("preview");
+    img.src=reader.result; img.style.display="block";
+
+    const res=await fetch("https://pao-ocr-worker.ohryee.workers.dev",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({imageBase64:base64})
     });
-    const j=await res.json();
-    if(j.pao) selectPao(j.pao);
-  }catch(e){
-    console.error(e);
-  }
-}
+    const json=await res.json();
 
-openedInput.onchange=calc;
+    if(json.pao){
+      selectPAO(json.pao);
+      calc();
+    }
+  };
+  reader.readAsDataURL(file);
+};
 </script>
 </body>
 </html>
