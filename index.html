@@ -34,15 +34,23 @@
 </div>
 
 <script>
-const PAOS=[3,6,9,12,18,24,36];
-let selectedPAO=null;
+/* ===== 설정 ===== */
+const PAOS = [3,6,9,12,18,24,36];
+const OCR_ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev/ocr-meta";
 
-const openedInput=document.getElementById("opened");
-const paoBox=document.getElementById("paoBtns");
-const result=document.getElementById("result");
+/* ===== 상태 ===== */
+let selectedPAO = null;
 
-openedInput.value=new Date().toISOString().slice(0,10);
+/* ===== DOM ===== */
+const openedInput = document.getElementById("opened");
+const paoBox = document.getElementById("paoBtns");
+const result = document.getElementById("result");
+const preview = document.getElementById("preview");
 
+/* ===== 초기값 ===== */
+openedInput.value = new Date().toISOString().slice(0,10);
+
+/* ===== PAO 버튼 ===== */
 PAOS.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
@@ -51,12 +59,13 @@ PAOS.forEach(m=>{
 });
 
 function selectPAO(m){
-  selectedPAO=m;
+  selectedPAO = m;
   [...paoBox.children].forEach(b=>{
-    b.classList.toggle("active",b.textContent===m+"M");
+    b.classList.toggle("active", b.textContent === m+"M");
   });
 }
 
+/* ===== 계산 ===== */
 function addMonths(dateStr,months){
   const [y,m,d]=dateStr.split("-").map(Number);
   const dt=new Date(y,m-1,d);
@@ -65,50 +74,47 @@ function addMonths(dateStr,months){
 }
 
 function updateResult(){
-  if(!openedInput.value||!selectedPAO){
-    result.className="result warn";
-    result.textContent="PAO를 선택하세요";
+  if(!openedInput.value || !selectedPAO){
+    result.textContent = "";
     return;
   }
 
-  const tossDate=addMonths(openedInput.value,selectedPAO);
-  const daysLeft=Math.floor((tossDate-new Date())/86400000);
+  const tossDate = addMonths(openedInput.value, selectedPAO);
+  const daysLeft = Math.floor((tossDate - new Date()) / 86400000);
 
-  let cls="ok",txt="SAFE TO USE";
-  if(daysLeft<0){cls="err";txt="TOSS IT";}
-  else if(daysLeft<=30){cls="warn";txt="USE SOON";}
+  let cls="ok", txt="SAFE TO USE";
+  if(daysLeft < 0){ cls="err"; txt="TOSS IT"; }
+  else if(daysLeft <= 30){ cls="warn"; txt="USE SOON"; }
 
-  result.className="result "+cls;
-  result.textContent=
+  result.className = "result " + cls;
+  result.textContent =
     `${txt} · ${selectedPAO}M · Toss at ${tossDate.toISOString().slice(0,10)}`;
 }
 
-openedInput.onchange=updateResult;
+openedInput.onchange = updateResult;
 
-// ===== OCR =====
-document.getElementById("fileInput").onchange=async e=>{
-  const file=e.target.files[0];
-  if(!file)return;
+/* ===== OCR (핵심) ===== */
+document.getElementById("fileInput").onchange = async e => {
+  const file = e.target.files[0];
+  if(!file) return;
 
-  const reader=new FileReader();
-  reader.onload=async()=>{
-    preview.src=reader.result;
-    preview.style.display="block";
+  const reader = new FileReader();
+  reader.onload = async () => {
+    preview.src = reader.result;
+    preview.style.display = "block";
 
-    const base64=reader.result.split(",")[1];
+    const base64 = reader.result.split(",")[1];
 
-    const res=await fetch(
-      "https://pao-ocr-worker.ohryee.workers.dev/ocr-meta",
-      {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({ imageBase64: base64 })
-      }
-    );
+    const res = await fetch(OCR_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageBase64: base64 })
+    });
 
-    const json=await res.json();
+    const json = await res.json();
 
-    if(json.paoCandidates && json.paoCandidates.length){
+    // ✅ 여기 중요
+    if (json.ok && json.paoCandidates && json.paoCandidates.length > 0) {
       selectPAO(json.paoCandidates[0]);
       updateResult();
     }
