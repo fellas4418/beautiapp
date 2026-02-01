@@ -66,13 +66,17 @@ function addMonths(dateStr,months){
 }
 
 function updateResult(){
-  if(!openedDateStr||!selectedPAO)return;
+  const r=document.getElementById("result");
+  if(!openedDateStr||!selectedPAO){
+    r.className="result warn";
+    r.textContent="날짜와 PAO를 선택하세요";
+    return;
+  }
 
   const tossDate=addMonths(openedDateStr,selectedPAO);
   const today=new Date();
   const daysLeft=Math.floor((tossDate-today)/86400000);
 
-  const r=document.getElementById("result");
   let cls="ok",txt="SAFE TO USE";
   if(daysLeft<0){cls="err";txt="TOSS IT";}
   else if(daysLeft<=30){cls="warn";txt="USE SOON";}
@@ -83,7 +87,7 @@ function updateResult(){
 }
 
 document.getElementById("opened").onchange=e=>{
-  openedDateStr=e.target.value;   // 문자열로만 보관
+  openedDateStr=e.target.value;
   updateResult();
 };
 
@@ -92,22 +96,19 @@ document.getElementById("file").onchange=e=>{
   if(!file)return;
 
   const reader=new FileReader();
-  reader.onload=async()=>{
-    document.getElementById("preview").src=reader.result;
-    document.getElementById("preview").style.display="block";
+  reader.onload=()=>{
+    const img=document.getElementById("preview");
+    img.src=reader.result;
+    img.style.display="block";
 
-    const base64=reader.result.split(",")[1];
-    const res=await fetch("https://pao-ocr-worker.ohryee.workers.dev",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({imageBase64:base64})
-    });
-    const json=await res.json();
+    // 🔴 임시: 파일명에 3m/6m/12m 있으면 자동 선택
+    const name=file.name.toLowerCase();
+    if(name.includes("3m")) selectPAO(3);
+    else if(name.includes("6m")) selectPAO(6);
+    else if(name.includes("9m")) selectPAO(9);
+    else if(name.includes("12m")) selectPAO(12);
 
-    if(json.pao){
-      selectPAO(json.pao);
-      updateResult();
-    }
+    updateResult();
   };
   reader.readAsDataURL(file);
 };
