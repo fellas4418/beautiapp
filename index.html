@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PAO OCR ONLY TEST</title>
+
   <style>
     body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
     .wrap{max-width:420px;margin:0 auto;padding:16px}
@@ -14,55 +15,77 @@
     .err{color:#ff4d4f}
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <h2>PAO OCR ONLY TEST</h2>
+
     <div class="card">
-      <input type="file" id="file" accept="image/*">
-      <img id="img" style="display:none">
+      <input type="file" id="fileInput" accept="image/*">
+      <img id="preview" style="display:none">
+
       <div id="result" class="result"></div>
     </div>
   </div>
 
 <script>
-const ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev/ocr-meta";
+const OCR_ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev";
 
-document.getElementById("file").onchange = async (e) => {
+const fileInput = document.getElementById("fileInput");
+const preview = document.getElementById("preview");
+const result = document.getElementById("result");
+
+fileInput.onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
+  // preview
   const reader = new FileReader();
-  reader.onload = async () => {
-    img.src = reader.result;
-    img.style.display = "block";
-
-    const base64 = reader.result.split(",")[1];
-
-    try {
-      const res = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64 })
-      });
-
-      const json = await res.json();
-      console.log(json);
-
-      if (json.paoCandidates && json.paoCandidates.length) {
-        result.className = "result ok";
-        result.textContent = "PAO 인식 성공: " + json.paoCandidates.join(", ") + "M";
-      } else {
-        result.className = "result err";
-        result.textContent = "PAO 인식 실패";
-      }
-    } catch (err) {
-      result.className = "result err";
-      result.textContent = "요청 실패";
-      console.error(err);
-    }
+  reader.onload = () => {
+    preview.src = reader.result;
+    preview.style.display = "block";
   };
   reader.readAsDataURL(file);
+
+  // base64
+  const base64 = await fileToBase64(file);
+
+  result.className = "result";
+  result.textContent = "OCR 중...";
+
+  try {
+    const res = await fetch(OCR_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageBase64: base64 }),
+    });
+
+    const data = await res.json();
+    console.log(data);
+
+    if (data.pao) {
+      result.className = "result ok";
+      result.textContent = `PAO 인식 성공: ${data.pao}M`;
+    } else {
+      result.className = "result err";
+      result.textContent = "PAO 인식 실패";
+    }
+
+  } catch (err) {
+    console.error(err);
+    result.className = "result err";
+    result.textContent = "요청 실패";
+  }
 };
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(",")[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
 </script>
 </body>
 </html>
