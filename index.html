@@ -128,11 +128,44 @@
       border-color: #667eea;
     }
 
+    .pao-section {
+      margin-bottom: 20px;
+    }
+
+    .pao-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .ocr-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+
+    .ocr-badge.detecting {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .ocr-badge.success {
+      background: #28a745;
+      color: white;
+    }
+
+    .ocr-badge.failed {
+      background: #dc3545;
+      color: white;
+    }
+
     .pao-buttons {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      margin-bottom: 20px;
     }
 
     .pao-option {
@@ -143,6 +176,7 @@
       cursor: pointer;
       font-size: 1rem;
       transition: all 0.3s;
+      position: relative;
     }
 
     .pao-option:hover {
@@ -154,6 +188,29 @@
       border-color: #667eea;
       background: #667eea;
       color: white;
+    }
+
+    .pao-option.suggested {
+      border-color: #28a745;
+      background: #d4edda;
+      animation: pulse 1s ease-in-out;
+    }
+
+    .pao-option.suggested::after {
+      content: '✓ 감지됨';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #28a745;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
     }
 
     .action-buttons {
@@ -196,6 +253,7 @@
       border-radius: 8px;
       margin-bottom: 15px;
       display: none;
+      font-size: 0.9rem;
     }
 
     .error-message {
@@ -211,26 +269,14 @@
     }
 
     /* Loading Indicator */
-    .loading {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .loading-spinner {
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #667eea;
+    .ocr-loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #667eea;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
+      animation: spin 0.8s linear infinite;
     }
 
     @keyframes spin {
@@ -426,10 +472,18 @@
           <input type="date" id="openedDate">
         </div>
 
-        <div class="form-group">
-          <label>Period After Opening (PAO)</label>
+        <div class="pao-section">
+          <div class="pao-label">
+            <label>Period After Opening (PAO)</label>
+            <span class="ocr-badge" id="ocrStatus" style="display: none;"></span>
+          </div>
           <div class="pao-buttons" id="paoButtons">
-            <!-- PAO buttons will be inserted here dynamically -->
+            <button class="pao-option" data-pao="3">3M</button>
+            <button class="pao-option" data-pao="6">6M</button>
+            <button class="pao-option" data-pao="9">9M</button>
+            <button class="pao-option" data-pao="12">12M</button>
+            <button class="pao-option" data-pao="24">24M</button>
+            <button class="pao-option" data-pao="36">36M</button>
           </div>
         </div>
 
@@ -455,11 +509,6 @@
     </div>
   </div>
 
-  <!-- Loading Indicator -->
-  <div class="loading" id="loadingIndicator">
-    <div class="loading-spinner"></div>
-  </div>
-
   <script>
     // Configuration
     const WORKER_URL = 'https://pao-ocr-worker.ohryee.workers.dev/ocr';
@@ -470,7 +519,7 @@
     const imagePreview = document.getElementById('imagePreview');
     const productNameInput = document.getElementById('productName');
     const openedDateInput = document.getElementById('openedDate');
-    const paoButtonsContainer = document.getElementById('paoButtons');
+    const paoButtons = document.querySelectorAll('.pao-option');
     const addToShelfBtn = document.getElementById('addToShelfBtn');
     const clearBtn = document.getElementById('clearBtn');
     const shelfContainer = document.getElementById('shelfContainer');
@@ -478,7 +527,7 @@
     const resetAllBtn = document.getElementById('resetAllBtn');
     const errorMessage = document.getElementById('errorMessage');
     const infoMessage = document.getElementById('infoMessage');
-    const loadingIndicator = document.getElementById('loadingIndicator');
+    const ocrStatus = document.getElementById('ocrStatus');
 
     // State
     let selectedPAO = null;
@@ -498,6 +547,14 @@
       clearBtn.addEventListener('click', clearForm);
       clearShelfBtn.addEventListener('click', clearShelf);
       resetAllBtn.addEventListener('click', resetAll);
+
+      // PAO button listeners
+      paoButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pao = parseInt(btn.dataset.pao);
+          selectPAO(pao);
+        });
+      });
     });
 
     // Set default date to today
@@ -532,118 +589,87 @@
       };
       reader.readAsDataURL(file);
 
-      // Analyze image
-      await analyzeImage(file);
+      // Analyze image in background (non-blocking)
+      analyzeImageInBackground(file);
     }
 
-    // Analyze image with OCR
-    async function analyzeImage(file) {
-      showLoading(true);
-      
+    // Analyze image in background
+    async function analyzeImageInBackground(file) {
+      // Show OCR status
+      ocrStatus.style.display = 'inline-block';
+      ocrStatus.className = 'ocr-badge detecting';
+      ocrStatus.innerHTML = '<span class="ocr-loading"></span> 감지 중...';
+
       try {
-        // 1. 원본 이미지로 시도
-        console.log('Attempting OCR with original image...');
-        let result = await tryOCR(file);
-        console.log('First attempt result:', result);
+        const base64 = await fileToBase64(file);
+        const imageData = base64.split(',')[1];
         
-        // 2. 실패 시 이미지 전처리 후 재시도
-        if (!result.success || result.pao.length === 0) {
-          console.log('First attempt failed, trying with enhanced image...');
-          showInfo('이미지를 개선하여 재시도 중...');
+        const response = await fetch(`${WORKER_URL}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageData })
+        });
+        
+        const result = await response.json();
+        console.log('OCR Result:', result);
+
+        if (result.success && result.pao && result.pao.length > 0) {
+          // OCR 성공
+          ocrStatus.className = 'ocr-badge success';
+          ocrStatus.textContent = `✓ ${result.pao.join(', ')}M 감지됨`;
           
-          const enhancedFile = await enhanceImage(file);
-          result = await tryOCR(enhancedFile);
-          console.log('Second attempt result:', result);
-        }
-        
-        if (result.success && result.pao.length > 0) {
-          displayPAOOptions(result.pao, result.text);
-          hideMessages();
+          // Highlight detected PAO buttons
+          highlightDetectedPAO(result.pao);
+          
+          // Auto-select first detected PAO
+          if (result.pao.length === 1) {
+            selectPAO(result.pao[0]);
+          }
         } else {
-          showError('PAO를 찾을 수 없습니다.');
-          showInfo(`감지된 텍스트: ${result.text || '없음'}`);
-          console.log('All detected texts:', result.allTexts);
+          // OCR 실패
+          ocrStatus.className = 'ocr-badge failed';
+          ocrStatus.textContent = '✗ 자동 감지 실패';
+          showInfo('PAO를 자동으로 찾지 못했습니다. 수동으로 선택해주세요.');
         }
         
       } catch (error) {
         console.error('OCR Error:', error);
-        showError('이미지 분석 중 오류가 발생했습니다: ' + error.message);
-      } finally {
-        showLoading(false);
+        ocrStatus.className = 'ocr-badge failed';
+        ocrStatus.textContent = '✗ 감지 실패';
+        showInfo('이미지 분석 중 오류가 발생했습니다. 수동으로 선택해주세요.');
       }
     }
 
-    // Try OCR request
-    async function tryOCR(file) {
-      const base64 = await fileToBase64(file);
-      const imageData = base64.split(',')[1];
-      
-      const response = await fetch(`${WORKER_URL}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageData })
+    // Highlight detected PAO buttons
+    function highlightDetectedPAO(paoValues) {
+      // Remove all suggestions first
+      paoButtons.forEach(btn => {
+        btn.classList.remove('suggested');
       });
-      
-      if (!response.ok) {
-        throw new Error(`OCR request failed: ${response.status}`);
-      }
-      
-      return await response.json();
+
+      // Add suggestion to detected PAOs
+      paoValues.forEach(pao => {
+        const btn = document.querySelector(`.pao-option[data-pao="${pao}"]`);
+        if (btn) {
+          btn.classList.add('suggested');
+        }
+      });
     }
 
-    // Enhance image quality
-    async function enhanceImage(file) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        img.onload = () => {
-          try {
-            // 이미지 크기 확대 (해상도 향상)
-            const scale = 2;
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            
-            // 고품질 스케일링
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
-            // 대비 증가
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            const contrast = 30;
-            const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-            
-            for (let i = 0; i < data.length; i += 4) {
-              data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));     // R
-              data[i+1] = Math.min(255, Math.max(0, factor * (data[i+1] - 128) + 128)); // G
-              data[i+2] = Math.min(255, Math.max(0, factor * (data[i+2] - 128) + 128)); // B
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-            
-            // Canvas를 Blob으로 변환
-            canvas.toBlob((blob) => {
-              if (blob) {
-                const enhancedFile = new File([blob], file.name, { type: 'image/jpeg' });
-                resolve(enhancedFile);
-              } else {
-                reject(new Error('Failed to create enhanced image'));
-              }
-            }, 'image/jpeg', 0.95);
-          } catch (error) {
-            reject(error);
-          }
-        };
-        
-        img.onerror = () => {
-          reject(new Error('Failed to load image'));
-        };
-        
-        img.src = URL.createObjectURL(file);
+    // Select PAO
+    function selectPAO(pao) {
+      selectedPAO = pao;
+      
+      // Remove active class from all buttons
+      paoButtons.forEach(btn => {
+        btn.classList.remove('active');
       });
+      
+      // Add active class to selected button
+      const selectedBtn = document.querySelector(`.pao-option[data-pao="${pao}"]`);
+      if (selectedBtn) {
+        selectedBtn.classList.add('active');
+      }
     }
 
     // Convert file to base64
@@ -654,45 +680,6 @@
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-    }
-
-    // Display PAO options
-    function displayPAOOptions(paoValues, detectedText) {
-      paoButtonsContainer.innerHTML = '';
-      selectedPAO = null;
-
-      // Show detected text info
-      if (detectedText) {
-        showInfo(`📝 PAO 인식 성공! 감지된 텍스트: "${detectedText}"`);
-      }
-
-      // Create buttons for each detected PAO
-      paoValues.forEach(pao => {
-        const button = document.createElement('button');
-        button.textContent = `${pao}M`;
-        button.classList.add('pao-option');
-        button.addEventListener('click', () => selectPAO(pao, button));
-        paoButtonsContainer.appendChild(button);
-      });
-
-      // Auto-select if only one option
-      if (paoValues.length === 1) {
-        const button = paoButtonsContainer.querySelector('.pao-option');
-        selectPAO(paoValues[0], button);
-      }
-    }
-
-    // Select PAO
-    function selectPAO(pao, button) {
-      selectedPAO = pao;
-      
-      // Remove active class from all buttons
-      document.querySelectorAll('.pao-option').forEach(btn => {
-        btn.classList.remove('active');
-      });
-      
-      // Add active class to selected button
-      button.classList.add('active');
     }
 
     // Add product to shelf
@@ -761,9 +748,17 @@
       imagePreview.innerHTML = '<span>이미지 미리보기</span>';
       productNameInput.value = '';
       setDefaultDate();
-      paoButtonsContainer.innerHTML = '';
       selectedPAO = null;
       uploadedImage = null;
+      
+      // Reset PAO buttons
+      paoButtons.forEach(btn => {
+        btn.classList.remove('active', 'suggested');
+      });
+      
+      // Hide OCR status
+      ocrStatus.style.display = 'none';
+      
       hideMessages();
     }
 
@@ -923,10 +918,6 @@
     function hideMessages() {
       errorMessage.style.display = 'none';
       infoMessage.style.display = 'none';
-    }
-
-    function showLoading(show) {
-      loadingIndicator.style.display = show ? 'flex' : 'none';
     }
   </script>
 </body>
