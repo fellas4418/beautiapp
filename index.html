@@ -20,105 +20,101 @@
 </head>
 
 <body>
-  <div class="wrap">
-    <h2>Keep or Toss</h2>
+<div class="wrap">
+  <h2>Keep or Toss</h2>
 
-    <div class="card">
-      <input type="file" id="fileInput" accept="image/*">
-      <img id="preview" style="display:none">
+  <div class="card">
+    <input type="file" id="fileInput" accept="image/*">
+    <img id="preview" style="display:none">
 
-      <input type="date" id="opened">
-
-      <div class="pao" id="paoBtns"></div>
-
-      <div id="result" class="result"></div>
-    </div>
+    <input type="date" id="opened">
+    <div class="pao" id="paoBtns"></div>
+    <div id="result" class="result"></div>
   </div>
+</div>
 
-  <script>
-    const PAOS=[3,6,9,12,18,24,36];
-    let selectedPAO=null;
+<script>
+const PAOS=[3,6,9,12,18,24,36];
+let selectedPAO=null;
 
-    const openedInput=document.getElementById("opened");
-    const paoBox=document.getElementById("paoBtns");
-    const result=document.getElementById("result");
+const openedInput=document.getElementById("opened");
+const paoBox=document.getElementById("paoBtns");
+const result=document.getElementById("result");
 
-    // 기본 날짜 값은 오늘
-    openedInput.value = new Date().toISOString().slice(0,10);
+openedInput.value=new Date().toISOString().slice(0,10);
 
-    // PAO 버튼 생성
-    PAOS.forEach(m=>{ 
-      const b=document.createElement("button");
-      b.textContent=m+"M";
-      b.onclick=()=>{ 
-        selectPAO(m); 
-        updateResult(); 
-      };
-      paoBox.appendChild(b);
-    });
+PAOS.forEach(m=>{
+  const b=document.createElement("button");
+  b.textContent=m+"M";
+  b.onclick=()=>{ selectPAO(m); updateResult(); };
+  paoBox.appendChild(b);
+});
 
-    function selectPAO(m){ 
-      selectedPAO=m; 
-      [...paoBox.children].forEach(b=>{ 
-        b.classList.toggle("active",b.textContent===m+"M"); 
-      }); 
-    }
+function selectPAO(m){
+  selectedPAO=m;
+  [...paoBox.children].forEach(b=>{
+    b.classList.toggle("active",b.textContent===m+"M");
+  });
+}
 
-    function addMonths(dateStr,months){
-      const [y,m,d]=dateStr.split("-").map(Number);
-      const dt=new Date(y,m-1,d);
-      dt.setMonth(dt.getMonth()+months);
-      return dt;
-    }
+function addMonths(dateStr,months){
+  const [y,m,d]=dateStr.split("-").map(Number);
+  const dt=new Date(y,m-1,d);
+  dt.setMonth(dt.getMonth()+months);
+  return dt;
+}
 
-    function updateResult(){
-      if(!openedInput.value||!selectedPAO){
-        result.className="result warn";
-        result.textContent="PAO를 선택하세요";
-        return;
+function updateResult(){
+  if(!openedInput.value||!selectedPAO){
+    result.className="result warn";
+    result.textContent="PAO를 선택하세요";
+    return;
+  }
+
+  const tossDate=addMonths(openedInput.value,selectedPAO);
+  const daysLeft=Math.floor((tossDate-new Date())/86400000);
+
+  let cls="ok",txt="SAFE TO USE";
+  if(daysLeft<0){cls="err";txt="TOSS IT";}
+  else if(daysLeft<=30){cls="warn";txt="USE SOON";}
+
+  result.className="result "+cls;
+  result.textContent=
+    `${txt} · ${selectedPAO}M · Toss at ${tossDate.toISOString().slice(0,10)}`;
+}
+
+openedInput.onchange=updateResult;
+
+// ===== OCR =====
+document.getElementById("fileInput").onchange=async e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+
+  const reader=new FileReader();
+  reader.onload=async()=>{
+    preview.src=reader.result;
+    preview.style.display="block";
+
+    const base64=reader.result.split(",")[1];
+
+    const res=await fetch(
+      "https://pao-ocr-worker.ohryee.workers.dev/ocr-meta",
+      {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body:JSON.stringify({ imageBase64: base64 })
       }
+    );
 
-      const tossDate=addMonths(openedInput.value,selectedPAO);
-      const today=new Date();
-      const daysLeft=Math.floor((tossDate-today)/86400000);
+    const json=await res.json();
 
-      let cls="ok",txt="SAFE TO USE";
-      if(daysLeft<0){cls="err";txt="TOSS IT";}
-      else if(daysLeft<=30){cls="warn";txt="USE SOON";}
-
-      result.className="result "+cls;
-      result.textContent=
-        `${txt} · ${selectedPAO}M · Toss at ${tossDate.toISOString().slice(0,10)}`;
+    if(json.paoCandidates && json.paoCandidates.length){
+      selectPAO(json.paoCandidates[0]);
+      updateResult();
     }
-
-    openedInput.onchange=updateResult;
-
-    // 이미지 업로드 시 OCR 호출
-    document.getElementById("fileInput").onchange=async e=>{
-      const file=e.target.files[0];
-      if(!file)return;
-
-      const reader=new FileReader();
-      reader.onload=async()=>{
-        document.getElementById("preview").src=reader.result;
-        document.getElementById("preview").style.display="block";
-
-        // base64로 변환 후 워커에 보내기
-        const base64=reader.result.split(",")[1];
-        const res=await fetch("https://pao-ocr-worker.ohryee.workers.dev",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({imageBase64:base64})
-        });
-        const json=await res.json();
-
-        if(json.pao){
-          selectPAO(json.pao);  // OCR에서 받은 PAO 값을 자동으로 선택
-          updateResult();  // 결과 업데이트
-        }
-      };
-      reader.readAsDataURL(file);
-    };
-  </script>
+  };
+  reader.readAsDataURL(file);
+};
+</script>
 </body>
 </html>
