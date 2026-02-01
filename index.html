@@ -47,21 +47,21 @@
     openedInput.value = new Date().toISOString().slice(0,10);
 
     // PAO 버튼 생성
-    PAOS.forEach(m=>{
+    PAOS.forEach(m=>{ 
       const b=document.createElement("button");
       b.textContent=m+"M";
       b.onclick=()=>{ 
-        selectPAO(m);
-        updateResult();
+        selectPAO(m); 
+        updateResult(); 
       };
       paoBox.appendChild(b);
     });
 
-    function selectPAO(m){
-      selectedPAO=m;
-      [...paoBox.children].forEach(b=>{
-        b.classList.toggle("active",b.textContent===m+"M");
-      });
+    function selectPAO(m){ 
+      selectedPAO=m; 
+      [...paoBox.children].forEach(b=>{ 
+        b.classList.toggle("active",b.textContent===m+"M"); 
+      }); 
     }
 
     function addMonths(dateStr,months){
@@ -120,47 +120,5 @@
       reader.readAsDataURL(file);
     };
   </script>
-
-  <script>
-    // OCR에서 PAO 값 받은 후 자동 선택하는 부분
-  
-    async function runPaoOCR(file) {
-      try {
-        const base64 = await imageToBase64(file);
-  
-        const res = await fetch(PAO_OCR_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageBase64: base64 }),
-        });
-  
-        const data = await res.json();
-  
-        // OCR 결과로 PAO 값을 받음
-        if (!data || !data.pao) return;
-  
-        selectPAO(data.pao);  // OCR 결과로 자동 PAO 선택
-        updateResult();  // PAO 선택 후 결과 업데이트
-      } catch (e) {
-        console.error("PAO OCR failed", e);
-      }
-    }
-  
-    // 기존 파일 업로드 이벤트에서 호출됨
-    document.getElementById("fileInput").addEventListener("change", (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-  
-      runPaoOCR(file); // 사진을 선택하면 OCR 호출
-    });
-  
-    function selectPAO(m) {
-      selectedPAO = m;
-      [...paoBox.children].forEach(b => {
-        b.classList.toggle("active", b.textContent === m + "M");
-      });
-    }
-  </script>
-  
 </body>
 </html>
