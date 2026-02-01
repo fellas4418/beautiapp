@@ -13,9 +13,10 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
       min-height: 100vh;
       padding: 20px;
+      color: #ecf0f1;
     }
 
     .container {
@@ -32,7 +33,7 @@
     header h1 {
       font-size: 2.5rem;
       margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
 
     header p {
@@ -48,14 +49,15 @@
     }
 
     .card {
-      background: white;
+      background: #2c3e50;
       border-radius: 15px;
       padding: 25px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      border: 1px solid #34495e;
     }
 
     h2 {
-      color: #667eea;
+      color: #3498db;
       margin-bottom: 20px;
       font-size: 1.5rem;
     }
@@ -68,7 +70,7 @@
     .choose-image-btn {
       width: 100%;
       padding: 12px;
-      background: #667eea;
+      background: #3498db;
       color: white;
       border: none;
       border-radius: 8px;
@@ -78,19 +80,19 @@
     }
 
     .choose-image-btn:hover {
-      background: #5568d3;
+      background: #2980b9;
     }
 
     .image-preview {
       margin-top: 15px;
-      border: 2px dashed #ddd;
+      border: 2px dashed #4a5f7f;
       border-radius: 8px;
       min-height: 200px;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      background: #f8f9fa;
+      background: #1a252f;
     }
 
     .image-preview img {
@@ -100,7 +102,7 @@
     }
 
     .image-preview span {
-      color: #999;
+      color: #7f8c8d;
     }
 
     .form-group {
@@ -110,22 +112,24 @@
     .form-group label {
       display: block;
       margin-bottom: 5px;
-      color: #333;
+      color: #bdc3c7;
       font-weight: 500;
     }
 
     .form-group input {
       width: 100%;
       padding: 10px;
-      border: 2px solid #e0e0e0;
+      border: 2px solid #4a5f7f;
       border-radius: 8px;
       font-size: 1rem;
       transition: border-color 0.3s;
+      background: #1a252f;
+      color: #ecf0f1;
     }
 
     .form-group input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #3498db;
     }
 
     .pao-section {
@@ -148,17 +152,17 @@
     }
 
     .ocr-badge.detecting {
-      background: #ffc107;
-      color: #333;
+      background: #f39c12;
+      color: #fff;
     }
 
     .ocr-badge.success {
-      background: #28a745;
+      background: #27ae60;
       color: white;
     }
 
     .ocr-badge.failed {
-      background: #dc3545;
+      background: #e74c3c;
       color: white;
     }
 
@@ -170,29 +174,31 @@
 
     .pao-option {
       padding: 12px;
-      border: 2px solid #e0e0e0;
-      background: white;
+      border: 2px solid #4a5f7f;
+      background: #1a252f;
       border-radius: 8px;
       cursor: pointer;
       font-size: 1rem;
       transition: all 0.3s;
       position: relative;
+      color: #ecf0f1;
     }
 
     .pao-option:hover {
-      border-color: #667eea;
-      background: #f0f3ff;
+      border-color: #3498db;
+      background: #243342;
     }
 
     .pao-option.active {
-      border-color: #667eea;
-      background: #667eea;
+      border-color: #3498db;
+      background: #3498db;
       color: white;
     }
 
     .pao-option.suggested {
-      border-color: #28a745;
-      background: #d4edda;
+      border-color: #27ae60;
+      background: #1e8449;
+      color: white;
       animation: pulse 1s ease-in-out;
     }
 
@@ -201,7 +207,7 @@
       position: absolute;
       top: -8px;
       right: -8px;
-      background: #28a745;
+      background: #27ae60;
       color: white;
       font-size: 0.7rem;
       padding: 2px 6px;
@@ -230,21 +236,21 @@
     }
 
     .btn-primary {
-      background: #28a745;
+      background: #27ae60;
       color: white;
     }
 
     .btn-primary:hover {
-      background: #218838;
+      background: #229954;
     }
 
     .btn-secondary {
-      background: #6c757d;
+      background: #7f8c8d;
       color: white;
     }
 
     .btn-secondary:hover {
-      background: #5a6268;
+      background: #6c7a7b;
     }
 
     /* Messages */
@@ -257,15 +263,15 @@
     }
 
     .error-message {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
+      background: #c0392b;
+      color: white;
+      border: 1px solid #e74c3c;
     }
 
     .info-message {
-      background: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
+      background: #16a085;
+      color: white;
+      border: 1px solid #1abc9c;
     }
 
     /* Loading Indicator */
@@ -273,8 +279,8 @@
       display: inline-block;
       width: 16px;
       height: 16px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #667eea;
+      border: 2px solid #34495e;
+      border-top: 2px solid #3498db;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -305,16 +311,15 @@
     }
 
     .shelf-section.expired h3 {
-      background: #dc3545;
+      background: #c0392b;
     }
 
     .shelf-section.warning h3 {
-      background: #ffc107;
-      color: #333;
+      background: #f39c12;
     }
 
     .shelf-section.safe h3 {
-      background: #28a745;
+      background: #27ae60;
     }
 
     .product-grid {
@@ -324,11 +329,12 @@
     }
 
     .product-card {
-      background: white;
+      background: #1a252f;
       border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       transition: transform 0.3s;
+      border: 1px solid #34495e;
     }
 
     .product-card:hover {
@@ -347,13 +353,13 @@
 
     .product-info h4 {
       margin-bottom: 8px;
-      color: #333;
+      color: #ecf0f1;
       font-size: 1rem;
     }
 
     .product-info p {
       font-size: 0.85rem;
-      color: #666;
+      color: #95a5a6;
       margin-bottom: 5px;
     }
 
@@ -367,24 +373,24 @@
     }
 
     .status-badge.expired {
-      background: #dc3545;
+      background: #c0392b;
       color: white;
     }
 
     .status-badge.warning {
-      background: #ffc107;
-      color: #333;
+      background: #f39c12;
+      color: white;
     }
 
     .status-badge.safe {
-      background: #28a745;
+      background: #27ae60;
       color: white;
     }
 
     .delete-btn {
       width: 100%;
       padding: 8px;
-      background: #dc3545;
+      background: #c0392b;
       color: white;
       border: none;
       cursor: pointer;
@@ -393,12 +399,12 @@
     }
 
     .delete-btn:hover {
-      background: #c82333;
+      background: #a93226;
     }
 
     .empty-shelf {
       text-align: center;
-      color: #999;
+      color: #7f8c8d;
       padding: 40px;
       font-size: 1.1rem;
     }
@@ -410,13 +416,13 @@
     }
 
     .btn-danger {
-      background: #dc3545;
+      background: #c0392b;
       color: white;
       padding: 12px 30px;
     }
 
     .btn-danger:hover {
-      background: #c82333;
+      background: #a93226;
     }
 
     /* Responsive */
@@ -436,6 +442,11 @@
 
     input[type="file"] {
       display: none;
+    }
+
+    /* Date input styling for dark mode */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
     }
   </style>
 </head>
@@ -589,13 +600,12 @@
       };
       reader.readAsDataURL(file);
 
-      // Analyze image in background (non-blocking)
+      // Analyze image in background
       analyzeImageInBackground(file);
     }
 
     // Analyze image in background
     async function analyzeImageInBackground(file) {
-      // Show OCR status
       ocrStatus.style.display = 'inline-block';
       ocrStatus.className = 'ocr-badge detecting';
       ocrStatus.innerHTML = '<span class="ocr-loading"></span> 감지 중...';
@@ -604,36 +614,37 @@
         const base64 = await fileToBase64(file);
         const imageData = base64.split(',')[1];
         
-        const response = await fetch(`${WORKER_URL}`, {
+        console.log('🔍 Sending image to OCR...');
+        
+        const response = await fetch(WORKER_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({ image: imageData })
         });
         
         const result = await response.json();
-        console.log('OCR Result:', result);
+        console.log('📥 OCR Response:', result);
 
         if (result.success && result.pao && result.pao.length > 0) {
-          // OCR 성공
           ocrStatus.className = 'ocr-badge success';
           ocrStatus.textContent = `✓ ${result.pao.join(', ')}M 감지됨`;
           
-          // Highlight detected PAO buttons
           highlightDetectedPAO(result.pao);
           
-          // Auto-select first detected PAO
           if (result.pao.length === 1) {
             selectPAO(result.pao[0]);
           }
         } else {
-          // OCR 실패
           ocrStatus.className = 'ocr-badge failed';
           ocrStatus.textContent = '✗ 자동 감지 실패';
           showInfo('PAO를 자동으로 찾지 못했습니다. 수동으로 선택해주세요.');
+          console.warn('❌ OCR failed:', result.error || 'No PAO detected');
         }
         
       } catch (error) {
-        console.error('OCR Error:', error);
+        console.error('❌ OCR Error:', error);
         ocrStatus.className = 'ocr-badge failed';
         ocrStatus.textContent = '✗ 감지 실패';
         showInfo('이미지 분석 중 오류가 발생했습니다. 수동으로 선택해주세요.');
@@ -642,12 +653,10 @@
 
     // Highlight detected PAO buttons
     function highlightDetectedPAO(paoValues) {
-      // Remove all suggestions first
       paoButtons.forEach(btn => {
         btn.classList.remove('suggested');
       });
 
-      // Add suggestion to detected PAOs
       paoValues.forEach(pao => {
         const btn = document.querySelector(`.pao-option[data-pao="${pao}"]`);
         if (btn) {
@@ -660,12 +669,10 @@
     function selectPAO(pao) {
       selectedPAO = pao;
       
-      // Remove active class from all buttons
       paoButtons.forEach(btn => {
         btn.classList.remove('active');
       });
       
-      // Add active class to selected button
       const selectedBtn = document.querySelector(`.pao-option[data-pao="${pao}"]`);
       if (selectedBtn) {
         selectedBtn.classList.add('active');
@@ -702,16 +709,13 @@
         return;
       }
 
-      // Calculate expiry date
       const opened = new Date(openedDate);
       const expiry = new Date(opened);
       expiry.setMonth(expiry.getMonth() + selectedPAO);
 
-      // Calculate days remaining
       const today = new Date();
       const daysRemaining = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-      // Determine safety status
       let safetyStatus = 'safe';
       if (daysRemaining < 0) {
         safetyStatus = 'expired';
@@ -719,7 +723,6 @@
         safetyStatus = 'warning';
       }
 
-      // Convert image to base64 for storage
       const reader = new FileReader();
       reader.onload = (e) => {
         const product = {
@@ -751,14 +754,11 @@
       selectedPAO = null;
       uploadedImage = null;
       
-      // Reset PAO buttons
       paoButtons.forEach(btn => {
         btn.classList.remove('active', 'suggested');
       });
       
-      // Hide OCR status
       ocrStatus.style.display = 'none';
-      
       hideMessages();
     }
 
@@ -769,7 +769,6 @@
         return;
       }
 
-      // Sort products by safety status and days remaining
       const sortedProducts = [...products].sort((a, b) => {
         const statusOrder = { expired: 0, warning: 1, safe: 2 };
         if (statusOrder[a.safetyStatus] !== statusOrder[b.safetyStatus]) {
@@ -778,26 +777,22 @@
         return a.daysRemaining - b.daysRemaining;
       });
 
-      // Group by safety status
       const expired = sortedProducts.filter(p => p.safetyStatus === 'expired');
       const warning = sortedProducts.filter(p => p.safetyStatus === 'warning');
       const safe = sortedProducts.filter(p => p.safetyStatus === 'safe');
 
       shelfContainer.innerHTML = '';
 
-      // Render expired products
       if (expired.length > 0) {
         const section = createShelfSection('🚨 TOSS', 'expired', expired);
         shelfContainer.appendChild(section);
       }
 
-      // Render warning products
       if (warning.length > 0) {
         const section = createShelfSection('⚠️ USE SOON', 'warning', warning);
         shelfContainer.appendChild(section);
       }
 
-      // Render safe products
       if (safe.length > 0) {
         const section = createShelfSection('✅ SAFE TO USE', 'safe', safe);
         shelfContainer.appendChild(section);
@@ -884,7 +879,7 @@
       }
     }
 
-    // Local storage functions
+    // Local storage
     function saveProducts() {
       localStorage.setItem('keepOrTossProducts', JSON.stringify(products));
     }
@@ -896,7 +891,7 @@
       }
     }
 
-    // UI feedback functions
+    // UI feedback
     function showError(message) {
       errorMessage.textContent = message;
       errorMessage.style.display = 'block';
