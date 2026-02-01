@@ -5,27 +5,27 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>PAO OCR ONLY TEST</title>
   <style>
-    body { background:#0b0c10; color:#e8e8ea; font-family:system-ui; margin:0; }
-    .wrap { max-width:420px; margin:40px auto; padding:16px; }
-    .card { background:#111318; border-radius:16px; padding:16px; }
-    img { width:100%; border-radius:12px; margin-top:12px; }
-    .out { margin-top:16px; font-size:18px; font-weight:800; }
-    .ok { color:#20c997 }
-    .err { color:#ff4d4f }
+    body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
+    .wrap{max-width:420px;margin:0 auto;padding:16px}
+    .card{background:#111318;border-radius:16px;padding:14px}
+    img{width:100%;border-radius:12px;margin-top:10px}
+    .result{margin-top:12px;font-weight:800}
+    .ok{color:#20c997}
+    .err{color:#ff4d4f}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h2>PAO OCR ONLY TEST</h2>
     <div class="card">
-      <input type="file" id="file" accept="image/*" />
-      <img id="img" style="display:none" />
-      <div id="out" class="out">결과 없음</div>
+      <input type="file" id="file" accept="image/*">
+      <img id="img" style="display:none">
+      <div id="result" class="result"></div>
     </div>
   </div>
 
 <script>
-const ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev";
+const ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev/ocr-meta";
 
 document.getElementById("file").onchange = async (e) => {
   const file = e.target.files[0];
@@ -33,13 +33,10 @@ document.getElementById("file").onchange = async (e) => {
 
   const reader = new FileReader();
   reader.onload = async () => {
-    const img = document.getElementById("img");
     img.src = reader.result;
     img.style.display = "block";
 
     const base64 = reader.result.split(",")[1];
-
-    document.getElementById("out").textContent = "OCR 중...";
 
     try {
       const res = await fetch(ENDPOINT, {
@@ -49,19 +46,19 @@ document.getElementById("file").onchange = async (e) => {
       });
 
       const json = await res.json();
-      console.log("OCR RESULT:", json);
+      console.log(json);
 
-      if (json.pao) {
-        document.getElementById("out").innerHTML =
-          `<span class="ok">PAO 인식: ${json.pao}M</span>`;
+      if (json.paoCandidates && json.paoCandidates.length) {
+        result.className = "result ok";
+        result.textContent = "PAO 인식 성공: " + json.paoCandidates.join(", ") + "M";
       } else {
-        document.getElementById("out").innerHTML =
-          `<span class="err">PAO 인식 실패</span>`;
+        result.className = "result err";
+        result.textContent = "PAO 인식 실패";
       }
-    } catch (e) {
-      document.getElementById("out").innerHTML =
-        `<span class="err">네트워크 오류</span>`;
-      console.error(e);
+    } catch (err) {
+      result.className = "result err";
+      result.textContent = "요청 실패";
+      console.error(err);
     }
   };
   reader.readAsDataURL(file);
