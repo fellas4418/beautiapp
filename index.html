@@ -1,125 +1,106 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Keep or Toss</title>
-
-  <style>
-    body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
-    .wrap{max-width:420px;margin:0 auto;padding:16px}
-    .card{background:#111318;border-radius:16px;padding:14px}
-    img{width:100%;border-radius:12px;margin-top:10px}
-    .pao{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-    button{padding:10px;border-radius:10px;border:none;background:#1f2430;color:#fff;font-weight:700}
-    button.active{outline:2px solid #20c997}
-    .result{margin-top:12px;font-weight:800}
-    .ok{color:#20c997}.warn{color:#ffcc00}.err{color:#ff4d4f}
-    input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;border:none}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Keep or Toss</title>
+<style>
+body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
+.wrap{max-width:420px;margin:0 auto;padding:16px}
+.card{background:#111318;border-radius:16px;padding:14px}
+img{width:100%;border-radius:12px;margin-top:10px}
+.pao{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+button{padding:10px;border-radius:10px;border:none;background:#1f2430;color:#fff;font-weight:700}
+button.active{outline:2px solid #20c997}
+.result{margin-top:12px;font-weight:800}
+.ok{color:#20c997}.warn{color:#ffcc00}.err{color:#ff4d4f}
+input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;border:none}
+</style>
 </head>
 
 <body>
 <div class="wrap">
-  <h2>Keep or Toss</h2>
+<h2>Keep or Toss</h2>
 
-  <div class="card">
-    <input type="file" id="fileInput" accept="image/*">
-    <img id="preview" style="display:none">
+<div class="card">
+<input type="file" id="fileInput" accept="image/*">
+<img id="preview" style="display:none">
 
-    <input type="date" id="opened">
-    <div class="pao" id="paoBtns"></div>
-    <div id="result" class="result"></div>
-  </div>
+<input type="date" id="opened">
+<div class="pao" id="paoBtns"></div>
+<div id="result" class="result"></div>
+</div>
 </div>
 
 <script>
-/* ===== 설정 ===== */
-const PAOS = [3,6,9,12,18,24,36];
-const OCR_ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev/ocr-meta";
+const OCR_ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev";
+const PAOS=[3,6,9,12,18,24,36];
+let selectedPAO=null;
 
-/* ===== 상태 ===== */
-let selectedPAO = null;
+const opened=document.getElementById("opened");
+const paoBox=document.getElementById("paoBtns");
+const result=document.getElementById("result");
+const preview=document.getElementById("preview");
 
-/* ===== DOM ===== */
-const openedInput = document.getElementById("opened");
-const paoBox = document.getElementById("paoBtns");
-const result = document.getElementById("result");
-const preview = document.getElementById("preview");
+opened.value=new Date().toISOString().slice(0,10);
 
-/* ===== 초기값 ===== */
-openedInput.value = new Date().toISOString().slice(0,10);
-
-/* ===== PAO 버튼 ===== */
 PAOS.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
-  b.onclick=()=>{ selectPAO(m); updateResult(); };
+  b.onclick=()=>{selectPAO(m);update()};
   paoBox.appendChild(b);
 });
 
 function selectPAO(m){
-  selectedPAO = m;
+  selectedPAO=m;
   [...paoBox.children].forEach(b=>{
-    b.classList.toggle("active", b.textContent === m+"M");
+    b.classList.toggle("active",b.textContent===m+"M");
   });
 }
 
-/* ===== 계산 ===== */
-function addMonths(dateStr,months){
-  const [y,m,d]=dateStr.split("-").map(Number);
-  const dt=new Date(y,m-1,d);
-  dt.setMonth(dt.getMonth()+months);
-  return dt;
+function addMonths(d,m){
+  const [y,mm,dd]=d.split("-").map(Number);
+  const t=new Date(y,mm-1,dd);
+  t.setMonth(t.getMonth()+m);
+  return t;
 }
 
-function updateResult(){
-  if(!openedInput.value || !selectedPAO){
-    result.textContent = "";
-    return;
-  }
-
-  const tossDate = addMonths(openedInput.value, selectedPAO);
-  const daysLeft = Math.floor((tossDate - new Date()) / 86400000);
-
-  let cls="ok", txt="SAFE TO USE";
-  if(daysLeft < 0){ cls="err"; txt="TOSS IT"; }
-  else if(daysLeft <= 30){ cls="warn"; txt="USE SOON"; }
-
-  result.className = "result " + cls;
-  result.textContent =
-    `${txt} · ${selectedPAO}M · Toss at ${tossDate.toISOString().slice(0,10)}`;
+function update(){
+  if(!opened.value||!selectedPAO){result.textContent="";return;}
+  const toss=addMonths(opened.value,selectedPAO);
+  const left=Math.floor((toss-new Date())/86400000);
+  let c="ok",t="SAFE TO USE";
+  if(left<0){c="err";t="TOSS IT";}
+  else if(left<=30){c="warn";t="USE SOON";}
+  result.className="result "+c;
+  result.textContent=`${t} · ${selectedPAO}M · Toss at ${toss.toISOString().slice(0,10)}`;
 }
 
-openedInput.onchange = updateResult;
+opened.onchange=update;
 
-/* ===== OCR (핵심) ===== */
-document.getElementById("fileInput").onchange = async e => {
-  const file = e.target.files[0];
-  if(!file) return;
+fileInput.onchange=async e=>{
+  const f=e.target.files[0];
+  if(!f)return;
 
-  const reader = new FileReader();
-  reader.onload = async () => {
-    preview.src = reader.result;
-    preview.style.display = "block";
+  const r=new FileReader();
+  r.onload=async()=>{
+    preview.src=r.result;
+    preview.style.display="block";
 
-    const base64 = reader.result.split(",")[1];
-
-    const res = await fetch(OCR_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageBase64: base64 })
+    const base64=r.result.split(",")[1];
+    const res=await fetch(OCR_ENDPOINT,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ imageBase64: base64 })
     });
+    const j=await res.json();
 
-    const json = await res.json();
-
-    // ✅ 여기 중요
-    if (json.ok && json.paoCandidates && json.paoCandidates.length > 0) {
-      selectPAO(json.paoCandidates[0]);
-      updateResult();
+    if(j.pao){
+      selectPAO(j.pao);
+      update();
     }
   };
-  reader.readAsDataURL(file);
+  r.readAsDataURL(f);
 };
 </script>
 </body>
