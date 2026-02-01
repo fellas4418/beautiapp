@@ -15,6 +15,8 @@ button{padding:10px;border-radius:10px;border:none;background:#1f2430;color:#fff
 button.active{outline:2px solid #20c997}
 .result{margin-top:12px;font-weight:800}
 input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;border:none}
+.file-btn{width:100%;padding:12px;border-radius:10px;background:#2b6cff;color:#fff;font-weight:800}
+input[type=file]{display:none}
 </style>
 </head>
 
@@ -23,12 +25,17 @@ input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;bord
 <h2>Keep or Toss</h2>
 
 <div class="card">
-<input type="file" id="fileInput" accept="image/*">
-<img id="preview" style="display:none">
 
+<label class="file-btn">
+  Choose image
+  <input type="file" id="fileInput" accept="image/*">
+</label>
+
+<img id="preview" style="display:none">
 <input type="date" id="opened">
 <div class="pao" id="paoBtns"></div>
 <div id="result" class="result"></div>
+
 </div>
 </div>
 
@@ -65,12 +72,12 @@ function addMonths(d,m){
 }
 
 function updateResult(){
-  if(!selectedPAO){result.textContent="PAO 선택";return;}
+  if(!selectedPAO){result.textContent="Select PAO";return;}
   const toss=addMonths(opened.value,selectedPAO);
   result.textContent=`${selectedPAO}M · Toss ${toss.toISOString().slice(0,10)}`;
 }
 
-/* ===== 핵심: 확실한 자동 인식 ===== */
+/* 자동 인식 (안 깨지는 버전) */
 document.getElementById("fileInput").onchange=e=>{
   const file=e.target.files[0];
   if(!file)return;
@@ -78,15 +85,11 @@ document.getElementById("fileInput").onchange=e=>{
   preview.src=URL.createObjectURL(file);
   preview.style.display="block";
 
-  // 1️⃣ 파일명에서 먼저 잡음 (6m.jpg, IMG_6M.png 등)
-  const nameMatch=file.name.match(/(3|6|9|12|18|24|36)\s*m/i);
-  if(nameMatch){
-    selectPAO(Number(nameMatch[1]));
+  const m=file.name.match(/(3|6|9|12|18|24|36)\s*m/i);
+  if(m){
+    selectPAO(Number(m[1]));
     updateResult();
-    return;
   }
-
-  // 2️⃣ 실패 시 기본값 없음 (사용자 직접 선택)
 };
 </script>
 </body>
