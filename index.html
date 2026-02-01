@@ -4,144 +4,121 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Keep or Toss</title>
+
   <style>
-    body{
-      margin:0;
-      background:#0b0c10;
-      color:#e8e8ea;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto;
-      display:flex;
-      justify-content:center;
-      padding:24px;
-    }
-    .card{
-      width:360px;
-      background:#111318;
-      border-radius:16px;
-      padding:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.4);
-    }
-    h1{margin:0 0 12px;font-size:20px}
-    input[type=file]{
-      width:100%;
-      margin-bottom:12px;
-    }
-    img{
-      width:100%;
-      border-radius:12px;
-      margin-bottom:12px;
-      display:none;
-    }
-    input[type=date]{
-      width:100%;
-      padding:10px;
-      border-radius:10px;
-      border:none;
-      background:#1a1d24;
-      color:#fff;
-      margin-bottom:12px;
-    }
-    .pao-buttons{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:8px;
-      margin-bottom:12px;
-    }
-    .pao-buttons button{
-      padding:10px 0;
-      border-radius:10px;
-      border:none;
-      background:#1f2430;
-      color:#fff;
-      cursor:pointer;
-    }
-    .pao-buttons button.active{
-      background:#2b6cff;
-    }
-    .result{
-      text-align:center;
-      margin-top:12px;
-      font-weight:600;
-    }
+    body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
+    .wrap{max-width:420px;margin:0 auto;padding:16px}
+    .card{background:#111318;border-radius:16px;padding:14px}
+    img{width:100%;border-radius:12px;margin-top:10px}
+    .pao{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+    button{padding:10px;border-radius:10px;border:none;background:#1f2430;color:#fff;font-weight:700}
+    button.active{outline:2px solid #20c997}
+    .result{margin-top:12px;font-weight:800}
+    .ok{color:#20c997}.warn{color:#ffcc00}.err{color:#ff4d4f}
+    input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;border:none}
   </style>
 </head>
+
 <body>
-  <div class="card">
-    <h1>Keep or Toss</h1>
+  <div class="wrap">
+    <h2>Keep or Toss</h2>
 
-    <input type="file" id="fileInput" accept="image/*" />
-    <img id="preview" />
+    <div class="card">
+      <input type="file" id="fileInput" accept="image/*">
+      <img id="preview" style="display:none">
 
-    <input type="date" id="openDate" />
+      <input type="date" id="opened">
 
-    <div class="pao-buttons" id="paoButtons">
-      <button data-m="3">3M</button>
-      <button data-m="6">6M</button>
-      <button data-m="9">9M</button>
-      <button data-m="12">12M</button>
-      <button data-m="18">18M</button>
-      <button data-m="24">24M</button>
-      <button data-m="36">36M</button>
+      <div class="pao" id="paoBtns"></div>
+
+      <div id="result" class="result"></div>
     </div>
-
-    <div class="result" id="result"></div>
   </div>
 
-<script>
-/* ===== 기본 날짜 세팅 (오늘) ===== */
-const openDateInput = document.getElementById("openDate");
-openDateInput.valueAsDate = new Date();
+  <script>
+    const PAOS=[3,6,9,12,18,24,36];
+    let selectedPAO=null;
 
-/* ===== 이미지 미리보기 ===== */
-const fileInput = document.getElementById("fileInput");
-const preview = document.getElementById("preview");
+    const openedInput=document.getElementById("opened");
+    const paoBox=document.getElementById("paoBtns");
+    const result=document.getElementById("result");
 
-fileInput.addEventListener("change", e => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+    // 기본 날짜 값은 오늘
+    openedInput.value = new Date().toISOString().slice(0,10);
 
-  const reader = new FileReader();
-  reader.onload = () => {
-    preview.src = reader.result;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(file);
-});
+    // PAO 버튼 생성
+    PAOS.forEach(m=>{
+      const b=document.createElement("button");
+      b.textContent=m+"M";
+      b.onclick=()=>{
+        selectPAO(m);
+        updateResult();
+      };
+      paoBox.appendChild(b);
+    });
 
-/* ===== PAO 선택 ===== */
-let selectedPao = null;
-const buttons = document.querySelectorAll("#paoButtons button");
-const result = document.getElementById("result");
+    function selectPAO(m){
+      selectedPAO=m;
+      [...paoBox.children].forEach(b=>{
+        b.classList.toggle("active",b.textContent===m+"M");
+      });
+    }
 
-buttons.forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    buttons.forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    selectedPao = Number(btn.dataset.m);
-    calculate();
-  });
-});
+    function addMonths(dateStr,months){
+      const [y,m,d]=dateStr.split("-").map(Number);
+      const dt=new Date(y,m-1,d);
+      dt.setMonth(dt.getMonth()+months);
+      return dt;
+    }
 
-/* ===== 계산 ===== */
-function calculate(){
-  if(!selectedPao) return;
+    function updateResult(){
+      if(!openedInput.value||!selectedPAO){
+        result.className="result warn";
+        result.textContent="PAO를 선택하세요";
+        return;
+      }
 
-  const opened = new Date(openDateInput.value);
-  if(isNaN(opened)) return;
+      const tossDate=addMonths(openedInput.value,selectedPAO);
+      const today=new Date();
+      const daysLeft=Math.floor((tossDate-today)/86400000);
 
-  const tossDate = new Date(opened);
-  tossDate.setMonth(tossDate.getMonth() + selectedPao);
+      let cls="ok",txt="SAFE TO USE";
+      if(daysLeft<0){cls="err";txt="TOSS IT";}
+      else if(daysLeft<=30){cls="warn";txt="USE SOON";}
 
-  const today = new Date();
-  const daysLeft = Math.ceil((tossDate - today)/(1000*60*60*24));
+      result.className="result "+cls;
+      result.textContent=
+        `${txt} · ${selectedPAO}M · Toss at ${tossDate.toISOString().slice(0,10)}`;
+    }
 
-  result.textContent =
-    daysLeft >= 0
-      ? `SAFE · Toss at ${tossDate.toISOString().slice(0,10)} (${daysLeft} days left)`
-      : `TOSS · Expired at ${tossDate.toISOString().slice(0,10)}`;
-}
+    openedInput.onchange=updateResult;
 
-openDateInput.addEventListener("change", calculate);
-</script>
+    // 이미지 업로드 시 OCR 호출
+    document.getElementById("fileInput").onchange=async e=>{
+      const file=e.target.files[0];
+      if(!file)return;
+
+      const reader=new FileReader();
+      reader.onload=async()=>{
+        document.getElementById("preview").src=reader.result;
+        document.getElementById("preview").style.display="block";
+
+        // base64로 변환 후 워커에 보내기
+        const base64=reader.result.split(",")[1];
+        const res=await fetch("https://pao-ocr-worker.ohryee.workers.dev",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({imageBase64:base64})
+        });
+        const json=await res.json();
+
+        if(json.pao){
+          selectPAO(json.pao);  // OCR에서 받은 PAO 값을 자동으로 선택
+          updateResult();  // 결과 업데이트
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+  </script>
 </body>
 </html>
