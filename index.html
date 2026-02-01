@@ -104,63 +104,85 @@ button{cursor:pointer}
 </div>
 
 <script>
-/* ===== 상태 ===== */
-const PAO = [3,6,9,12,18,24,36];
-let selectedPao = null;
-
-/* ===== 유틸 ===== */
-const $ = id => document.getElementById(id);
-const today = () => new Date().toISOString().slice(0,10);
-
-function addMonths(d,m){
-  const x=new Date(d); x.setMonth(x.getMonth()+m); return x;
-}
-function daysLeft(t){
-  return Math.floor((t-new Date())/86400000);
-}
-
-/* ===== 사진 미리보기 ===== */
-$("photo").onchange = e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const url = URL.createObjectURL(file);
-  $("img").src = url;
-  $("preview").style.display="block";
-};
-
-/* ===== PAO 버튼 ===== */
-PAO.forEach(m=>{
-  const b=document.createElement("button");
-  b.textContent=m+"M";
-  b.className="paoBtn";
-  b.onclick=()=>{
-    selectedPao=m;
-    [...$("paoGrid").children].forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    calc();
+  const PAO = [3,6,9,12,18,24,36];
+  let selectedPao = null;
+  let currentItem = null;
+  
+  const $ = id => document.getElementById(id);
+  const today = () => new Date().toISOString().slice(0,10);
+  
+  function addMonths(d,m){
+    const x=new Date(d);
+    x.setMonth(x.getMonth()+m);
+    return x;
+  }
+  function daysLeft(t){
+    return Math.floor((t-new Date())/86400000);
+  }
+  
+  /* 사진 미리보기 */
+  $("photo").onchange = e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    $("img").src = URL.createObjectURL(file);
+    $("preview").style.display="block";
   };
-  $("paoGrid").appendChild(b);
-});
-
-/* ===== 계산 ===== */
-function calc(){
-  if(!selectedPao) return;
-  const opened = new Date($("opened").value);
-  const toss = addMonths(opened, selectedPao);
-  const d = daysLeft(toss);
-
-  const r = $("result");
-  r.style.display="block";
-  r.className="result "+(d<0?"err":d<=30?"warn":"ok");
-  r.textContent =
-    d<0 ? "TOSS IT" :
-    d<=30 ? "USE SOON" :
-    "SAFE TO USE";
-}
-
-/* 초기값 */
-$("opened").value = today();
-$("opened").onchange = calc;
-</script>
+  
+  /* PAO 버튼 */
+  PAO.forEach(m=>{
+    const b=document.createElement("button");
+    b.textContent=m+"M";
+    b.className="paoBtn";
+    b.onclick=()=>{
+      selectedPao=m;
+      [...$("paoGrid").children].forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      buildItem();
+    };
+    $("paoGrid").appendChild(b);
+  });
+  
+  /* 핵심: 아이템 생성 */
+  function buildItem(){
+    if(!selectedPao) return;
+  
+    const opened = new Date($("opened").value);
+    const toss = addMonths(opened, selectedPao);
+    const left = daysLeft(toss);
+  
+    let status =
+      left < 0 ? "TOSS" :
+      left <= 30 ? "USE SOON" :
+      "SAFE";
+  
+    currentItem = {
+      openedAt: $("opened").value,
+      paoMonths: selectedPao,
+      tossAt: toss.toISOString().slice(0,10),
+      daysLeft: left,
+      status
+    };
+  
+    renderResult();
+  }
+  
+  /* 결과 표시 */
+  function renderResult(){
+    const r = $("result");
+    r.style.display="block";
+    r.className="result "+
+      (currentItem.status==="TOSS"?"err":
+       currentItem.status==="USE SOON"?"warn":"ok");
+  
+    r.textContent =
+      currentItem.status +
+      " · Toss at " + currentItem.tossAt;
+  }
+  
+  /* 초기화 */
+  $("opened").value = today();
+  $("opened").onchange = buildItem;
+  </script>
+  
 </body>
 </html>
