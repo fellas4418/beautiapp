@@ -1,196 +1,176 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Keep or Toss</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Keep or Toss</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0b0c10;
-      color: #eaeaf0;
-      display: flex;
-      justify-content: center;
-      padding: 24px;
-    }
+<style>
+:root{
+  --bg:#0b0c10;
+  --card:#111318;
+  --border:rgba(255,255,255,.12);
+  --text:#e8e8ea;
+  --muted:#9aa0a6;
+  --ok:#20c997;
+  --warn:#ffcc00;
+  --danger:#ff4d4f;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+}
+.wrap{
+  max-width:420px;
+  margin:0 auto;
+  padding:16px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:14px;
+}
+h1{margin:0 0 6px;font-size:22px}
+.sub{font-size:13px;color:var(--muted);margin-bottom:10px}
 
-    .app {
-      width: 360px;
-      background: #111318;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.6);
-    }
+.preview{
+  width:100%;
+  aspect-ratio:3/4;
+  border-radius:12px;
+  background:#000;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.preview img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
 
-    h1 {
-      margin: 0 0 12px;
-      font-size: 18px;
-    }
+input[type="file"],
+input[type="date"]{
+  width:100%;
+  background:#000;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:8px;
+}
 
-    input, button {
-      width: 100%;
-      margin-bottom: 8px;
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-      background: #1a1d24;
-      color: #fff;
-      font-size: 14px;
-    }
+.pao{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin:10px 0;
+}
+.pao button{
+  background:#000;
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:10px 0;
+  border-radius:10px;
+  font-weight:700;
+}
+.pao button.active{
+  border-color:var(--ok);
+  color:var(--ok);
+}
 
-    .preview {
-      width: 100%;
-      height: 220px;
-      border-radius: 12px;
-      background: #0f1116;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
-
-    .preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .pao-buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .pao-buttons button {
-      background: #1f2430;
-      font-size: 12px;
-    }
-
-    .pao-buttons button.active {
-      background: #2b6cff;
-    }
-
-    .result {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 12px;
-      background: #0f1116;
-      text-align: center;
-      font-size: 13px;
-    }
-
-    .SAFE { color: #20c997; }
-    .USE\ SOON { color: #ffcc00; }
-    .TOSS { color: #ff4d4f; }
-  </style>
+.result{
+  margin-top:10px;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  text-align:center;
+}
+.result.ok{color:var(--ok)}
+.result.warn{color:var(--warn)}
+.result.err{color:var(--danger)}
+</style>
 </head>
 
 <body>
-  <div class="app">
-    <h1>Keep or Toss</h1>
+<div class="wrap">
+  <h1>Keep or Toss</h1>
+  <div class="sub">Photo → PAO → Date</div>
 
-    <input type="file" accept="image/*" id="imageInput" />
+  <div class="card">
 
-    <div class="preview" id="preview">
-      <span>사진 선택</span>
-    </div>
+    <input type="file" id="file" accept="image/*">
 
-    <input type="date" id="openedDate" />
+    <div class="preview" id="preview"></div>
 
-    <div class="pao-buttons" id="paoButtons"></div>
+    <input type="date" id="opened">
 
-    <div class="result" id="result">PAO와 날짜를 선택하세요</div>
+    <div class="pao" id="paoBtns"></div>
+
+    <div id="result" class="result" style="display:none"></div>
+
   </div>
+</div>
 
-  <script>
-    // ===== 상태 =====
-    let selectedPao = null;
+<script>
+const PAOS = [3,6,9,12,18,24,36];
+let selectedPAO = null;
 
-    // ===== PAO 버튼 생성 =====
-    const paoList = [3, 6, 9, 12, 18, 24, 36];
-    const paoWrap = document.getElementById("paoButtons");
+const fileInput = document.getElementById("file");
+const preview = document.getElementById("preview");
+const openedInput = document.getElementById("opened");
+const paoBtns = document.getElementById("paoBtns");
+const resultBox = document.getElementById("result");
 
-    paoList.forEach(m => {
-      const btn = document.createElement("button");
-      btn.textContent = m + "M";
-      btn.onclick = () => {
-        document.querySelectorAll(".pao-buttons button")
-          .forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        selectedPao = m;
-        recalc();
-      };
-      paoWrap.appendChild(btn);
-    });
+openedInput.value = new Date().toISOString().slice(0,10);
 
-    // ===== 이미지 미리보기 =====
-    document.getElementById("imageInput").onchange = e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const img = document.createElement("img");
-      img.src = URL.createObjectURL(file);
-      const preview = document.getElementById("preview");
-      preview.innerHTML = "";
-      preview.appendChild(img);
-    };
+fileInput.onchange = e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const img = document.createElement("img");
+  img.src = URL.createObjectURL(f);
+  preview.innerHTML="";
+  preview.appendChild(img);
+};
 
-    document.getElementById("openedDate").onchange = recalc;
+PAOS.forEach(m=>{
+  const b=document.createElement("button");
+  b.textContent=m+"M";
+  b.onclick=()=>{
+    selectedPAO=m;
+    [...paoBtns.children].forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    calc();
+  };
+  paoBtns.appendChild(b);
+});
 
-    // ===== 계산 함수 =====
-    function calculateItem(openedAt, paoMonths) {
-      if (!openedAt || !paoMonths) return null;
+openedInput.onchange = calc;
 
-      const openDate = new Date(openedAt);
-      const tossDate = new Date(openDate);
-      tossDate.setMonth(tossDate.getMonth() + paoMonths);
+function calc(){
+  if(!selectedPAO || !openedInput.value) return;
 
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      tossDate.setHours(0,0,0,0);
+  const opened = new Date(openedInput.value);
+  const toss = new Date(opened);
+  toss.setMonth(toss.getMonth()+selectedPAO);
 
-      const daysLeft = Math.floor(
-        (tossDate - today) / (1000 * 60 * 60 * 24)
-      );
+  const days = Math.floor((toss - new Date())/86400000);
 
-      let status = "SAFE";
-      if (daysLeft < 0) status = "TOSS";
-      else if (daysLeft <= 30) status = "USE SOON";
+  let status="ok", text="SAFE TO USE";
+  if(days<=30){status="warn";text="USE SOON";}
+  if(days<0){status="err";text="TOSS IT";}
 
-      return {
-        openedAt,
-        paoMonths,
-        tossAt: tossDate.toISOString().slice(0,10),
-        daysLeft,
-        status
-      };
-    }
-
-    // ===== 재계산 =====
-    function recalc() {
-      const openedAt = document.getElementById("openedDate").value;
-      const res = calculateItem(openedAt, selectedPao);
-      const box = document.getElementById("result");
-
-      if (!res) {
-        box.textContent = "PAO와 날짜를 선택하세요";
-        box.className = "result";
-        return;
-      }
-
-      box.className = "result " + res.status;
-      box.innerHTML = `
-        <div>${res.status}</div>
-        <div>PAO ${res.paoMonths}M</div>
-        <div>Toss at ${res.tossAt}</div>
-        <div>${res.daysLeft} days left</div>
-      `;
-
-      console.log(res);
-    }
-  </script>
+  resultBox.style.display="block";
+  resultBox.className="result "+status;
+  resultBox.innerHTML = `
+    <div style="font-size:18px;font-weight:800">${text}</div>
+    <div style="font-size:13px;margin-top:6px">
+      PAO ${selectedPAO}M · Toss ${toss.toISOString().slice(0,10)}
+    </div>
+  `;
+}
+</script>
 </body>
 </html>
