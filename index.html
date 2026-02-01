@@ -1,188 +1,180 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Keep or Toss</title>
 
 <style>
-:root{
-  --bg:#0b0c10;
-  --card:#111318;
-  --text:#e8e8ea;
-  --muted:#a8abb4;
-  --border:rgba(255,255,255,.12);
-  --ok:#20c997;
-  --warn:#ffcc00;
-  --danger:#ff4d4f;
-}
-*{box-sizing:border-box;}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
-  background:var(--bg);
-  color:var(--text);
-}
-.wrap{max-width:420px;margin:0 auto;padding:16px;}
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:16px;
-}
-h1{margin:0 0 6px;font-size:24px;}
-.sub{color:var(--muted);font-size:13px;margin-bottom:12px}
+  :root {
+    --bg:#0b0c10;
+    --card:#111318;
+    --text:#e8e8ea;
+    --muted:#9aa0aa;
+    --ok:#20c997;
+    --danger:#ff4d4f;
+    --btn:#1f2430;
+    --accent:#2b6cff;
+    --radius:14px;
+  }
 
-input,button{
-  width:100%;
-  background:#1a1f2b;
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:12px;
-  color:var(--text);
-  font-weight:600;
-}
-button{cursor:pointer}
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:system-ui, -apple-system, Segoe UI, Roboto;
+  }
 
-.paoGrid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  margin-top:12px;
-}
-.paoBtn.active{
-  border-color:var(--ok);
-  box-shadow:0 0 0 2px rgba(32,201,151,.3) inset;
-}
+  .wrap {
+    max-width:420px;
+    margin:0 auto;
+    padding:16px;
+  }
 
-.preview{
-  margin-top:12px;
-  border-radius:12px;
-  overflow:hidden;
-  border:1px solid var(--border);
-}
-.preview img{
-  width:100%;
-  display:block;
-}
+  h1 {
+    margin:0 0 12px;
+    font-size:22px;
+  }
 
-.result{
-  margin-top:12px;
-  padding:12px;
-  border-radius:12px;
-  text-align:center;
-}
-.result.ok{color:var(--ok)}
-.result.warn{color:var(--warn)}
-.result.err{color:var(--danger)}
+  .card {
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:12px;
+  }
+
+  input[type="file"],
+  input[type="date"] {
+    width:100%;
+    padding:10px;
+    background:#0f1116;
+    color:var(--text);
+    border:1px solid #222;
+    border-radius:10px;
+  }
+
+  img {
+    width:100%;
+    border-radius:12px;
+    margin-top:10px;
+    display:none;
+  }
+
+  .pao-grid {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-top:12px;
+  }
+
+  .pao-btn {
+    background:var(--btn);
+    border:1px solid #2a2f3a;
+    color:var(--text);
+    padding:10px 0;
+    border-radius:10px;
+    font-weight:600;
+  }
+
+  .pao-btn.active {
+    background:var(--accent);
+  }
+
+  .result {
+    margin-top:14px;
+    text-align:center;
+    font-size:15px;
+  }
+
+  .status-ok { color:var(--ok); }
+  .status-bad { color:var(--danger); }
+
 </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>Keep or Toss</h1>
-  <div class="sub">Photo preview → PAO → date</div>
 
   <div class="card">
-    <!-- 사진 선택 -->
-    <input id="photo" type="file" accept="image/*">
+    <input type="file" id="photo" accept="image/*" />
+    <img id="preview" />
+  </div>
 
-    <!-- 사진 미리보기 -->
-    <div id="preview" class="preview" style="display:none">
-      <img id="img">
+  <div class="card">
+    <input type="date" id="opened" />
+    <div class="pao-grid">
+      <button class="pao-btn" data-m="3">3M</button>
+      <button class="pao-btn" data-m="6">6M</button>
+      <button class="pao-btn" data-m="9">9M</button>
+      <button class="pao-btn" data-m="12">12M</button>
+      <button class="pao-btn" data-m="18">18M</button>
+      <button class="pao-btn" data-m="24">24M</button>
+      <button class="pao-btn" data-m="36">36M</button>
     </div>
 
-    <!-- 날짜 -->
-    <input id="opened" type="date" style="margin-top:12px">
-
-    <!-- PAO -->
-    <div id="paoGrid" class="paoGrid"></div>
-
-    <!-- 결과 -->
-    <div id="result" class="result" style="display:none"></div>
+    <div class="result" id="result"></div>
   </div>
 </div>
 
 <script>
-  const PAO = [3,6,9,12,18,24,36];
-  let selectedPao = null;
-  let currentItem = null;
-  
-  const $ = id => document.getElementById(id);
-  const today = () => new Date().toISOString().slice(0,10);
-  
-  function addMonths(d,m){
-    const x=new Date(d);
-    x.setMonth(x.getMonth()+m);
-    return x;
-  }
-  function daysLeft(t){
-    return Math.floor((t-new Date())/86400000);
-  }
-  
-  /* 사진 미리보기 */
-  $("photo").onchange = e=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    $("img").src = URL.createObjectURL(file);
-    $("preview").style.display="block";
-  };
-  
-  /* PAO 버튼 */
-  PAO.forEach(m=>{
-    const b=document.createElement("button");
-    b.textContent=m+"M";
-    b.className="paoBtn";
-    b.onclick=()=>{
-      selectedPao=m;
-      [...$("paoGrid").children].forEach(x=>x.classList.remove("active"));
-      b.classList.add("active");
-      buildItem();
-    };
-    $("paoGrid").appendChild(b);
+const photo = document.getElementById("photo");
+const preview = document.getElementById("preview");
+const opened = document.getElementById("opened");
+const result = document.getElementById("result");
+const buttons = document.querySelectorAll(".pao-btn");
+
+let selectedPAO = null;
+
+// 사진 미리보기
+photo.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  preview.src = url;
+  preview.style.display = "block";
+});
+
+// PAO 선택
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    buttons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    selectedPAO = Number(btn.dataset.m);
+    calculate();
   });
-  
-  /* 핵심: 아이템 생성 */
-  function buildItem(){
-    if(!selectedPao) return;
-  
-    const opened = new Date($("opened").value);
-    const toss = addMonths(opened, selectedPao);
-    const left = daysLeft(toss);
-  
-    let status =
-      left < 0 ? "TOSS" :
-      left <= 30 ? "USE SOON" :
-      "SAFE";
-  
-    currentItem = {
-      openedAt: $("opened").value,
-      paoMonths: selectedPao,
-      tossAt: toss.toISOString().slice(0,10),
-      daysLeft: left,
-      status
-    };
-  
-    renderResult();
+});
+
+// 계산
+function calculate() {
+  if (!opened.value || !selectedPAO) return;
+
+  const openDate = new Date(opened.value);
+  const tossDate = new Date(openDate);
+  tossDate.setMonth(tossDate.getMonth() + selectedPAO);
+
+  const today = new Date();
+  const diff = Math.ceil((tossDate - today) / 86400000);
+
+  if (diff < 0) {
+    result.innerHTML =
+      `<div class="status-bad">TOSS<br>폐기일 ${tossDate.toISOString().slice(0,10)}</div>`;
+  } else {
+    result.innerHTML =
+      `<div class="status-ok">SAFE<br>${diff} days left<br>폐기일 ${tossDate.toISOString().slice(0,10)}</div>`;
   }
-  
-  /* 결과 표시 */
-  function renderResult(){
-    const r = $("result");
-    r.style.display="block";
-    r.className="result "+
-      (currentItem.status==="TOSS"?"err":
-       currentItem.status==="USE SOON"?"warn":"ok");
-  
-    r.textContent =
-      currentItem.status +
-      " · Toss at " + currentItem.tossAt;
-  }
-  
-  /* 초기화 */
-  $("opened").value = today();
-  $("opened").onchange = buildItem;
-  </script>
-  
+
+  // 👉 여기서부터 다음 단계로 확장 가능
+  window.currentItem = {
+    opened: opened.value,
+    pao: selectedPAO,
+    tossAt: tossDate.toISOString().slice(0,10),
+    daysLeft: diff
+  };
+
+  console.log("currentItem", window.currentItem);
+}
+</script>
 </body>
 </html>
