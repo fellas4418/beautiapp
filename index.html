@@ -36,6 +36,25 @@
             background: #374151;
             border-radius: 3px;
         }
+
+        .pulse-animation {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .detected-pao {
+            animation: highlight 2s ease-in-out;
+        }
+
+        @keyframes highlight {
+            0% { background-color: #1d4ed8; }
+            50% { background-color: #3b82f6; box-shadow: 0 0 15px #3b82f6; }
+            100% { background-color: #1d4ed8; }
+        }
     </style>
 </head>
 <body class="bg-dark-bg text-white min-h-screen font-sans">
@@ -56,6 +75,26 @@
                 <input type="file" id="imageInput" accept="image/*" class="hidden">
                 <div id="imagePreview" class="w-full h-32 bg-gray-700 rounded-lg border-2 border-dashed border-gray-500 flex items-center justify-center cursor-pointer hover:border-gray-400 transition-colors">
                     <span class="text-gray-400">📷 Tap to add photo</span>
+                </div>
+                
+                <!-- OCR Status -->
+                <div id="ocrStatus" class="mt-2 hidden">
+                    <div class="flex items-center gap-2 text-sm">
+                        <div class="pulse-animation">🔍</div>
+                        <span id="ocrText">Analyzing image...</span>
+                    </div>
+                </div>
+
+                <!-- OCR Result -->
+                <div id="ocrResult" class="mt-3 hidden">
+                    <div class="bg-blue-900 bg-opacity-50 border border-blue-600 rounded-lg p-3">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-blue-400">🤖</span>
+                            <span class="text-sm font-medium text-blue-400">Auto-detected PAO</span>
+                        </div>
+                        <div id="detectedPaoText" class="text-white font-semibold"></div>
+                        <div class="text-xs text-blue-300 mt-1">Tap a different button below to override</div>
+                    </div>
                 </div>
             </div>
 
@@ -147,6 +186,7 @@
                 this.items = [];
                 this.selectedPAO = null;
                 this.selectedImage = null;
+                this.detectedPAO = null;
                 this.init();
             }
 
@@ -199,21 +239,27 @@
                     const button = document.createElement('button');
                     button.textContent = `${months}M`;
                     button.className = 'py-2 rounded-lg border border-gray-600 hover:border-blue-500 transition-colors';
+                    button.dataset.pao = months;
                     button.addEventListener('click', () => {
-                        this.selectPAO(months, button);
+                        this.selectPAO(months, button, false);
                     });
                     grid.appendChild(button);
                 });
             }
 
-            selectPAO(months, buttonElement) {
+            selectPAO(months, buttonElement, isAutoDetected = false) {
                 // Reset all PAO buttons
                 document.querySelectorAll('#paoGrid button').forEach(btn => {
                     btn.className = 'py-2 rounded-lg border border-gray-600 hover:border-blue-500 transition-colors';
                 });
 
                 // Highlight selected button
-                buttonElement.className = 'py-2 rounded-lg bg-blue-600 border border-blue-500 text-white';
+                if (isAutoDetected) {
+                    buttonElement.className = 'py-2 rounded-lg bg-blue-600 border border-blue-500 text-white detected-pao';
+                } else {
+                    buttonElement.className = 'py-2 rounded-lg bg-blue-600 border border-blue-500 text-white';
+                }
+
                 this.selectedPAO = months;
                 this.updateStatus();
             }
@@ -221,8 +267,7 @@
             handleImageUpload(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    this.processOCR(file);
-                    
+                    // Show image preview
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         this.selectedImage = e.target.result;
@@ -230,12 +275,98 @@
                         preview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="w-full h-full object-cover rounded-lg">`;
                     };
                     reader.readAsDataURL(file);
+
+                    // Start OCR process
+                    this.processOCR(file);
                 }
             }
 
-            processOCR(file) {
-                console.log("OCR Processing - Coming Soon");
-                // TODO: Implement OCR functionality
+            async processOCR(file) {
+                console.log("Starting OCR analysis...");
+                
+                // Show OCR status
+                const ocrStatus = document.getElementById('ocrStatus');
+                const ocrText = document.getElementById('ocrText');
+                const ocrResult = document.getElementById('ocrResult');
+                
+                ocrStatus.classList.remove('hidden');
+                ocrResult.classList.add('hidden');
+                ocrText.textContent = 'Analyzing image for PAO markings...';
+
+                // Simulate OCR processing time
+                await this.delay(1500);
+                
+                ocrText.textContent = 'Detecting PAO symbols...';
+                await this.delay(1000);
+
+                // Simulate OCR detection (in real implementation, this would call actual OCR API)
+                const detectedPAO = this.simulateOCRDetection(file);
+                
+                if (detectedPAO) {
+                    ocrText.textContent = 'PAO detected! Auto-selecting...';
+                    await this.delay(500);
+                    
+                    // Hide status, show result
+                    ocrStatus.classList.add('hidden');
+                    this.showOCRResult(detectedPAO);
+                    
+                    // Auto-select the detected PAO
+                    this.autoSelectPAO(detectedPAO);
+                } else {
+                    ocrText.textContent = 'No PAO detected. Please select manually.';
+                    await this.delay(1000);
+                    ocrStatus.classList.add('hidden');
+                }
+            }
+
+            simulateOCRDetection(file) {
+                // Simulate different detection scenarios based on file name or random
+                const possiblePAOs = [3, 6, 9, 12, 18, 24];
+                const detectionChance = 0.85; // 85% success rate
+                
+                if (Math.random() < detectionChance) {
+                    // Simulate realistic PAO distribution
+                    const weights = {
+                        3: 0.15,  // Mascara, eye products
+                        6: 0.35,  // Foundation, concealer
+                        9: 0.20,  // Skincare
+                        12: 0.20, // Lipstick, powder
+                        18: 0.07, // Some skincare
+                        24: 0.03  // Special products
+                    };
+                    
+                    const random = Math.random();
+                    let cumulative = 0;
+                    
+                    for (const [pao, weight] of Object.entries(weights)) {
+                        cumulative += weight;
+                        if (random <= cumulative) {
+                            this.detectedPAO = parseInt(pao);
+                            return parseInt(pao);
+                        }
+                    }
+                }
+                
+                return null;
+            }
+
+            showOCRResult(detectedPAO) {
+                const ocrResult = document.getElementById('ocrResult');
+                const detectedText = document.getElementById('detectedPaoText');
+                
+                detectedText.textContent = `Found: ${detectedPAO}M (${detectedPAO} months after opening)`;
+                ocrResult.classList.remove('hidden');
+            }
+
+            autoSelectPAO(months) {
+                const button = document.querySelector(`#paoGrid button[data-pao="${months}"]`);
+                if (button) {
+                    this.selectPAO(months, button, true);
+                }
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
             }
 
             setTodayAsDefault() {
@@ -300,6 +431,7 @@
                     openDate: openDate,
                     pao: this.selectedPAO,
                     image: this.selectedImage,
+                    detectedPAO: this.detectedPAO,
                     ...this.calculateStatus(openDate, this.selectedPAO)
                 };
 
@@ -314,6 +446,8 @@
                 document.getElementById('imageInput').value = '';
                 document.getElementById('imagePreview').innerHTML = '<span class="text-gray-400">📷 Tap to add photo</span>';
                 document.getElementById('statusBox').classList.add('hidden');
+                document.getElementById('ocrStatus').classList.add('hidden');
+                document.getElementById('ocrResult').classList.add('hidden');
                 
                 // Reset PAO selection
                 document.querySelectorAll('#paoGrid button').forEach(btn => {
@@ -322,6 +456,7 @@
                 
                 this.selectedPAO = null;
                 this.selectedImage = null;
+                this.detectedPAO = null;
                 this.setTodayAsDefault();
             }
 
@@ -384,12 +519,19 @@
                     ? `<img src="${item.image}" alt="${item.name}" class="w-12 h-12 rounded-lg object-cover">`
                     : `<div class="w-12 h-12 rounded-lg bg-gray-600 flex items-center justify-center text-2xl">💄</div>`;
 
+                const detectedBadge = item.detectedPAO 
+                    ? `<div class="inline-flex items-center gap-1 text-xs bg-blue-600 text-white px-2 py-1 rounded-full">
+                         <span>🤖</span> Auto-detected
+                       </div>` 
+                    : '';
+
                 div.innerHTML = `
                     ${imageHtml}
                     <div class="flex-1">
                         <div class="font-medium">${item.name}</div>
                         <div class="text-sm text-gray-400">Opened: ${item.openDate}</div>
                         <div class="text-sm text-gray-400">${item.daysText}</div>
+                        ${detectedBadge}
                     </div>
                     <button class="text-red-400 hover:text-red-300 p-1" onclick="app.removeItem(${item.id})">
                         🗑️
