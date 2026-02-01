@@ -11,139 +11,156 @@
   --card:#111318;
   --text:#e8e8ea;
   --muted:#a8abb4;
-  --border:rgba(255,255,255,.10);
+  --border:rgba(255,255,255,.12);
   --ok:#20c997;
+  --warn:#ffcc00;
+  --danger:#ff4d4f;
 }
 *{box-sizing:border-box;}
 body{
   margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
   background:var(--bg);
   color:var(--text);
 }
-.wrap{max-width:720px;margin:0 auto;padding:16px;}
+.wrap{max-width:420px;margin:0 auto;padding:16px;}
 .card{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:16px;
   padding:16px;
 }
-h1{margin:0 0 8px;font-size:26px;}
+h1{margin:0 0 6px;font-size:24px;}
+.sub{color:var(--muted);font-size:13px;margin-bottom:12px}
+
 input,button{
-  background:#1f2430;
+  width:100%;
+  background:#1a1f2b;
   border:1px solid var(--border);
-  color:var(--text);
-  padding:12px;
   border-radius:12px;
+  padding:12px;
+  color:var(--text);
+  font-weight:600;
 }
-button{cursor:pointer;font-weight:700}
+button{cursor:pointer}
+
 .paoGrid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:10px;
+  gap:8px;
   margin-top:12px;
 }
 .paoBtn.active{
   border-color:var(--ok);
   box-shadow:0 0 0 2px rgba(32,201,151,.3) inset;
 }
-.result{
-  margin-top:14px;
+
+.preview{
+  margin-top:12px;
+  border-radius:12px;
+  overflow:hidden;
   border:1px solid var(--border);
-  border-radius:14px;
-  padding:14px;
+}
+.preview img{
+  width:100%;
+  display:block;
+}
+
+.result{
+  margin-top:12px;
+  padding:12px;
+  border-radius:12px;
   text-align:center;
 }
 .result.ok{color:var(--ok)}
+.result.warn{color:var(--warn)}
+.result.err{color:var(--danger)}
 </style>
 </head>
 
 <body>
 <div class="wrap">
   <h1>Keep or Toss</h1>
+  <div class="sub">Photo preview → PAO → date</div>
 
   <div class="card">
-    <input id="imageInput" type="file" accept="image/*">
+    <!-- 사진 선택 -->
+    <input id="photo" type="file" accept="image/*">
 
-    <input id="openedDate" type="date" style="margin-top:10px">
+    <!-- 사진 미리보기 -->
+    <div id="preview" class="preview" style="display:none">
+      <img id="img">
+    </div>
 
-    <div class="paoGrid" id="paoGrid"></div>
+    <!-- 날짜 -->
+    <input id="opened" type="date" style="margin-top:12px">
 
+    <!-- PAO -->
+    <div id="paoGrid" class="paoGrid"></div>
+
+    <!-- 결과 -->
     <div id="result" class="result" style="display:none"></div>
   </div>
 </div>
 
 <script>
-/* ===== CONFIG ===== */
-const OCR_ENDPOINT = "https://pao-ocr-worker.ohryee.workers.dev";
-
-/* ===== STATE ===== */
+/* ===== 상태 ===== */
 const PAO = [3,6,9,12,18,24,36];
 let selectedPao = null;
 
-/* ===== DOM ===== */
+/* ===== 유틸 ===== */
 const $ = id => document.getElementById(id);
+const today = () => new Date().toISOString().slice(0,10);
 
-/* ===== PAO BUTTONS ===== */
-const grid = $("paoGrid");
+function addMonths(d,m){
+  const x=new Date(d); x.setMonth(x.getMonth()+m); return x;
+}
+function daysLeft(t){
+  return Math.floor((t-new Date())/86400000);
+}
+
+/* ===== 사진 미리보기 ===== */
+$("photo").onchange = e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  $("img").src = url;
+  $("preview").style.display="block";
+};
+
+/* ===== PAO 버튼 ===== */
 PAO.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
   b.className="paoBtn";
-  b.onclick=()=>selectPao(m);
-  grid.appendChild(b);
+  b.onclick=()=>{
+    selectedPao=m;
+    [...$("paoGrid").children].forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    calc();
+  };
+  $("paoGrid").appendChild(b);
 });
 
-function selectPao(m){
-  selectedPao=m;
-  [...grid.children].forEach(x=>x.classList.remove("active"));
-  [...grid.children].find(b=>b.textContent===m+"M")?.classList.add("active");
-  calc();
-}
-
-/* ===== DATE ===== */
-$("openedDate").value=new Date().toISOString().slice(0,10);
-
-/* ===== CALC ===== */
-function addMonths(d,m){
-  const x=new Date(d); x.setMonth(x.getMonth()+m); return x;
-}
+/* ===== 계산 ===== */
 function calc(){
   if(!selectedPao) return;
-  const opened=new Date($("openedDate").value);
-  const toss=addMonths(opened,selectedPao);
-  const r=$("result");
+  const opened = new Date($("opened").value);
+  const toss = addMonths(opened, selectedPao);
+  const d = daysLeft(toss);
+
+  const r = $("result");
   r.style.display="block";
-  r.className="result ok";
-  r.innerHTML=`SAFE TO USE<br>${selectedPao}M · Toss ${toss.toISOString().slice(0,10)}`;
+  r.className="result "+(d<0?"err":d<=30?"warn":"ok");
+  r.textContent =
+    d<0 ? "TOSS IT" :
+    d<=30 ? "USE SOON" :
+    "SAFE TO USE";
 }
 
-/* ===== IMAGE → OCR (자동) ===== */
-$("imageInput").onchange=async e=>{
-  const file=e.target.files[0];
-  if(!file) return;
-
-  const base64 = await toBase64(file);
-  console.log("base64 length:", base64.length);
-
-  const res = await fetch(OCR_ENDPOINT,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ imageBase64: base64 })
-  }).then(r=>r.json()).catch(()=>null);
-
-  if(res?.pao){
-    selectPao(res.pao);
-  }
-};
-
-function toBase64(file){
-  return new Promise(res=>{
-    const r=new FileReader();
-    r.onload=()=>res(r.result.split(",")[1]);
-    r.readAsDataURL(file);
-  });
-}
+/* 초기값 */
+$("opened").value = today();
+$("opened").onchange = calc;
 </script>
 </body>
 </html>
