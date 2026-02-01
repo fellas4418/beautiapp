@@ -50,7 +50,7 @@
     PAOS.forEach(m=>{
       const b=document.createElement("button");
       b.textContent=m+"M";
-      b.onclick=()=>{
+      b.onclick=()=>{ 
         selectPAO(m);
         updateResult();
       };
@@ -120,8 +120,8 @@
       reader.readAsDataURL(file);
     };
   </script>
+
   <script>
-    // 이전 코드 그대로 이어서 추가
     // OCR에서 PAO 값 받은 후 자동 선택하는 부분
   
     async function runPaoOCR(file) {
