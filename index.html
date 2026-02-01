@@ -38,9 +38,15 @@ input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;bord
 <script>
 const PAOS=[3,6,9,12,18,24,36];
 let selectedPAO=null;
-let openedDateStr=null;
 
+const openedInput=document.getElementById("opened");
 const paoBox=document.getElementById("paoBtns");
+const result=document.getElementById("result");
+
+// ✅ 오늘 날짜 기본 세팅
+const todayStr=new Date().toISOString().slice(0,10);
+openedInput.value=todayStr;
+
 PAOS.forEach(m=>{
   const b=document.createElement("button");
   b.textContent=m+"M";
@@ -66,14 +72,13 @@ function addMonths(dateStr,months){
 }
 
 function updateResult(){
-  const r=document.getElementById("result");
-  if(!openedDateStr||!selectedPAO){
-    r.className="result warn";
-    r.textContent="날짜와 PAO를 선택하세요";
+  if(!openedInput.value||!selectedPAO){
+    result.className="result warn";
+    result.textContent="PAO를 선택하세요";
     return;
   }
 
-  const tossDate=addMonths(openedDateStr,selectedPAO);
+  const tossDate=addMonths(openedInput.value,selectedPAO);
   const today=new Date();
   const daysLeft=Math.floor((tossDate-today)/86400000);
 
@@ -81,15 +86,12 @@ function updateResult(){
   if(daysLeft<0){cls="err";txt="TOSS IT";}
   else if(daysLeft<=30){cls="warn";txt="USE SOON";}
 
-  r.className="result "+cls;
-  r.textContent=
+  result.className="result "+cls;
+  result.textContent=
     `${txt} · ${selectedPAO}M · Toss at ${tossDate.toISOString().slice(0,10)}`;
 }
 
-document.getElementById("opened").onchange=e=>{
-  openedDateStr=e.target.value;
-  updateResult();
-};
+openedInput.onchange=updateResult;
 
 document.getElementById("file").onchange=e=>{
   const file=e.target.files[0];
@@ -101,7 +103,7 @@ document.getElementById("file").onchange=e=>{
     img.src=reader.result;
     img.style.display="block";
 
-    // 🔴 임시: 파일명에 3m/6m/12m 있으면 자동 선택
+    // 임시 자동 PAO (파일명 기준)
     const name=file.name.toLowerCase();
     if(name.includes("3m")) selectPAO(3);
     else if(name.includes("6m")) selectPAO(6);
