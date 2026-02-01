@@ -1,19 +1,10 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Keep or Toss</title>
   <meta name="theme-color" content="#0b0c10" />
-
-  <!--
-    핵심 정책
-    - 워커스 호출 안 함 (네트워크/코르스/지연 제거)
-    - Analyze 버튼 없음 (파일 선택 즉시 OCR 자동 실행)
-    - 화장대 정렬: TOSS(맨 위) → USE SOON → SAFE (아이템 추가할 때마다 자동 재정렬)
-    - 로컬 저장: localStorage
-  -->
-
   <style>
     :root{
       --bg:#0b0c10;
@@ -29,787 +20,537 @@
       --ok:#20c997;
       --shadow: 0 10px 30px rgba(0,0,0,.45);
       --radius: 18px;
-      --radius2: 14px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
-
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
-
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-      background: radial-gradient(1200px 700px at 10% 0%, rgba(43,108,255,.12), transparent 60%),
-                  radial-gradient(900px 600px at 90% 10%, rgba(32,201,151,.10), transparent 60%),
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 70% -10%, rgba(43,108,255,.18), transparent 60%),
+                  radial-gradient(900px 600px at 0% 20%, rgba(32,201,151,.12), transparent 55%),
                   var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
-
     .wrap{
-      max-width: 860px;
+      max-width: 460px;
       margin: 0 auto;
-      padding: 18px 14px 40px;
-      display:flex;
-      gap: 16px;
-      align-items:flex-start;
-      justify-content:center;
-      flex-wrap:wrap;
+      padding: 14px 14px 40px;
     }
-
-    .titlebar{
-      width:100%;
-      max-width: 860px;
+    .topbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      padding: 6px 4px 2px;
+      gap:10px;
+      margin: 4px 0 10px;
     }
-
-    .titlebar .title{
+    .title{
       font-size: 22px;
-      letter-spacing: .2px;
       font-weight: 800;
+      letter-spacing: .2px;
       margin:0;
     }
-
-    .titlebar .subtitle{
+    .sub{
       margin: 2px 0 0;
-      font-size: 12px;
       color: var(--muted);
+      font-size: 12px;
     }
-
-    .panel{
-      width: 420px;
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      color: var(--text);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 700;
+      cursor:pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      border: none;
+      background: linear-gradient(180deg, rgba(43,108,255,1), rgba(43,108,255,.85));
+    }
+    .btn.ghost{
+      background: transparent;
+    }
+    .card{
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow:hidden;
     }
+    .cardInner{ padding: 12px; }
 
-    .panel .inner{
-      padding: 14px;
-    }
+    .row{ display:flex; gap:10px; align-items:center; }
+    .row.wrapRow{ flex-wrap:wrap; }
+    .spacer{ flex:1; }
 
-    .row{
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .spacer{ height: 10px; }
-
-    .hint{
-      font-size: 12px;
-      color: var(--muted);
-      margin: 8px 2px 0;
-      line-height: 1.35;
-    }
-
-    .btn{
-      appearance:none;
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 12px;
-      font-weight: 800;
-      letter-spacing: .2px;
-      cursor:pointer;
-      box-shadow: 0 6px 16px rgba(0,0,0,.30);
-      user-select:none;
-    }
-    .btn:hover{ filter: brightness(1.03); }
-    .btn:active{ transform: translateY(1px); }
-
-    .btn.primary{
-      border-color: rgba(43,108,255,.35);
-      background: linear-gradient(180deg, rgba(43,108,255,.35), rgba(43,108,255,.15));
-    }
-
-    .btn.ghost{
-      box-shadow:none;
-      background: transparent;
-    }
-
-    .btn.small{
-      padding: 8px 10px;
-      border-radius: 11px;
-      font-weight: 800;
-      font-size: 12px;
-    }
-
-    .filebar{
+    .fileRow{
       display:flex;
       align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      padding: 12px 14px;
-      background: rgba(0,0,0,.18);
+      gap:10px;
+      padding: 12px;
       border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.15);
     }
-
-    .filebar .filename{
-      font-size: 12px;
+    .fileName{
       color: var(--muted);
-      max-width: 220px;
+      font-size: 12px;
       overflow:hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      max-width: 230px;
     }
+    input[type="file"]{ display:none; }
 
-    .hiddenInput{
-      position:absolute;
-      left:-9999px;
-      width:1px;
-      height:1px;
-      opacity:0;
-      pointer-events:none;
+    .previewWrap{
+      padding: 12px;
     }
-
-    .previewBox{
-      background: rgba(0,0,0,.18);
-      border: 1px solid var(--border);
-      border-radius: var(--radius2);
-      overflow:hidden;
+    .preview{
       width:100%;
-      aspect-ratio: 3 / 4;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      position:relative;
+      border-radius: 14px;
+      display:block;
+      background: #0a0b0f;
+      border: 1px solid rgba(255,255,255,.08);
+      max-height: 520px;
+      object-fit: contain;
     }
 
-    .previewBox img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      display:none;
-    }
-
-    .previewBox .empty{
-      padding: 16px;
-      text-align:center;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .badge{
-      position:absolute;
-      left:10px;
-      bottom:10px;
-      background: rgba(0,0,0,.55);
-      border: 1px solid rgba(255,255,255,.10);
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      color: rgba(255,255,255,.90);
-      display:none;
-      gap: 8px;
-      align-items:center;
-    }
-
-    .dot{
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background: var(--muted);
-      display:inline-block;
-    }
-    .dot.ok{ background: var(--ok); }
-    .dot.warn{ background: var(--warn); }
-    .dot.err{ background: var(--danger); }
-
-    .inputs{
-      display:flex;
-      flex-direction:column;
+    .form{
+      padding: 0 12px 12px;
+      display:grid;
       gap: 10px;
-      margin-top: 12px;
     }
-
-    .field{
+    .fieldLabel{
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 6px;
+    }
+    .input{
+      width:100%;
+      border:1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.18);
-      border: 1px solid var(--border);
+      color: var(--text);
       border-radius: 12px;
       padding: 10px 10px;
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      justify-content:space-between;
-    }
-
-    .field label{
-      font-size: 12px;
-      color: var(--muted);
-      white-space:nowrap;
-    }
-
-    .field input[type="date"]{
-      width: 180px;
-      background: transparent;
-      color: var(--text);
-      border: none;
       outline:none;
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 14px;
     }
-
-    .field input[type="text"]{
-      width: 100%;
-      background: transparent;
-      color: var(--text);
-      border: none;
-      outline:none;
-      font-size: 13px;
-      font-weight: 700;
+    .input:focus{
+      border-color: rgba(43,108,255,.65);
+      box-shadow: 0 0 0 3px rgba(43,108,255,.18);
     }
 
     .paoGrid{
       display:grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
-      margin-top: 12px;
     }
-
     .paoBtn{
-      padding: 11px 10px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(31,36,48,.55);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
       color: var(--text);
-      font-weight: 900;
+      border-radius: 12px;
+      padding: 10px 0;
+      font-weight: 800;
       cursor:pointer;
       user-select:none;
-      letter-spacing: .2px;
     }
-
     .paoBtn.active{
-      outline: 2px solid rgba(32,201,151,.85);
-      background: rgba(32,201,151,.10);
+      outline: 2px solid rgba(32,201,151,.9);
+      background: rgba(32,201,151,.12);
+      border-color: rgba(32,201,151,.35);
     }
 
-    .resultLine{
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(0,0,0,.18);
-      font-weight: 900;
+    .statusLine{
       font-size: 13px;
-      line-height: 1.35;
-      min-height: 44px;
+      font-weight: 800;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap: 10px;
-      flex-wrap:wrap;
+      gap:10px;
+      min-height: 42px;
     }
-
-    .resultLine .left{
-      display:flex;
-      align-items:center;
-      gap: 8px;
-      min-width: 180px;
+    .statusLine .left{
+      display:flex; gap:10px; align-items:center; min-width: 0;
     }
-
-    .statusText.ok{ color: var(--ok); }
-    .statusText.warn{ color: var(--warn); }
-    .statusText.err{ color: var(--danger); }
-
-    .meta{
-      font-family: var(--mono);
+    .pill{
       font-size: 11px;
-      color: rgba(255,255,255,.75);
-      opacity: .9;
+      font-weight: 900;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      white-space: nowrap;
     }
+    .pill.ok{ color: var(--ok); border-color: rgba(32,201,151,.35); background: rgba(32,201,151,.10); }
+    .pill.warn{ color: var(--warn); border-color: rgba(255,204,0,.35); background: rgba(255,204,0,.10); }
+    .pill.err{ color: var(--danger); border-color: rgba(255,77,79,.35); background: rgba(255,77,79,.10); }
+    .muted{ color: var(--muted); font-weight: 600; font-size: 12px; }
 
     .actions{
-      display:flex;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-top: 12px;
     }
 
-    .shelfPanel{
-      width: 420px;
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-
-    .shelfHeader{
-      padding: 12px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(0,0,0,.18);
-    }
-
-    .shelfHeader .h1{
-      margin:0;
-      font-size: 14px;
-      font-weight: 900;
-      letter-spacing:.2px;
-    }
-
-    .shelfHeader .count{
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 800;
-    }
-
-    .group{
-      padding: 12px 14px 6px;
-    }
-
-    .groupTitle{
-      display:flex;
-      align-items:center;
-      gap: 8px;
-      font-weight: 900;
-      font-size: 12px;
-      letter-spacing: .2px;
-      margin: 0 0 10px;
-    }
-
-    .groupTitle .tag{
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      color: rgba(255,255,255,.85);
-      background: rgba(0,0,0,.18);
-    }
-
-    .groupTitle .tag.err{ border-color: rgba(255,77,79,.35); color: rgba(255,77,79,.95); }
-    .groupTitle .tag.warn{ border-color: rgba(255,204,0,.35); color: rgba(255,204,0,.95); }
-    .groupTitle .tag.ok{ border-color: rgba(32,201,151,.35); color: rgba(32,201,151,.95); }
-
-    .items{
-      display:flex;
-      flex-direction:column;
-      gap: 10px;
-      padding-bottom: 10px;
-    }
-
-    .item{
-      border: 1px solid var(--border);
-      background: rgba(0,0,0,.18);
-      border-radius: 14px;
-      padding: 10px;
-      display:flex;
-      gap: 10px;
-      align-items:flex-start;
-    }
-
-    .thumb{
-      width: 54px;
-      height: 72px;
-      border-radius: 10px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
-      flex: 0 0 auto;
-      overflow:hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .thumb img{
-      width:100%;
-      height:100%;
-      object-fit: cover;
-      display:block;
-    }
-
-    .itemMain{
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .itemTitle{
-      font-weight: 1000;
-      font-size: 13px;
-      margin: 0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-
-    .itemSub{
-      margin-top: 4px;
+    .help{
       font-size: 12px;
       color: var(--muted);
       line-height: 1.35;
+      margin-top: 2px;
     }
 
-    .itemSub .mono{ font-family: var(--mono); }
-
-    .itemRight{
+    .shelfCard{
+      margin-top: 12px;
+      background: rgba(0,0,0,.14);
+      border-top: 1px solid var(--border);
+      padding: 12px;
+    }
+    .shelfHeader{
       display:flex;
-      flex-direction:column;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .shelfTitle{
+      font-weight: 900;
+      margin:0;
+    }
+    .count{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .group{
+      margin-top: 12px;
+    }
+    .groupTop{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 8px;
+    }
+    .groupName{
+      font-weight: 900;
+      margin:0;
+      font-size: 13px;
+    }
+    .divider{
+      height:1px;
+      background: rgba(255,255,255,.08);
+      flex:1;
+    }
+    .item{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      border-radius: 14px;
+      padding: 10px;
+      display:grid;
       gap: 8px;
-      align-items:flex-end;
-      flex: 0 0 auto;
+      margin-bottom: 8px;
     }
-
-    .pill{
-      font-weight: 1000;
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
+    .itemTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .itemName{
+      font-weight: 900;
+      font-size: 14px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+    }
+    .itemMeta{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .thumb{
+      width:100%;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: #0a0b0f;
+      max-height: 220px;
+      object-fit: cover;
+    }
+    .miniActions{
+      display:flex;
+      gap:8px;
+    }
+    .miniBtn{
+      border:1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.18);
-      letter-spacing:.2px;
-      white-space:nowrap;
-    }
-    .pill.ok{ color: var(--ok); border-color: rgba(32,201,151,.35); }
-    .pill.warn{ color: var(--warn); border-color: rgba(255,204,0,.35); }
-    .pill.err{ color: var(--danger); border-color: rgba(255,77,79,.35); }
-
-    .delBtn{
-      appearance:none;
-      border: 1px solid rgba(255,77,79,.35);
-      background: rgba(255,77,79,.10);
-      color: rgba(255,255,255,.92);
-      padding: 6px 8px;
+      color: var(--text);
       border-radius: 10px;
-      font-weight: 1000;
-      font-size: 11px;
+      padding: 6px 8px;
+      font-weight: 800;
+      font-size: 12px;
       cursor:pointer;
     }
 
-    .delBtn:hover{ filter: brightness(1.05); }
-    .delBtn:active{ transform: translateY(1px); }
-
-    .footerNote{
-      padding: 10px 14px 14px;
-      color: var(--muted);
-      font-size: 11px;
-      line-height: 1.35;
-      border-top: 1px solid var(--border);
-      background: rgba(0,0,0,.10);
-    }
-
-    @media (max-width: 920px){
-      .wrap{ max-width: 860px; }
-      .panel,.shelfPanel{ width: 100%; max-width: 520px; }
-      .titlebar{ max-width: 520px; }
+    @media (max-width: 380px){
+      .fileName{ max-width: 180px; }
+      .paoGrid{ grid-template-columns: repeat(3, 1fr); }
     }
   </style>
 </head>
-
 <body>
   <div class="wrap">
-    <div class="titlebar">
+    <div class="topbar">
       <div>
-        <p class="titlebar-title title">Keep or Toss</p>
-        <p class="subtitle">Photo → local PAO OCR → Toss date → My Shelf</p>
+        <h1 class="title">Keep or Toss</h1>
+        <div class="sub">Photo → local PAO OCR → Toss date → My Shelf</div>
       </div>
-      <button class="btn ghost small" id="btnResetAll" type="button">Reset</button>
+      <button class="btn ghost" id="resetAllBtn" type="button">Reset</button>
     </div>
 
-    <!-- LEFT: scanner -->
-    <section class="panel" aria-label="scanner">
-      <div class="filebar">
-        <div class="row" style="gap:8px;">
-          <input class="hiddenInput" id="fileInput" type="file" accept="image/*" />
-          <button class="btn primary small" id="btnPick" type="button">Choose image</button>
-          <div class="filename" id="fileName">No file selected</div>
-        </div>
-        <div class="row" style="gap:8px;">
-          <button class="btn small" id="btnClearCurrent" type="button">Clear</button>
-        </div>
+    <div class="card">
+      <div class="fileRow">
+        <button class="btn primary" id="chooseBtn" type="button">Choose image</button>
+        <div class="fileName" id="fileName">No file</div>
+        <div class="spacer"></div>
+        <button class="btn" id="clearBtn" type="button">Clear</button>
+        <input type="file" id="fileInput" accept="image/*" />
       </div>
 
-      <div class="inner">
-        <div class="previewBox" id="previewBox">
-          <img id="previewImg" alt="preview" />
-          <div class="empty" id="previewEmpty">
-            사진을 선택하면 자동으로 PAO(3M/6M/…)를 읽고<br/>
-            Toss date를 계산해서 화장대에 넣을 수 있어.
-          </div>
-          <div class="badge" id="scanBadge">
-            <span class="dot" id="scanDot"></span>
-            <span id="scanText">대기</span>
-          </div>
+      <div class="previewWrap">
+        <img id="preview" class="preview" alt="preview" style="display:none" />
+      </div>
+
+      <div class="form">
+        <div>
+          <div class="fieldLabel">Opened</div>
+          <input class="input" type="date" id="opened" />
         </div>
 
-        <div class="inputs">
-          <div class="field">
-            <label for="opened">Opened</label>
-            <input id="opened" type="date" />
-          </div>
-
-          <div class="field">
-            <label for="productName">Name</label>
-            <input id="productName" type="text" placeholder="Product name (optional)" maxlength="60" />
-          </div>
+        <div>
+          <div class="fieldLabel">Name</div>
+          <input class="input" type="text" id="name" placeholder="Product name (optional)" />
         </div>
 
-        <div class="paoGrid" id="paoGrid"></div>
+        <div>
+          <div class="fieldLabel">PAO</div>
+          <div class="paoGrid" id="paoBtns"></div>
+        </div>
 
-        <div class="resultLine" id="resultLine">
+        <div class="statusLine" id="statusLine">
           <div class="left">
-            <span class="dot" id="statusDot"></span>
-            <span class="statusText warn" id="statusText">PAO와 날짜를 선택하세요</span>
+            <span class="pill warn" id="statusPill">WAIT</span>
+            <span id="statusText" class="muted">Choose image to auto-detect PAO.</span>
           </div>
-          <div class="meta" id="metaText"></div>
+          <span id="statusRight" class="muted"></span>
         </div>
 
         <div class="actions">
-          <button class="btn primary" id="btnAdd" type="button" style="flex:1;">Add to Shelf</button>
-          <button class="btn" id="btnClearShelf" type="button" style="flex:1;">Clear Shelf</button>
+          <button class="btn primary" id="addBtn" type="button">Add to Shelf</button>
+          <button class="btn" id="clearShelfBtn" type="button">Clear Shelf</button>
         </div>
 
-        <div class="hint" id="hintLine">
-          팁: “버릴 것”이 맨 위로 올라오게 정렬됨. 사진 추가할수록 위에서부터 바로 정리됨.
+        <div class="help">
+          Tip: “TOSS” items stack on top. Add photos one by one and you’ll immediately see what to throw away first.
         </div>
       </div>
-    </section>
 
-    <!-- RIGHT: shelf -->
-    <section class="shelfPanel" aria-label="shelf">
-      <div class="shelfHeader">
-        <p class="h1">My Shelf</p>
-        <div class="count" id="shelfCount">0 items</div>
-      </div>
-
-      <div class="group" id="groupToss">
-        <div class="groupTitle">
-          <span class="tag err">TOSS</span>
-          <span>버릴 것 (기한 지남)</span>
+      <div class="shelfCard">
+        <div class="shelfHeader">
+          <div class="shelfTitle">My Shelf</div>
+          <div class="count" id="countText">0 items</div>
         </div>
-        <div class="items" id="listToss"></div>
-      </div>
 
-      <div class="group" id="groupSoon">
-        <div class="groupTitle">
-          <span class="tag warn">USE SOON</span>
-          <span>곧 버릴 것 (30일 이내)</span>
-        </div>
-        <div class="items" id="listSoon"></div>
+        <div id="shelf"></div>
       </div>
-
-      <div class="group" id="groupSafe">
-        <div class="groupTitle">
-          <span class="tag ok">SAFE</span>
-          <span>사용해도 되는 것</span>
-        </div>
-        <div class="items" id="listSafe"></div>
-      </div>
-
-      <div class="footerNote">
-        로컬 저장(localStorage). 브라우저/기기 바꾸면 데이터는 안 따라감.<br/>
-        지금 단계는 “PAO + 날짜 + 정렬 UX”만 고정. 워커스/서버는 안 씀.
-      </div>
-    </section>
+    </div>
   </div>
 
-    <!-- Tesseract.js (로컬 OCR) -->
-  <!--
-    - 첫 실행 때 워커 로딩/캐시 때문에 약간의 딜레이가 있을 수 있음
-    - 그 다음부터는 훨씬 빨라짐
-    - 인식 대상이 "3M, 6M..." 같은 짧은 패턴이라 whitelist로 강하게 제한함
-  -->
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- Local OCR (browser) -->
+  <script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <script>
-    /* =========================
-       Constants
-    ========================= */
-    const PAO_OPTIONS = [3,6,9,12,18,24,36];
-    const SOON_DAYS = 30;
+    const PAOS = [3,6,9,12,18,24,36];
 
-    const LS_KEY = "keep_or_toss_shelf_v3";
+    const $ = (id) => document.getElementById(id);
 
-    /* =========================
-       Elements
-    ========================= */
-    const fileInput = document.getElementById("fileInput");
-    const btnPick = document.getElementById("btnPick");
-    const btnClearCurrent = document.getElementById("btnClearCurrent");
-    const fileNameEl = document.getElementById("fileName");
+    const fileInput = $("fileInput");
+    const chooseBtn = $("chooseBtn");
+    const clearBtn = $("clearBtn");
+    const fileNameEl = $("fileName");
+    const preview = $("preview");
+    const opened = $("opened");
+    const nameInput = $("name");
+    const paoBtns = $("paoBtns");
+    const statusLine = $("statusLine");
+    const statusPill = $("statusPill");
+    const statusText = $("statusText");
+    const statusRight = $("statusRight");
+    const addBtn = $("addBtn");
+    const clearShelfBtn = $("clearShelfBtn");
+    const resetAllBtn = $("resetAllBtn");
+    const shelfEl = $("shelf");
+    const countText = $("countText");
 
-    const previewImg = document.getElementById("previewImg");
-    const previewEmpty = document.getElementById("previewEmpty");
-
-    const openedEl = document.getElementById("opened");
-    const productNameEl = document.getElementById("productName");
-
-    const paoGrid = document.getElementById("paoGrid");
-
-    const resultLine = document.getElementById("resultLine");
-    const statusDot = document.getElementById("statusDot");
-    const statusText = document.getElementById("statusText");
-    const metaText = document.getElementById("metaText");
-
-    const btnAdd = document.getElementById("btnAdd");
-    const btnClearShelf = document.getElementById("btnClearShelf");
-    const btnResetAll = document.getElementById("btnResetAll");
-
-    const shelfCount = document.getElementById("shelfCount");
-    const listToss = document.getElementById("listToss");
-    const listSoon = document.getElementById("listSoon");
-    const listSafe = document.getElementById("listSafe");
-
-    const scanBadge = document.getElementById("scanBadge");
-    const scanDot = document.getElementById("scanDot");
-    const scanText = document.getElementById("scanText");
-
-    /* =========================
-       State
-    ========================= */
     let selectedPAO = null;
-    let currentImageDataUrl = "";
-    let currentImageThumb = "";
-    let shelf = [];
-
-    let ocrWorker = null;
-    let ocrReady = false;
+    let lastImageDataUrl = "";
     let ocrBusy = false;
 
-    /* =========================
-       Helpers: date
-    ========================= */
-    function todayISO(){
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const dd = String(d.getDate()).padStart(2,"0");
-      return `${y}-${m}-${dd}`;
+    const LS_KEY = "keepOrTossShelf_v1";
+    let shelf = loadShelf();
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+    function isoDate(d){
+      return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
     }
+    function todayISO(){ return isoDate(new Date()); }
 
-    function parseISO(iso){
-      const [y,m,d] = String(iso).split("-").map(Number);
-      return new Date(y, (m||1)-1, d||1);
-    }
+    opened.value = todayISO();
 
-    function toISO(d){
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,"0");
-      const dd = String(d.getDate()).padStart(2,"0");
-      return `${y}-${m}-${dd}`;
-    }
+    function addMonths(dateStr, months){
+      const [y,m,d] = dateStr.split("-").map(Number);
+      const dt = new Date(y, m-1, d);
+      const targetMonth = dt.getMonth() + months;
+      dt.setMonth(targetMonth);
 
-    function addMonths(iso, months){
-      const dt = parseISO(iso);
-      const day = dt.getDate();
-      dt.setMonth(dt.getMonth() + months);
-
-      // JS month overflow로 날짜가 밀리는 문제 완화
-      // ex) 1/31 + 1 month => 3/02 같은 케이스를 최대한 원래 월의 마지막날로 맞춤
-      if (dt.getDate() !== day) {
-        dt.setDate(0); // 전월 말일
+      // Month overflow fix (e.g., Jan 31 + 1 month)
+      while (dt.getMonth() !== (targetMonth % 12 + 12) % 12) {
+        dt.setDate(dt.getDate() - 1);
       }
       return dt;
     }
 
     function diffDays(a, b){
-      // a-b (a가 미래면 +)
-      const ms = a.getTime() - b.getTime();
+      // a,b are Date
+      const ms = (a.getTime() - b.getTime());
       return Math.floor(ms / 86400000);
     }
 
-    /* =========================
-       Status logic
-    ========================= */
-    function getStatus(tossDate){
+    function getStatus(openedISO, paoMonths){
+      const tossDate = addMonths(openedISO, paoMonths);
       const today = new Date();
-      const left = diffDays(tossDate, today);
+      const daysLeft = diffDays(tossDate, today);
 
-      if (left < 0) return { key:"err", label:"TOSS IT", daysLeft:left };
-      if (left <= SOON_DAYS) return { key:"warn", label:"USE SOON", daysLeft:left };
-      return { key:"ok", label:"SAFE TO USE", daysLeft:left };
+      if (daysLeft < 0) return { key:"toss", label:"TOSS", cls:"err", tossDate, daysLeft };
+      if (daysLeft <= 30) return { key:"soon", label:"USE SOON", cls:"warn", tossDate, daysLeft };
+      return { key:"safe", label:"SAFE", cls:"ok", tossDate, daysLeft };
     }
 
-    function setResultUI(statusKey, text, meta){
-      statusDot.className = "dot " + (statusKey || "");
-      statusText.className = "statusText " + (statusKey || "warn");
-      statusText.textContent = text || "";
-      metaText.textContent = meta || "";
+    function setStatus(pillText, pillCls, text, right=""){
+      statusPill.className = "pill " + pillCls;
+      statusPill.textContent = pillText;
+      statusText.textContent = text;
+      statusRight.textContent = right;
     }
 
-    function setScanUI(mode, text){
-      // mode: "idle" | "busy" | "ok" | "fail"
-      scanBadge.style.display = "flex";
-      scanText.textContent = text || "";
-
-      scanDot.className = "dot";
-      if (mode === "ok") scanDot.classList.add("ok");
-      else if (mode === "fail") scanDot.classList.add("err");
-      else if (mode === "busy") scanDot.classList.add("warn");
-    }
-
-    function hideScanUI(){
-      scanBadge.style.display = "none";
-    }
-
-    /* =========================
-       PAO buttons
-    ========================= */
-    function renderPaoButtons(){
-      paoGrid.innerHTML = "";
-      PAO_OPTIONS.forEach(m=>{
+    function renderPAOButtons(){
+      paoBtns.innerHTML = "";
+      PAOS.forEach((m)=>{
         const b = document.createElement("button");
         b.type = "button";
         b.className = "paoBtn";
-        b.textContent = `${m}M`;
+        b.textContent = m + "M";
         b.addEventListener("click", ()=>{
           selectPAO(m);
-          updateResult();
+          updateResultLine();
         });
-        paoGrid.appendChild(b);
+        paoBtns.appendChild(b);
       });
     }
 
     function selectPAO(m){
       selectedPAO = m;
-      [...paoGrid.children].forEach(btn=>{
-        btn.classList.toggle("active", btn.textContent === `${m}M`);
+      [...paoBtns.children].forEach((b)=>{
+        b.classList.toggle("active", b.textContent === (m+"M"));
       });
     }
 
-    function clearPAO(){
-      selectedPAO = null;
-      [...paoGrid.children].forEach(btn=> btn.classList.remove("active"));
+    function updateResultLine(){
+      if (!opened.value || !selectedPAO){
+        setStatus("WAIT","warn","Pick PAO and date.","");
+        return;
+      }
+      const st = getStatus(opened.value, selectedPAO);
+      const tossISO = isoDate(st.tossDate);
+      const right = "Toss at " + tossISO;
+
+      if (st.key === "toss"){
+        setStatus("TOSS","err","Expired. Throw it away.", right);
+      } else if (st.key === "soon"){
+        setStatus("SOON","warn","Use it soon.", right);
+      } else {
+        setStatus("SAFE","ok","Safe to use.", right);
+      }
     }
 
-    /* =========================
-       Result calculation
-    ========================= */
-    function updateResult(){
-      const opened = openedEl.value;
-      if (!opened || !selectedPAO){
-        setResultUI("warn", "PAO와 날짜를 선택하세요", "");
+    opened.addEventListener("change", updateResultLine);
+
+    chooseBtn.addEventListener("click", ()=> fileInput.click());
+
+    clearBtn.addEventListener("click", ()=>{
+      fileInput.value = "";
+      fileNameEl.textContent = "No file";
+      preview.style.display = "none";
+      preview.src = "";
+      lastImageDataUrl = "";
+      selectedPAO = null;
+      [...paoBtns.children].forEach(b=> b.classList.remove("active"));
+      setStatus("WAIT","warn","Choose image to auto-detect PAO.","");
+      statusRight.textContent = "";
+    });
+
+    resetAllBtn.addEventListener("click", ()=>{
+      clearBtn.click();
+      nameInput.value = "";
+      opened.value = todayISO();
+      updateResultLine();
+    });
+
+    clearShelfBtn.addEventListener("click", ()=>{
+      shelf = [];
+      saveShelf();
+      renderShelf();
+    });
+
+    addBtn.addEventListener("click", ()=>{
+      if (!lastImageDataUrl){
+        setStatus("WAIT","warn","Choose an image first.","");
+        return;
+      }
+      if (!opened.value || !selectedPAO){
+        setStatus("WAIT","warn","Pick PAO and date first.","");
         return;
       }
 
-      const tossDate = addMonths(opened, selectedPAO);
-      const st = getStatus(tossDate);
+      const st = getStatus(opened.value, selectedPAO);
+      const item = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2),
+        name: (nameInput.value || "").trim() || "Untitled",
+        openedAt: opened.value,
+        pao: selectedPAO,
+        tossAt: isoDate(st.tossDate),
+        status: st.key, // toss | soon | safe
+        createdAt: Date.now(),
+        img: lastImageDataUrl
+      };
 
-      const meta = `${selectedPAO}M · Toss at ${toISO(tossDate)} · D${st.daysLeft>=0?"+":""}${st.daysLeft}`;
-      setResultUI(st.key, st.label, meta);
-    }
+      shelf.unshift(item);
+      saveShelf();
+      renderShelf();
+    });
 
-    /* =========================
-       localStorage
-    ========================= */
     function loadShelf(){
       try{
         const raw = localStorage.getItem(LS_KEY);
         if (!raw) return [];
         const arr = JSON.parse(raw);
-        if (!Array.isArray(arr)) return [];
-        return arr;
-      }catch{
+        return Array.isArray(arr) ? arr : [];
+      } catch {
         return [];
       }
     }
@@ -818,463 +559,305 @@
       localStorage.setItem(LS_KEY, JSON.stringify(shelf));
     }
 
-    /* =========================
-       Shelf sort/render
-       - TOSS first, then SOON, then SAFE
-       - within each group: tossDate ascending (더 급한게 위)
-       - tie-breaker: createdAt desc (최근 추가가 위)
-    ========================= */
-    function statusRank(key){
-      if (key === "err") return 0;
-      if (key === "warn") return 1;
-      return 2;
-    }
-
-    function normalizeItem(it){
-      // 기존 데이터 호환
-      const openedAt = it.openedAt || it.opened || todayISO();
-      const paoMonths = Number(it.paoMonths || it.pao || 0) || null;
-      const name = it.name || it.productName || "";
-      const image = it.image || it.imageDataUrl || "";
-      const thumb = it.thumb || it.thumbnail || "";
-      const createdAt = it.createdAt || Date.now();
-
-      let tossAt = it.tossAt;
-      if (!tossAt && openedAt && paoMonths){
-        tossAt = toISO(addMonths(openedAt, paoMonths));
-      }
-
-      return {
-        id: it.id || ("it_" + Math.random().toString(36).slice(2) + "_" + Date.now()),
-        name,
-        openedAt,
-        paoMonths,
-        tossAt,
-        image,
-        thumb,
-        createdAt
-      };
-    }
-
-    function computeStatusForItem(it){
-      const tossDate = parseISO(it.tossAt);
-      const st = getStatus(tossDate);
-      return st;
-    }
-
-    function sortShelf(){
-      shelf = shelf.map(normalizeItem);
-
-      shelf.sort((a,b)=>{
-        const sa = computeStatusForItem(a);
-        const sb = computeStatusForItem(b);
-
-        const ra = statusRank(sa.key);
-        const rb = statusRank(sb.key);
+    function sortShelfForUX(items){
+      // TOSS first, then SOON, then SAFE; within each group tossAt ascending (earliest first)
+      const rank = { toss:0, soon:1, safe:2 };
+      return [...items].sort((a,b)=>{
+        const ra = rank[a.status] ?? 9;
+        const rb = rank[b.status] ?? 9;
         if (ra !== rb) return ra - rb;
-
-        // tossAt 빠른 순
-        const ta = parseISO(a.tossAt).getTime();
-        const tb = parseISO(b.tossAt).getTime();
-        if (ta !== tb) return ta - tb;
-
-        // 최근 추가 위
+        if (a.tossAt !== b.tossAt) return a.tossAt.localeCompare(b.tossAt);
         return (b.createdAt||0) - (a.createdAt||0);
       });
     }
 
+    function groupByStatus(items){
+      const g = { toss: [], soon: [], safe: [] };
+      items.forEach(it=>{
+        if (it.status === "toss") g.toss.push(it);
+        else if (it.status === "soon") g.soon.push(it);
+        else g.safe.push(it);
+      });
+      return g;
+    }
+
     function renderShelf(){
-      listToss.innerHTML = "";
-      listSoon.innerHTML = "";
-      listSafe.innerHTML = "";
+      const items = sortShelfForUX(shelf);
+      countText.textContent = items.length + " items";
+      const g = groupByStatus(items);
 
-      sortShelf();
+      shelfEl.innerHTML = "";
 
-      const total = shelf.length;
-      shelfCount.textContent = `${total} item${total===1?"":"s"}`;
+      const groups = [
+        { key:"toss", label:"Throw away first", pill:"TOSS", cls:"err" },
+        { key:"soon", label:"Use soon", pill:"SOON", cls:"warn" },
+        { key:"safe", label:"Safe to use", pill:"SAFE", cls:"ok" },
+      ];
 
-      shelf.forEach(it=>{
-        const st = computeStatusForItem(it);
-        const el = renderItem(it, st);
+      groups.forEach(gr=>{
+        const arr = g[gr.key];
+        const wrap = document.createElement("div");
+        wrap.className = "group";
 
-        if (st.key === "err") listToss.appendChild(el);
-        else if (st.key === "warn") listSoon.appendChild(el);
-        else listSafe.appendChild(el);
-      });
-    }
+        const top = document.createElement("div");
+        top.className = "groupTop";
 
-    function renderItem(it, st){
-      const wrap = document.createElement("div");
-      wrap.className = "item";
+        const pill = document.createElement("span");
+        pill.className = "pill " + gr.cls;
+        pill.textContent = gr.pill;
 
-      const thumb = document.createElement("div");
-      thumb.className = "thumb";
-      const img = document.createElement("img");
-      img.alt = "thumb";
-      img.src = it.thumb || it.image || "";
-      thumb.appendChild(img);
+        const name = document.createElement("div");
+        name.className = "groupName";
+        name.textContent = gr.label + " (" + arr.length + ")";
 
-      const main = document.createElement("div");
-      main.className = "itemMain";
+        const div = document.createElement("div");
+        div.className = "divider";
 
-      const title = document.createElement("p");
-      title.className = "itemTitle";
-      title.textContent = it.name?.trim() ? it.name.trim() : "Untitled";
+        top.appendChild(pill);
+        top.appendChild(name);
+        top.appendChild(div);
+        wrap.appendChild(top);
 
-      const sub = document.createElement("div");
-      sub.className = "itemSub";
-      sub.innerHTML =
-        `<span class="mono">${it.paoMonths||"?"}M</span> · Opened <span class="mono">${it.openedAt}</span><br/>` +
-        `Toss <span class="mono">${it.tossAt}</span>`;
+        if (arr.length === 0){
+          const empty = document.createElement("div");
+          empty.className = "muted";
+          empty.style.padding = "6px 2px 2px";
+          empty.textContent = "No items.";
+          wrap.appendChild(empty);
+        } else {
+          arr.forEach(it=>{
+            const card = document.createElement("div");
+            card.className = "item";
 
-      main.appendChild(title);
-      main.appendChild(sub);
+            const top2 = document.createElement("div");
+            top2.className = "itemTop";
 
-      const right = document.createElement("div");
-      right.className = "itemRight";
+            const nm = document.createElement("div");
+            nm.className = "itemName";
+            nm.textContent = it.name;
 
-      const pill = document.createElement("div");
-      pill.className = "pill " + st.key;
-      pill.textContent = st.label;
+            const right = document.createElement("div");
+            right.className = "miniActions";
 
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "delBtn";
-      del.textContent = "Delete";
-      del.addEventListener("click", ()=>{
-        shelf = shelf.filter(x=> x.id !== it.id);
-        saveShelf();
-        renderShelf();
-      });
+            const useBtn = document.createElement("button");
+            useBtn.type = "button";
+            useBtn.className = "miniBtn";
+            useBtn.textContent = "Use";
+            useBtn.addEventListener("click", ()=>{
+              // load item back to editor
+              lastImageDataUrl = it.img || "";
+              if (lastImageDataUrl){
+                preview.src = lastImageDataUrl;
+                preview.style.display = "block";
+              }
+              fileNameEl.textContent = "Loaded from shelf";
+              opened.value = it.openedAt || todayISO();
+              nameInput.value = it.name === "Untitled" ? "" : it.name;
+              selectPAO(it.pao || null);
+              updateResultLine();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            });
 
-      right.appendChild(pill);
-      right.appendChild(del);
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "miniBtn";
+            delBtn.textContent = "Delete";
+            delBtn.addEventListener("click", ()=>{
+              shelf = shelf.filter(x=> x.id !== it.id);
+              saveShelf();
+              renderShelf();
+            });
 
-      wrap.appendChild(thumb);
-      wrap.appendChild(main);
-      wrap.appendChild(right);
+            right.appendChild(useBtn);
+            right.appendChild(delBtn);
 
-      return wrap;
-    }
-    /* =========================
-       Image utils
-    ========================= */
-    function fileToDataUrl(file){
-      return new Promise((resolve,reject)=>{
-        const r = new FileReader();
-        r.onload = ()=> resolve(String(r.result||""));
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
-    }
+            top2.appendChild(nm);
+            top2.appendChild(right);
 
-    async function makeThumbnail(dataUrl){
-      // 작은 썸네일 저장 (로컬스토리지 용량 줄이기)
-      // 긴 변 240px 정도로
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise(res=> { img.onload=res; img.onerror=res; });
+            const meta = document.createElement("div");
+            meta.className = "itemMeta";
+            meta.textContent =
+              it.pao + "M · Opened " + (it.openedAt || "-") + " · Toss at " + (it.tossAt || "-");
 
-      const maxSide = 240;
-      const w = img.naturalWidth || 1;
-      const h = img.naturalHeight || 1;
+            const img = document.createElement("img");
+            img.className = "thumb";
+            img.alt = "item photo";
+            img.src = it.img || "";
 
-      let tw = w, th = h;
-      if (w >= h){
-        if (w > maxSide){
-          tw = maxSide;
-          th = Math.round(h * (maxSide / w));
-        }
-      }else{
-        if (h > maxSide){
-          th = maxSide;
-          tw = Math.round(w * (maxSide / h));
-        }
-      }
+            card.appendChild(top2);
+            card.appendChild(meta);
+            if (it.img) card.appendChild(img);
 
-      const c = document.createElement("canvas");
-      c.width = tw;
-      c.height = th;
-      const ctx = c.getContext("2d");
-      ctx.drawImage(img, 0, 0, tw, th);
-
-      return c.toDataURL("image/jpeg", 0.72);
-    }
-
-    function showPreview(dataUrl){
-      currentImageDataUrl = dataUrl || "";
-      previewImg.src = dataUrl || "";
-      previewImg.style.display = dataUrl ? "block" : "none";
-      previewEmpty.style.display = dataUrl ? "none" : "block";
-    }
-
-    function clearCurrent(){
-      fileInput.value = "";
-      fileNameEl.textContent = "No file selected";
-      showPreview("");
-      productNameEl.value = "";
-      clearPAO();
-      updateResult();
-      hideScanUI();
-      currentImageThumb = "";
-    }
-
-    /* =========================
-       OCR: local (Tesseract.js)
-       - 빠르게 하려면 "크게 중앙만" 보도록 간단 전처리
-       - 글자 패턴은 (3|6|9|12|18|24|36)M 만
-    ========================= */
-    async function ensureOcrWorker(){
-      if (ocrWorker && ocrReady) return;
-
-      setScanUI("busy", "OCR 준비중…");
-      ocrWorker = await Tesseract.createWorker("eng", 1, {
-        logger: (m) => {
-          // 너무 시끄러우면 주석 처리
-          // console.log(m);
-        }
-      });
-
-      // 문자셋을 강하게 제한
-      await ocrWorker.setParameters({
-        tessedit_char_whitelist: "0123456789Mm",
-        preserve_interword_spaces: "1"
-      });
-
-      ocrReady = true;
-      setScanUI("ok", "OCR 준비 완료");
-      setTimeout(()=>hideScanUI(), 700);
-    }
-
-    async function ocrDetectPAO(dataUrl){
-      // 반환: { pao: number|null, raw: string }
-      await ensureOcrWorker();
-
-      if (!ocrWorker) return { pao:null, raw:"" };
-      if (ocrBusy) return { pao:null, raw:"" };
-
-      ocrBusy = true;
-      setScanUI("busy", "PAO 읽는중…");
-
-      try{
-        // 전처리: 캔버스로 줄이고 대비 올림 + 중앙 영역만
-        const pre = await preprocessForPAO(dataUrl);
-
-        const { data } = await ocrWorker.recognize(pre);
-        const raw = String(data?.text || "").trim();
-
-        const pao = extractPAOFromText(raw);
-        if (pao){
-          setScanUI("ok", `PAO ${pao}M 감지`);
-          setTimeout(()=>hideScanUI(), 700);
-          return { pao, raw };
+            wrap.appendChild(card);
+          });
         }
 
-        setScanUI("fail", "PAO 인식 실패");
-        // 실패 표시 조금 보이게
-        setTimeout(()=>hideScanUI(), 1200);
-        return { pao:null, raw };
-      }catch(e){
-        console.error(e);
-        setScanUI("fail", "OCR 오류");
-        setTimeout(()=>hideScanUI(), 1200);
-        return { pao:null, raw:"" };
-      }finally{
-        ocrBusy = false;
-      }
+        shelfEl.appendChild(wrap);
+      });
     }
 
-    function extractPAOFromText(raw){
-      // 3M/6M/9M/12M/18M/24M/36M
-      // 대충 나온 결과에서도 잡히게 공백/줄바꿈 제거 후 검사
-      const compact = String(raw||"")
-        .toUpperCase()
-        .replace(/\s+/g,"")
-        .replace(/O/g,"0"); // 혹시 O가 0로 나오는 케이스
+    renderPAOButtons();
+    renderShelf();
+    updateResultLine();
 
-      const matches = compact.match(/(3|6|9|12|18|24|36)M/g) || [];
-      if (matches.length === 0) return null;
+    // ---------------------------
+    // Local PAO OCR (Tesseract.js)
+    // ---------------------------
 
-      // 가장 먼저 나온 걸 사용
-      const m = matches[0];
-      const n = Number(m.replace("M",""));
-      return PAO_OPTIONS.includes(n) ? n : null;
+    function dataURLToImage(dataUrl){
+      return new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.onload = ()=> resolve(img);
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
     }
 
-    async function preprocessForPAO(dataUrl){
-      // 중앙을 좀 더 크게 보는 전처리
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise(res=> { img.onload=res; img.onerror=res; });
+    function preprocessToCanvas(img){
+      // Heuristic crop: center 70% (works for most "PAO icon area" / handwritten tests)
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-      const iw = img.naturalWidth || 1;
-      const ih = img.naturalHeight || 1;
+      const iw = img.naturalWidth || img.width;
+      const ih = img.naturalHeight || img.height;
 
-      // 중앙 60% 영역 크롭
-      const cropW = Math.floor(iw * 0.62);
-      const cropH = Math.floor(ih * 0.62);
+      const cropW = Math.floor(iw * 0.70);
+      const cropH = Math.floor(ih * 0.70);
       const sx = Math.floor((iw - cropW) / 2);
       const sy = Math.floor((ih - cropH) / 2);
 
-      // 다운스케일 목표 너비 (너무 크면 느림)
-      const targetW = 520;
-      const scale = cropW > targetW ? (targetW / cropW) : 1;
+      // scale up for OCR
+      const scale = 2.2;
+      canvas.width = Math.floor(cropW * scale);
+      canvas.height = Math.floor(cropH * scale);
 
-      const cw = Math.max(1, Math.floor(cropW * scale));
-      const ch = Math.max(1, Math.floor(cropH * scale));
+      ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
 
-      const c = document.createElement("canvas");
-      c.width = cw;
-      c.height = ch;
-      const ctx = c.getContext("2d");
+      // grayscale + threshold
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imageData.data;
 
-      // draw + 대비/그레이
-      ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, cw, ch);
-
-      // 간단한 대비 강화 + 그레이
-      const imgData = ctx.getImageData(0,0,cw,ch);
-      const d = imgData.data;
-
-      for (let i=0; i<d.length; i+=4){
-        const r = d[i], g = d[i+1], b = d[i+2];
-
-        // luminance
-        let v = 0.299*r + 0.587*g + 0.114*b;
-
-        // contrast
-        // v' = (v-128)*1.35 + 128
-        v = (v - 128) * 1.35 + 128;
-
-        // clamp
-        v = Math.max(0, Math.min(255, v));
-
-        d[i] = d[i+1] = d[i+2] = v;
-        // alpha 유지
+      // auto-threshold-ish
+      let sum = 0;
+      for (let i=0;i<d.length;i+=4){
+        const v = (d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114);
+        sum += v;
       }
-      ctx.putImageData(imgData,0,0);
+      const mean = sum / (d.length/4);
+      const thr = Math.max(90, Math.min(170, mean * 0.92));
 
-      return c.toDataURL("image/png");
+      for (let i=0;i<d.length;i+=4){
+        const v = (d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114);
+        const out = v < thr ? 0 : 255;
+        d[i]=d[i+1]=d[i+2]=out;
+        d[i+3]=255;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      return canvas;
     }
 
-    /* =========================
-       Events
-    ========================= */
-    btnPick.addEventListener("click", ()=> fileInput.click());
+    function extractPAOFromText(raw){
+      const t = String(raw || "").toUpperCase();
 
+      // normalize common OCR confusions
+      // 'O' -> '0' sometimes, but we only need M + digits
+      // Allow whitespace or punctuation between digit and M
+      const m = t.match(/(3|6|9|12|18|24|36)\s*[/\.\-\s]*M\b/);
+      if (m) return Number(m[1]);
+
+      // backup: sometimes returns like "6 M" or "6M;"
+      const m2 = t.match(/\b(3|6|9)\s*M\b/);
+      if (m2) return Number(m2[1]);
+
+      const m3 = t.match(/\b(12|18|24|36)\s*M\b/);
+      if (m3) return Number(m3[1]);
+
+      return null;
+    }
+
+    async function runLocalPAOOCR(dataUrl){
+      if (ocrBusy) return;
+      ocrBusy = true;
+
+      try{
+        setStatus("OCR","warn","Detecting PAO…","");
+
+        const img = await dataURLToImage(dataUrl);
+        const canvas = preprocessToCanvas(img);
+
+        const worker = await Tesseract.createWorker("eng", 1, {
+          logger: (m)=>{
+            if (m && m.status === "recognizing text" && typeof m.progress === "number"){
+              const p = Math.round(m.progress * 100);
+              statusRight.textContent = p + "%";
+            }
+          }
+        });
+
+        // Encourage reading short tokens
+        await worker.setParameters({
+          tessedit_char_whitelist: "0123456789Mm",
+          preserve_interword_spaces: "1"
+        });
+
+        const { data } = await worker.recognize(canvas);
+        await worker.terminate();
+
+        const raw = (data && data.text) ? data.text : "";
+        const pao = extractPAOFromText(raw);
+
+        if (pao && PAOS.includes(pao)){
+          selectPAO(pao);
+          updateResultLine();
+
+          // keep pill based on actual status
+          const st = getStatus(opened.value || todayISO(), pao);
+          const tossISO = isoDate(st.tossDate);
+          if (st.key === "toss") setStatus("TOSS","err","Expired. Throw it away.","Toss at " + tossISO);
+          else if (st.key === "soon") setStatus("SOON","warn","Use it soon.","Toss at " + tossISO);
+          else setStatus("SAFE","ok","Safe to use.","Toss at " + tossISO);
+
+          // small debug
+          // console.log("OCR RAW:", raw);
+        } else {
+          setStatus("FAIL","err","PAO not detected. Tap a PAO button manually.","");
+          // console.log("OCR RAW:", raw);
+        }
+      } catch (e){
+        console.error(e);
+        setStatus("ERR","err","OCR error. Try another photo or pick PAO manually.","");
+      } finally {
+        ocrBusy = false;
+        statusRight.textContent = "";
+      }
+    }
+
+    // File change
     fileInput.addEventListener("change", async (e)=>{
-      const file = e.target.files?.[0];
+      const file = e.target.files && e.target.files[0];
       if (!file) return;
 
-      fileNameEl.textContent = file.name || "selected";
-      const dataUrl = await fileToDataUrl(file);
-      showPreview(dataUrl);
-      currentImageThumb = await makeThumbnail(dataUrl);
+      fileNameEl.textContent = file.name || "Selected";
 
-      // 파일 선택 즉시 OCR 자동 실행
-      const { pao, raw } = await ocrDetectPAO(dataUrl);
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        lastImageDataUrl = String(reader.result || "");
+        preview.src = lastImageDataUrl;
+        preview.style.display = "block";
 
-      // OCR 성공하면 PAO 자동 선택
-      if (pao){
-        selectPAO(pao);
-      }else{
-        // 실패 시, 기존 선택값 유지 (원래 선택이 있었다면 유지)
-        // 아무것도 없으면 그대로
-      }
+        // reset selection to avoid "6M stuck"
+        selectedPAO = null;
+        [...paoBtns.children].forEach(b=> b.classList.remove("active"));
 
-      // 디버그 보고 싶으면 아래 주석 해제
-      // console.log("OCR RAW:", raw);
+        // run OCR (local)
+        await runLocalPAOOCR(lastImageDataUrl);
 
-      updateResult();
+        // if OCR didn't pick PAO, keep result line prompting
+        if (!selectedPAO) updateResultLine();
+      };
+      reader.readAsDataURL(file);
     });
-
-    openedEl.addEventListener("change", ()=>{
-      updateResult();
-    });
-
-    productNameEl.addEventListener("input", ()=>{
-      // 결과 계산과 무관하지만, UX 상 바로 반영되게 둠
-    });
-
-    btnClearCurrent.addEventListener("click", ()=>{
-      clearCurrent();
-    });
-
-    btnAdd.addEventListener("click", ()=>{
-      const opened = openedEl.value;
-      if (!currentImageDataUrl){
-        setResultUI("warn", "먼저 사진을 선택하세요", "");
-        return;
-      }
-      if (!opened || !selectedPAO){
-        setResultUI("warn", "PAO와 날짜를 선택하세요", "");
-        return;
-      }
-
-      const tossDate = addMonths(opened, selectedPAO);
-      const st = getStatus(tossDate);
-
-      const item = normalizeItem({
-        id: "it_" + Math.random().toString(36).slice(2) + "_" + Date.now(),
-        name: String(productNameEl.value||"").trim(),
-        openedAt: opened,
-        paoMonths: selectedPAO,
-        tossAt: toISO(tossDate),
-        image: currentImageDataUrl,
-        thumb: currentImageThumb,
-        createdAt: Date.now()
-      });
-
-      shelf.unshift(item);
-      saveShelf();
-      renderShelf();
-
-      // 추가 후 UX: 다음 등록을 위해 이름만 유지할지/초기화할지
-      // 여기서는 사진/PAO는 유지(연속 등록 편하게), 이름은 비움
-      productNameEl.value = "";
-
-      setResultUI(st.key, st.label, `${selectedPAO}M · Toss at ${toISO(tossDate)}`);
-      setScanUI("ok", "화장대에 추가됨");
-      setTimeout(()=>hideScanUI(), 700);
-    });
-
-    btnClearShelf.addEventListener("click", ()=>{
-      shelf = [];
-      saveShelf();
-      renderShelf();
-    });
-
-    btnResetAll.addEventListener("click", ()=>{
-      localStorage.removeItem(LS_KEY);
-      shelf = [];
-      saveShelf();
-      renderShelf();
-      clearCurrent();
-      openedEl.value = todayISO();
-      updateResult();
-    });
-
-    /* =========================
-       Init
-    ========================= */
-    function init(){
-      renderPaoButtons();
-
-      // 날짜 기본값: 오늘
-      openedEl.value = todayISO();
-
-      // 선반 로드/렌더
-      shelf = loadShelf().map(normalizeItem);
-      saveShelf();
-      renderShelf();
-
-      // 기본 결과 상태
-      updateResult();
-
-      // 초기 뱃지 숨김
-      hideScanUI();
-    }
-
-    init();
   </script>
 </body>
 </html>
