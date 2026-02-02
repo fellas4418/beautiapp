@@ -98,8 +98,8 @@ document.getElementById("fileInput").onchange=e=>{
   paoDetection.style.display="block";
 
   const img = new Image();
-  img.src = URL.createObjectURL(file);
   img.onload = () => {
+    console.log("이미지 로드 완료, OCR 시작");
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -148,6 +148,8 @@ document.getElementById("fileInput").onchange=e=>{
       paoDetection.style.background='#4d1b1b';
     });
   };
+  
+  img.src = URL.createObjectURL(file);
 };
 </script>
 </body>
