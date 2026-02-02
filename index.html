@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧴 PAO Tracker</title>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js'></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -42,6 +43,16 @@
             margin-left: auto;
             margin-right: auto;
         }
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        .status.analyzing { background: #e3f2fd; color: #1976d2; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.manual { background: #fff3cd; color: #856404; }
         .pao-options { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -59,7 +70,12 @@
             font-weight: 500;
         }
         .pao-btn:hover { border-color: #667eea; background: #f8f9ff; }
-        .pao-btn.selected { border-color: #667eea; background: #667eea; color: white; }
+        .pao-btn.selected { 
+            border-color: #667eea; 
+            background: #667eea; 
+            color: white;
+            transform: scale(1.05);
+        }
         input[type="text"], input[type="date"] {
             width: 100%;
             padding: 12px;
@@ -111,6 +127,18 @@
         }
         .delete-btn:hover { background: #c82333; }
         h3 { margin-top: 20px; margin-bottom: 10px; }
+        .progress {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -121,11 +149,12 @@
         <div class="upload-area" id="uploadArea">
             <p style="font-size: 48px;">📷</p>
             <p><strong>Upload product image</strong></p>
-            <p style="color: #999; font-size: 14px;">Click or drag to add image</p>
+            <p style="color: #999; font-size: 14px;">Auto-detect PAO symbol</p>
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
 
         <img id="previewImage" class="preview-image" style="display: none;">
+        <div id="status"></div>
 
         <div>
             <h3>Period After Opening (PAO)</h3>
@@ -146,7 +175,7 @@
 
         <div>
             <h3>Opening Date</h3>
-            <input type="date" id="openingDate" value="2026-02-02">
+            <input type="date" id="openingDate">
         </div>
 
         <button class="btn btn-primary" id="saveBtn" disabled>Save</button>
@@ -165,9 +194,9 @@
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const previewImage = document.getElementById('previewImage');
+        const status = document.getElementById('status');
         const saveBtn = document.getElementById('saveBtn');
 
-        // 파일 업로드
         uploadArea.addEventListener('click', () => fileInput.click());
 
         uploadArea.addEventListener('dragover', (e) => {
@@ -196,13 +225,75 @@
             if (file) handleFile(file);
         });
 
-        function handleFile(file) {
+        async function handleFile(file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 currentImage = e.target.result;
                 previewImage.src = currentImage;
                 previewImage.style.display = 'block';
                 uploadArea.style.display = 'none';
+
+                // OCR 분석 시작
+                status.innerHTML = '🔍 이미지 분석 중...<div class="progress"><div class="progress-bar" style="width: 30%"></div></div>';
+                status.className = 'status analyzing';
+
+                try {
+                    console.log('🚀 Starting OCR...');
+                    
+                    const result = await Tesseract.recognize(
+                        currentImage,
+                        'eng',
+                        {
+                            logger: m => {
+                                if (m.status === 'recognizing text') {
+                                    const progress = Math.round(m.progress * 100);
+                                    status.innerHTML = `🔍 텍스트 인식 중... ${progress}%<div class="progress"><div class="progress-bar" style="width: ${progress}%"></div></div>`;
+                                }
+                            }
+                        }
+                    );
+
+                    console.log('📝 OCR Result:', result.data.text);
+
+                    // PAO 패턴 찾기: 3M, 6M, 12M, 18M, 24M, 36M
+                    const validMonths = [3, 6, 12, 18, 24, 36];
+                    const patterns = [
+                        /(\d+)\s*M\b/gi,           // 12M, 6M
+                        /(\d+)\s*months?/gi,       // 12 months
+                        /PAO[:\s]*(\d+)/gi,        // PAO: 12
+                        /period[:\s]*(\d+)/gi      // Period: 12
+                    ];
+
+                    let foundMonths = null;
+
+                    for (const pattern of patterns) {
+                        const matches = [...result.data.text.matchAll(pattern)];
+                        for (const match of matches) {
+                            const num = parseInt(match[1]);
+                            if (validMonths.includes(num)) {
+                                foundMonths = num;
+                                break;
+                            }
+                        }
+                        if (foundMonths) break;
+                    }
+
+                    if (foundMonths) {
+                        console.log('✅ Found PAO:', foundMonths);
+                        selectPAO(foundMonths);
+                        status.innerHTML = `✅ PAO ${foundMonths}개월 자동 감지! (수정 가능)`;
+                        status.className = 'status success';
+                    } else {
+                        console.log('❌ No PAO found in text:', result.data.text);
+                        status.innerHTML = '⬇️ PAO를 수동으로 선택해주세요';
+                        status.className = 'status manual';
+                    }
+
+                } catch (error) {
+                    console.error('OCR Error:', error);
+                    status.innerHTML = '⚠️ 자동 인식 실패. 수동으로 선택해주세요.';
+                    status.className = 'status manual';
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -210,12 +301,19 @@
         // PAO 선택
         document.querySelectorAll('.pao-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedMonths = parseInt(btn.dataset.months);
-                updateSaveButton();
+                selectPAO(parseInt(btn.dataset.months));
             });
         });
+
+        function selectPAO(months) {
+            document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
+            const btn = document.querySelector(`[data-months="${months}"]`);
+            if (btn) {
+                btn.classList.add('selected');
+                selectedMonths = months;
+                updateSaveButton();
+            }
+        }
 
         function updateSaveButton() {
             saveBtn.disabled = !selectedMonths;
@@ -254,6 +352,7 @@
             fileInput.value = '';
             previewImage.style.display = 'none';
             uploadArea.style.display = 'block';
+            status.innerHTML = '';
             document.getElementById('productName').value = '';
             document.getElementById('openingDate').value = new Date().toISOString().split('T')[0];
             document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
@@ -262,7 +361,7 @@
             updateSaveButton();
         }
 
-        // 제품 목록 로드
+        // 제품 목록
         function loadProducts() {
             const products = JSON.parse(localStorage.getItem('products') || '[]');
             const list = document.getElementById('productList');
@@ -316,10 +415,8 @@
             }
         };
 
-        // 오늘 날짜 기본값
+        // 초기 설정
         document.getElementById('openingDate').value = new Date().toISOString().split('T')[0];
-
-        // 초기 로드
         loadProducts();
     </script>
 </body>
