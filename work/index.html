@@ -82,8 +82,12 @@ document.getElementById("fileInput").onchange=e=>{
   // 1️⃣ 파일명에서 먼저 잡음 (6m.jpg, IMG_6M.png 등)
   const nameMatch=file.name.match(/(3|6|9|12|18|24|36)\s*m/i);
   if(nameMatch){
-    selectPAO(Number(nameMatch[1]));
+    const detected=Number(nameMatch[1]);
+    selectPAO(detected);
     updateResult();
+    const paoDetection=document.getElementById("pao-detection");
+    paoDetection.textContent=`Detected ${detected}M`;
+    paoDetection.style.display="block";
     return;
   }
 
