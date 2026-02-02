@@ -32,12 +32,22 @@
             margin-bottom: 20px;
         }
         .upload-area:hover { border-color: #667eea; background: #f8f9ff; }
-        .upload-area.dragover { border-color: #667eea; background: #f0f2ff; }
-        .preview-image { max-width: 100%; height: auto; border-radius: 10px; margin: 20px 0; }
-        .result { padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; font-weight: bold; }
-        .result.success { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
-        .result.error { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
-        .pao-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
+        .preview-image { 
+            max-width: 100%; 
+            max-height: 400px;
+            height: auto; 
+            border-radius: 10px; 
+            margin: 20px 0;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .pao-options { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            margin: 20px 0; 
+        }
         .pao-btn {
             padding: 15px;
             border: 2px solid #ddd;
@@ -46,6 +56,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: all 0.2s;
+            font-weight: 500;
         }
         .pao-btn:hover { border-color: #667eea; background: #f8f9ff; }
         .pao-btn.selected { border-color: #667eea; background: #667eea; color: white; }
@@ -69,6 +80,7 @@
         }
         .btn-primary { background: #667eea; color: white; margin-bottom: 10px; }
         .btn-primary:hover { background: #5568d3; }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
         .btn-secondary { background: #f1f3f5; color: #495057; }
         .btn-secondary:hover { background: #e9ecef; }
         .product-list {
@@ -81,9 +93,24 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 10px;
+            position: relative;
         }
-        .product-item.expired { background: #ffe6e6; }
-        .product-item.warning { background: #fff3cd; }
+        .product-item.expired { background: #ffe6e6; border: 2px solid #ff4444; }
+        .product-item.warning { background: #fff3cd; border: 2px solid #ffc107; }
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover { background: #c82333; }
+        h3 { margin-top: 20px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -94,12 +121,11 @@
         <div class="upload-area" id="uploadArea">
             <p style="font-size: 48px;">📷</p>
             <p><strong>Upload product image</strong></p>
-            <p style="color: #999; font-size: 14px;">Click or drag to analyze PAO</p>
+            <p style="color: #999; font-size: 14px;">Click or drag to add image</p>
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
 
         <img id="previewImage" class="preview-image" style="display: none;">
-        <div id="result"></div>
 
         <div>
             <h3>Period After Opening (PAO)</h3>
@@ -123,11 +149,11 @@
             <input type="date" id="openingDate" value="2026-02-02">
         </div>
 
-        <button class="btn btn-primary" id="saveBtn">Save</button>
+        <button class="btn btn-primary" id="saveBtn" disabled>Save</button>
         <button class="btn btn-secondary" id="clearBtn">Clear</button>
 
         <div class="product-list">
-            <h2>My Vanity</h2>
+            <h2>📦 My Vanity</h2>
             <div id="productList"></div>
         </div>
     </div>
@@ -136,30 +162,33 @@
         let selectedMonths = null;
         let currentImage = null;
 
-        // ✅ 본인의 Worker URL 적용!
-        const WORKER_URL = 'https://pao-detector-final.ohryee.workers.dev/';
-
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const previewImage = document.getElementById('previewImage');
-        const result = document.getElementById('result');
+        const saveBtn = document.getElementById('saveBtn');
 
+        // 파일 업로드
         uploadArea.addEventListener('click', () => fileInput.click());
 
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadArea.classList.add('dragover');
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = '#f0f2ff';
         });
 
         uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.background = 'transparent';
         });
 
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadArea.classList.remove('dragover');
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.background = 'transparent';
             const file = e.dataTransfer.files[0];
-            if (file) handleFile(file);
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
         });
 
         fileInput.addEventListener('change', (e) => {
@@ -167,107 +196,79 @@
             if (file) handleFile(file);
         });
 
-        async function handleFile(file) {
+        function handleFile(file) {
             const reader = new FileReader();
-            reader.onload = async (e) => {
+            reader.onload = (e) => {
                 currentImage = e.target.result;
                 previewImage.src = currentImage;
                 previewImage.style.display = 'block';
-
-                result.innerHTML = '🔍 AI 분석 중...';
-                result.className = 'result';
-
-                try {
-                    console.log('🚀 Sending to API:', WORKER_URL);
-                    
-                    const response = await fetch(WORKER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image: currentImage })
-                    });
-
-                    console.log('📊 API Response:', response);
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    console.log('📦 Parsed Data:', data);
-
-                    if (data.success && data.pao && data.pao.length > 0) {
-                        const months = data.pao[0].months;
-                        result.innerHTML = `✅ PAO ${months}개월 감지! 아래 버튼을 확인하세요.`;
-                        result.className = 'result success';
-                        selectPAO(months);
-                    } else {
-                        result.innerHTML = '❌ No PAO found. Please select manually.';
-                        result.className = 'result error';
-                    }
-                } catch (error) {
-                    console.error('❌ Error:', error);
-                    result.innerHTML = `❌ 에러: ${error.message}`;
-                    result.className = 'result error';
-                }
+                uploadArea.style.display = 'none';
             };
             reader.readAsDataURL(file);
         }
 
+        // PAO 선택
         document.querySelectorAll('.pao-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                selectPAO(parseInt(btn.dataset.months));
+                document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedMonths = parseInt(btn.dataset.months);
+                updateSaveButton();
             });
         });
 
-        function selectPAO(months) {
-            document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
-            const btn = document.querySelector(`[data-months="${months}"]`);
-            if (btn) {
-                btn.classList.add('selected');
-                selectedMonths = months;
-            }
+        function updateSaveButton() {
+            saveBtn.disabled = !selectedMonths;
         }
 
-        document.getElementById('saveBtn').addEventListener('click', () => {
+        // 저장
+        saveBtn.addEventListener('click', () => {
             if (!selectedMonths) {
-                alert('PAO를 선택해주세요!');
+                alert('⚠️ PAO를 선택해주세요!');
                 return;
             }
+
             const name = document.getElementById('productName').value || '제품명 없음';
             const openDate = document.getElementById('openingDate').value;
             
             const products = JSON.parse(localStorage.getItem('products') || '[]');
             products.push({
+                id: Date.now(),
                 name,
                 months: selectedMonths,
                 openDate,
-                image: currentImage
+                image: currentImage,
+                createdAt: new Date().toISOString()
             });
             localStorage.setItem('products', JSON.stringify(products));
             
-            alert('저장 완료!');
+            alert('✅ 저장 완료!');
             loadProducts();
             clearForm();
         });
 
+        // 초기화
         document.getElementById('clearBtn').addEventListener('click', clearForm);
 
         function clearForm() {
             fileInput.value = '';
             previewImage.style.display = 'none';
-            result.innerHTML = '';
+            uploadArea.style.display = 'block';
             document.getElementById('productName').value = '';
+            document.getElementById('openingDate').value = new Date().toISOString().split('T')[0];
             document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
             selectedMonths = null;
             currentImage = null;
+            updateSaveButton();
         }
 
+        // 제품 목록 로드
         function loadProducts() {
             const products = JSON.parse(localStorage.getItem('products') || '[]');
             const list = document.getElementById('productList');
             
             if (products.length === 0) {
-                list.innerHTML = '<p style="text-align: center; color: #999;">저장된 제품이 없습니다</p>';
+                list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">저장된 제품이 없습니다</p>';
                 return;
             }
 
@@ -281,6 +282,7 @@
                 
                 let status = '';
                 let className = 'product-item';
+                
                 if (daysLeft < 0) {
                     status = '⚠️ 만료됨';
                     className += ' expired';
@@ -293,24 +295,31 @@
 
                 return `
                     <div class="${className}">
-                        <strong>${p.name}</strong><br>
-                        PAO: ${p.months}개월<br>
-                        개봉일: ${p.openDate}<br>
-                        만료일: ${expDate.toISOString().split('T')[0]}<br>
-                        ${status}
-                        <button onclick="deleteProduct(${i})" style="float: right; background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">삭제</button>
+                        <button class="delete-btn" onclick="deleteProduct(${i})">삭제</button>
+                        ${p.image ? `<img src="${p.image}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">` : ''}
+                        <strong style="font-size: 18px;">${p.name}</strong><br>
+                        <span style="color: #666;">PAO: ${p.months}개월</span><br>
+                        <span style="color: #666;">개봉일: ${p.openDate}</span><br>
+                        <span style="color: #666;">만료일: ${expDate.toISOString().split('T')[0]}</span><br>
+                        <strong style="font-size: 16px; margin-top: 5px; display: inline-block;">${status}</strong>
                     </div>
                 `;
             }).join('');
         }
 
-        function deleteProduct(index) {
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            products.splice(index, 1);
-            localStorage.setItem('products', JSON.stringify(products));
-            loadProducts();
-        }
+        window.deleteProduct = function(index) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                const products = JSON.parse(localStorage.getItem('products') || '[]');
+                products.splice(index, 1);
+                localStorage.setItem('products', JSON.stringify(products));
+                loadProducts();
+            }
+        };
 
+        // 오늘 날짜 기본값
+        document.getElementById('openingDate').value = new Date().toISOString().split('T')[0];
+
+        // 초기 로드
         loadProducts();
     </script>
 </body>
