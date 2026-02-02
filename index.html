@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧴 PAO Tracker</title>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js'></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -42,6 +43,16 @@
             margin-left: auto;
             margin-right: auto;
         }
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        .status.analyzing { background: #e3f2fd; color: #1976d2; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.manual { background: #fff3cd; color: #856404; }
         .pao-options { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -116,49 +127,17 @@
         }
         .delete-btn:hover { background: #c82333; }
         h3 { margin-top: 20px; margin-bottom: 10px; }
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #ff4444;
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        .settings-section {
-            margin-top: 30px;
-            padding: 20px;
+        .debug-info {
             background: #f8f9fa;
-            border-radius: 10px;
-        }
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
             padding: 10px;
             border-radius: 5px;
-            transition: background 0.2s;
+            margin: 10px 0;
+            font-size: 12px;
+            font-family: monospace;
+            max-height: 150px;
+            overflow-y: auto;
         }
-        .checkbox-label:hover {
-            background: #e9ecef;
-        }
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
+        canvas { display: none; }
     </style>
 </head>
 <body>
@@ -169,15 +148,17 @@
         <div class="upload-area" id="uploadArea">
             <p style="font-size: 48px;">📷</p>
             <p><strong>Upload product image</strong></p>
-            <p style="color: #999; font-size: 14px;">Click or drag</p>
+            <p style="color: #999; font-size: 14px;">AI will detect PAO symbol</p>
             <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
 
         <img id="previewImage" class="preview-image" style="display: none;">
+        <canvas id="canvas"></canvas>
+        <div id="status"></div>
 
         <div>
             <h3>Period After Opening (PAO)</h3>
-            <div class="pao-options">
+            <div class="pao-options" id="paoOptions">
                 <button class="pao-btn" data-months="3">3 months</button>
                 <button class="pao-btn" data-months="6">6 months</button>
                 <button class="pao-btn" data-months="12">12 months</button>
@@ -200,23 +181,8 @@
         <button class="btn btn-primary" id="saveBtn" disabled>Save</button>
         <button class="btn btn-secondary" id="clearBtn">Clear</button>
 
-        <div class="settings-section">
-            <h3>⚙️ Settings</h3>
-            <label class="checkbox-label">
-                <input type="checkbox" id="notificationEnabled" checked>
-                <span>Enable expiration notifications</span>
-            </label>
-            <label class="checkbox-label">
-                <input type="checkbox" id="dailyCheck" checked>
-                <span>Daily notification check (10 AM)</span>
-            </label>
-        </div>
-
         <div class="product-list">
-            <h2 style="position: relative; display: inline-block;">
-                📦 My Vanity
-                <span class="notification-badge" id="expiringCount" style="display: none;">0</span>
-            </h2>
+            <h2>📦 My Vanity</h2>
             <div id="productList"></div>
         </div>
     </div>
@@ -228,96 +194,11 @@
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const previewImage = document.getElementById('previewImage');
+        const status = document.getElementById('status');
         const saveBtn = document.getElementById('saveBtn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-        // 알림 권한 요청
-        function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
-        }
-
-        // 만료 알림 표시
-        function showExpirationNotification(product, daysLeft) {
-            if ('Notification' in window && Notification.permission === 'granted') {
-                const notification = new Notification('🧴 PAO Tracker', {
-                    body: `${product.name}이(가) ${daysLeft}일 후 만료됩니다!`,
-                    icon: '🧴',
-                    badge: '⏰',
-                    tag: `pao-${product.id}`,
-                    requireInteraction: false
-                });
-
-                notification.onclick = () => {
-                    window.focus();
-                    notification.close();
-                };
-            }
-        }
-
-        // 만료 체크
-        function checkExpirations() {
-            const notificationEnabled = document.getElementById('notificationEnabled').checked;
-            if (!notificationEnabled) return;
-
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            const today = new Date();
-            let expiringCount = 0;
-
-            products.forEach(p => {
-                const openDate = new Date(p.openDate);
-                const expDate = new Date(openDate);
-                expDate.setMonth(expDate.getMonth() + p.months);
-                
-                const daysLeft = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-
-                // 7일, 3일, 1일 남았을 때 알림
-                if ([7, 3, 1].includes(daysLeft)) {
-                    const lastNotified = localStorage.getItem(`notified-${p.id}-${daysLeft}`);
-                    const todayStr = today.toDateString();
-                    
-                    if (lastNotified !== todayStr) {
-                        showExpirationNotification(p, daysLeft);
-                        localStorage.setItem(`notified-${p.id}-${daysLeft}`, todayStr);
-                    }
-                }
-
-                if (daysLeft <= 30 && daysLeft >= 0) {
-                    expiringCount++;
-                }
-            });
-
-            // 배지 업데이트
-            const badge = document.getElementById('expiringCount');
-            if (expiringCount > 0) {
-                badge.textContent = expiringCount;
-                badge.style.display = 'flex';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
-        // 매일 10시 체크
-        function scheduleDailyCheck() {
-            const dailyCheck = document.getElementById('dailyCheck').checked;
-            if (!dailyCheck) return;
-
-            const now = new Date();
-            const targetTime = new Date();
-            targetTime.setHours(10, 0, 0, 0);
-
-            if (now > targetTime) {
-                targetTime.setDate(targetTime.getDate() + 1);
-            }
-
-            const timeUntilCheck = targetTime - now;
-            setTimeout(() => {
-                checkExpirations();
-                setInterval(checkExpirations, 24 * 60 * 60 * 1000); // 매일 반복
-            }, timeUntilCheck);
-        }
-
-        // 파일 업로드
         uploadArea.addEventListener('click', () => fileInput.click());
 
         uploadArea.addEventListener('dragover', (e) => {
@@ -346,13 +227,124 @@
             if (file) handleFile(file);
         });
 
-        function handleFile(file) {
+        // 이미지 전처리 (흑백 + 고대비)
+        function preprocessImage(img) {
+            // 3배 확대
+            canvas.width = img.width * 3;
+            canvas.height = img.height * 3;
+            
+            // 이미지 그리기
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            // 픽셀 데이터 가져오기
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // 흑백 + 대비 증가
+            for (let i = 0; i < data.length; i += 4) {
+                // 흑백 변환
+                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                
+                // 대비 증가 (임계값: 128)
+                const value = avg > 128 ? 255 : 0;
+                
+                data[i] = value;     // R
+                data[i + 1] = value; // G
+                data[i + 2] = value; // B
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            return canvas.toDataURL();
+        }
+
+        async function handleFile(file) {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 currentImage = e.target.result;
                 previewImage.src = currentImage;
                 previewImage.style.display = 'block';
                 uploadArea.style.display = 'none';
+
+                status.innerHTML = '🔍 이미지 분석 중... (10초 소요)';
+                status.className = 'status analyzing';
+
+                try {
+                    // 이미지 로드
+                    const img = new Image();
+                    img.onload = async () => {
+                        // 전처리
+                        const processedImage = preprocessImage(img);
+                        
+                        console.log('🚀 Starting OCR with preprocessed image...');
+                        
+                        // Tesseract OCR
+                        const result = await Tesseract.recognize(
+                            processedImage,
+                            'eng+fra', // 영어+프랑스어
+                            {
+                                logger: m => {
+                                    if (m.status === 'recognizing text') {
+                                        status.innerHTML = `🔍 텍스트 인식 중... ${Math.round(m.progress * 100)}%`;
+                                    }
+                                }
+                            }
+                        );
+
+                        const text = result.data.text;
+                        console.log('📝 Detected text:', text);
+                        console.log('🔤 All words:', result.data.words.map(w => w.text).join(', '));
+
+                        // PAO 찾기
+                        const validMonths = [3, 6, 12, 18, 24, 36];
+                        let foundMonths = null;
+
+                        // 패턴 1: 숫자 + M
+                        const pattern1 = text.match(/(\d+)\s*[Mm]/g);
+                        if (pattern1) {
+                            for (const match of pattern1) {
+                                const num = parseInt(match);
+                                if (validMonths.includes(num)) {
+                                    foundMonths = num;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // 패턴 2: 개별 단어에서 숫자 찾기
+                        if (!foundMonths) {
+                            for (const word of result.data.words) {
+                                const nums = word.text.match(/\d+/g);
+                                if (nums) {
+                                    for (const numStr of nums) {
+                                        const num = parseInt(numStr);
+                                        if (validMonths.includes(num)) {
+                                            foundMonths = num;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (foundMonths) break;
+                            }
+                        }
+
+                        if (foundMonths) {
+                            console.log('✅ PAO detected:', foundMonths);
+                            selectPAO(foundMonths);
+                            status.innerHTML = `✅ PAO ${foundMonths}개월 자동 감지! (수정 가능)`;
+                            status.className = 'status success';
+                        } else {
+                            console.log('❌ No PAO found');
+                            status.innerHTML = `ℹ️ PAO를 찾지 못했습니다. 수동으로 선택해주세요.<div class="debug-info">인식된 텍스트: ${text}</div>`;
+                            status.className = 'status manual';
+                        }
+                    };
+                    img.src = currentImage;
+
+                } catch (error) {
+                    console.error('OCR Error:', error);
+                    status.innerHTML = '⚠️ 자동 인식 실패. 수동으로 선택해주세요.';
+                    status.className = 'status manual';
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -365,6 +357,7 @@
         });
 
         function selectPAO(months) {
+            console.log('Selecting PAO:', months);
             document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
             const btn = document.querySelector(`[data-months="${months}"]`);
             if (btn) {
@@ -376,6 +369,7 @@
 
         function updateSaveButton() {
             saveBtn.disabled = !selectedMonths;
+            console.log('Save button enabled:', !saveBtn.disabled);
         }
 
         // 저장
@@ -384,8 +378,6 @@
                 alert('⚠️ PAO를 선택해주세요!');
                 return;
             }
-
-            requestNotificationPermission();
 
             const name = document.getElementById('productName').value || '제품명 없음';
             const openDate = document.getElementById('openingDate').value;
@@ -404,7 +396,6 @@
             alert('✅ 저장 완료!');
             loadProducts();
             clearForm();
-            checkExpirations();
         });
 
         // 초기화
@@ -414,6 +405,7 @@
             fileInput.value = '';
             previewImage.style.display = 'none';
             uploadArea.style.display = 'block';
+            status.innerHTML = '';
             document.getElementById('productName').value = '';
             document.getElementById('openingDate').value = new Date().toISOString().split('T')[0];
             document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
@@ -465,8 +457,6 @@
                     </div>
                 `;
             }).join('');
-
-            checkExpirations();
         }
 
         window.deleteProduct = function(index) {
@@ -478,17 +468,11 @@
             }
         };
 
-        // 설정 변경 감지
-        document.getElementById('notificationEnabled').addEventListener('change', checkExpirations);
-        document.getElementById('dailyCheck').addEventListener('change', scheduleDailyCheck);
-
         // 초기 설정
         document.getElementById('openingDate').value = new Date().toISOString().split('T')[0];
         loadProducts();
-        scheduleDailyCheck();
 
-        // 페이지 로드 시 체크
-        checkExpirations();
+        console.log('✅ Script loaded successfully');
     </script>
 </body>
 </html>
