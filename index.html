@@ -174,29 +174,16 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         let selectedMonths = null;
         let currentImage = null;
-        let ocrWorker = null;
 
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const previewImage = document.getElementById('previewImage');
         const status = document.getElementById('status');
         const saveBtn = document.getElementById('saveBtn');
-
-        // Tesseract 초기화
-        async function initOCR() {
-            try {
-                ocrWorker = await Tesseract.createWorker('eng');
-                console.log('✅ OCR initialized');
-            } catch (error) {
-                console.error('❌ OCR init failed:', error);
-            }
-        }
-
-        initOCR();
 
         uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -238,12 +225,22 @@
                 status.className = 'status analyzing';
 
                 try {
-                    if (!ocrWorker) {
-                        throw new Error('OCR not initialized');
-                    }
+                    console.log('🚀 Starting OCR...');
+                    
+                    const { data: { text } } = await Tesseract.recognize(
+                        currentImage,
+                        'eng',
+                        { 
+                            logger: m => {
+                                if (m.status === 'recognizing text') {
+                                    status.innerHTML = `🔍 Recognizing... ${Math.round(m.progress * 100)}%`;
+                                }
+                                console.log(m);
+                            }
+                        }
+                    );
 
-                    const { data: { text } } = await ocrWorker.recognize(currentImage);
-                    console.log('Detected text:', text);
+                    console.log('📝 Detected text:', text);
 
                     const validMonths = [3, 6, 12, 18, 24, 36];
                     const matches = text.match(/(\d+)\s*M\b/gi);
@@ -269,7 +266,7 @@
                     }
 
                 } catch (error) {
-                    console.error('OCR Error:', error);
+                    console.error('❌ OCR Error:', error);
                     status.innerHTML = '⚠️ Auto-detection failed. Please select manually.';
                     status.className = 'status manual';
                 }
@@ -322,7 +319,7 @@
                 clearForm();
             } catch (error) {
                 console.error('Save error:', error);
-                alert('⚠️ Save failed. Please check console.');
+                alert('⚠️ Save failed. Please try again.');
             }
         });
 
@@ -386,7 +383,6 @@
                 }).join('');
             } catch (error) {
                 console.error('Load error:', error);
-                document.getElementById('productList').innerHTML = '<p style="text-align: center; color: #f44; padding: 20px;">⚠️ Cannot load products</p>';
             }
         }
 
@@ -399,13 +395,14 @@
                     loadProducts();
                 } catch (error) {
                     console.error('Delete error:', error);
-                    alert('⚠️ Delete failed');
                 }
             }
         };
 
         document.getElementById('openingDate').value = new Date().toISOString().split('T')[0];
         loadProducts();
+
+        console.log('✅ App loaded. Tesseract version:', Tesseract);
     </script>
 </body>
 </html>
