@@ -880,16 +880,28 @@
     }
 
     // Local storage
-    function saveProducts() {
-      localStorage.setItem('keepOrTossProducts', JSON.stringify(products));
-    }
+    // Local storage (오류 처리 추가)
+function saveProducts() {
+  try {
+    localStorage.setItem('keepOrTossProducts', JSON.stringify(products));
+  } catch (error) {
+    console.warn('localStorage 저장 실패:', error);
+    // 인메모리로만 유지
+  }
+}
 
-    function loadProducts() {
-      const stored = localStorage.getItem('keepOrTossProducts');
-      if (stored) {
-        products = JSON.parse(stored);
-      }
+function loadProducts() {
+  try {
+    const stored = localStorage.getItem('keepOrTossProducts');
+    if (stored) {
+      products = JSON.parse(stored);
     }
+  } catch (error) {
+    console.warn('localStorage 로드 실패:', error);
+    // 빈 배열로 시작
+    products = [];
+  }
+}
 
     // UI feedback
     function showError(message) {
