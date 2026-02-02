@@ -388,64 +388,69 @@
         }
 
         async function analyzeImageInBackground(file) {
-            ocrStatus.style.display = 'inline-block';
-            ocrStatus.className = 'ocr-badge detecting';
-            ocrStatus.innerHTML = '<span class="ocr-loading"></span> 감지 중...';
+    ocrStatus.style.display = 'inline-block';
+    ocrStatus.className = 'ocr-badge detecting';
+    ocrStatus.innerHTML = '<span class="ocr-loading"></span> 감지 중...';
 
-            try {
-                const base64 = await fileToBase64(file);
-                const imageData = base64.split(',')[1];
-                
-                console.log('🔍 Sending image to OCR...');
-                
-                const response = await fetch(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: imageData })
-                });
-                
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
-                const result = await response.json();
-                console.log('📥 OCR Response:', result);
-
-                if (result.success && result.pao && result.pao.length > 0) {
-                    // ✅ 유효한 PAO만 필터링 (3, 6, 12, 18, 24, 36)
-                    const validPAO = result.pao.filter(p => [3, 6, 12, 18, 24, 36].includes(p));
-                    
-                    if (validPAO.length === 0) {
-                        throw new Error('Invalid PAO values detected');
-                    }
-                    
-                    ocrStatus.className = 'ocr-badge success';
-                    
-                    if (validPAO.length === 1) {
-                        // ✅ 1개 감지: 바로 선택
-                        ocrStatus.textContent = `✓ ${validPAO[0]}M 자동 선택`;
-                        selectPAO(validPAO[0]);
-                    } else {
-                        // ⚠️ 여러 개 감지: 가장 작은 값 선택 (더 안전)
-                        const minPAO = Math.min(...validPAO);
-                        ocrStatus.textContent = `✓ ${validPAO.join('/')}M 중 ${minPAO}M 선택`;
-                        highlightDetectedPAO(validPAO);
-                        selectPAO(minPAO);
-                        
-                        showInfo(`💡 ${validPAO.join(', ')}M이 감지되었습니다. 안전하게 ${minPAO}M을 선택했습니다. 필요시 수동 변경하세요.`);
-                    }
-                    
-                } else {
-                    ocrStatus.className = 'ocr-badge failed';
-                    ocrStatus.textContent = '✗ 수동 선택 필요';
-                    showInfo('PAO를 찾지 못했습니다. 수동으로 선택해주세요.');
-                }
-                
-            } catch (error) {
-                console.error('❌ OCR Error:', error);
-                ocrStatus.className = 'ocr-badge failed';
-                ocrStatus.textContent = '✗ 인식 실패';
-                showInfo('이미지 분석 실패. 수동으로 선택해주세요.');
-            }
+    try {
+        const base64 = await fileToBase64(file);
+        const imageData = base64.split(',')[1];
+        
+        console.log('🔍 Worker URL:', WORKER_URL);
+        console.log('🔍 Image size:', imageData.length, 'chars');
+        
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageData })
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Worker error:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
+        
+        const result = await response.json();
+        console.log('📥 OCR Result:', result);
+
+        if (result.success && result.pao && result.pao.length > 0) {
+            const validPAO = result.pao.filter(p => [3, 6, 12, 18, 24, 36].includes(p));
+            
+            if (validPAO.length === 0) {
+                throw new Error('Invalid PAO values detected');
+            }
+            
+            ocrStatus.className = 'ocr-badge success';
+            
+            if (validPAO.length === 1) {
+                ocrStatus.textContent = `✓ ${validPAO[0]}M 자동 선택`;
+                selectPAO(validPAO[0]);
+            } else {
+                const minPAO = Math.min(...validPAO);
+                ocrStatus.textContent = `✓ ${validPAO.join('/')}M 중 ${minPAO}M 선택`;
+                highlightDetectedPAO(validPAO);
+                selectPAO(minPAO);
+                
+                showInfo(`💡 ${validPAO.join(', ')}M이 감지되었습니다. 안전하게 ${minPAO}M을 선택했습니다.`);
+            }
+            
+        } else {
+            console.warn('⚠️ No PAO detected');
+            ocrStatus.className = 'ocr-badge failed';
+            ocrStatus.textContent = '✗ 수동 선택 필요';
+            showInfo('PAO를 찾지 못했습니다. 수동으로 선택해주세요.');
+        }
+        
+    } catch (error) {
+        console.error('❌ OCR Error:', error);
+        ocrStatus.className = 'ocr-badge failed';
+        ocrStatus.textContent = `✗ ${error.message}`;
+        showInfo('이미지 분석 실패. 수동으로 선택해주세요.');
+    }
+}
 
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
