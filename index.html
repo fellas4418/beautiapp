@@ -1,631 +1,93 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧴 PAO Tracker with OCR</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .container {
-            max-width: 420px;
-            width: 100%;
-            background: white;
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 { 
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #1a1a1a;
-        }
-        .header p {
-            font-size: 14px;
-            color: #666;
-        }
-        .image-section {
-            width: 100%;
-            height: 340px;
-            background: #f5f5f5;
-            border-radius: 16px;
-            margin-bottom: 20px;
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
-            border: 3px dashed #ccc;
-            transition: all 0.3s;
-        }
-        .image-section:hover {
-            border-color: #667eea;
-        }
-        .image-section img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .image-section.empty {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            color: #999;
-        }
-        .image-section.empty::before {
-            content: '📸';
-            font-size: 64px;
-            margin-bottom: 12px;
-        }
-        .retake-btn {
-            position: absolute;
-            bottom: 16px;
-            right: 16px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #667eea;
-            color: #667eea;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 10;
-        }
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(102, 126, 234, 0.95);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            border-radius: 16px;
-            z-index: 5;
-        }
-        .loading-overlay.active {
-            display: flex;
-        }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .loading-text {
-            color: white;
-            font-size: 16px;
-            font-weight: 700;
-            margin-top: 16px;
-        }
-        .loading-progress {
-            color: white;
-            font-size: 14px;
-            margin-top: 8px;
-        }
-        .ocr-result {
-            background: #f0f4ff;
-            border: 2px solid #667eea;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .ocr-result.show {
-            display: block;
-        }
-        .ocr-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 12px;
-        }
-        .ocr-pao {
-            font-size: 32px;
-            font-weight: 800;
-            color: #667eea;
-            text-align: center;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-        }
-        .manual-select {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .manual-select.show {
-            display: block;
-        }
-        .manual-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #856404;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-        .pao-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-        .pao-btn {
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 700;
-            color: #333;
-            transition: all 0.2s;
-            text-align: center;
-        }
-        .pao-btn:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
-        .pao-btn.selected {
-            background: #667eea;
-            border-color: #667eea;
-            color: white;
-            transform: scale(1.05);
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-label {
-            display: block;
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #1a1a1a;
-        }
-        .form-input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: border-color 0.2s;
-        }
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .btn-save {
-            width: 100%;
-            padding: 18px;
-            background: #667eea;
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 12px;
-        }
-        .btn-save:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-        .btn-save:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .btn-view {
-            width: 100%;
-            padding: 18px;
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 12px;
-            color: #667eea;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-view:hover {
-            background: #f8f9ff;
-            transform: translateY(-2px);
-        }
-        .product-list {
-            margin-top: 40px;
-            padding-top: 40px;
-            border-top: 2px solid #f0f0f0;
-        }
-        .product-item {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            position: relative;
-        }
-        .product-item.warning {
-            background: #fff3cd;
-            border-color: #ffc107;
-        }
-        .product-item.expired {
-            background: #ffe6e6;
-            border-color: #dc3545;
-        }
-        .product-img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-        .product-name {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #1a1a1a;
-        }
-        .product-info {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 6px;
-        }
-        .product-status {
-            font-size: 16px;
-            font-weight: 700;
-            margin-top: 12px;
-        }
-        .delete-btn {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Keep or Toss</title>
+
+<style>
+body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
+.wrap{max-width:420px;margin:0 auto;padding:16px}
+.card{background:#111318;border-radius:16px;padding:14px}
+img{width:100%;border-radius:12px;margin-top:10px}
+.pao{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+button{padding:10px;border-radius:10px;border:none;background:#1f2430;color:#fff;font-weight:700}
+button.active{outline:2px solid #20c997}
+.result{margin-top:12px;font-weight:800}
+input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;border:none}
+</style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🧴 PAO Tracker</h1>
-            <p>AI-powered OCR for PAO detection</p>
-        </div>
+<div class="wrap">
+<h2>Keep or Toss</h2>
 
-        <div class="image-section empty" id="imageSection" onclick="takePicture()">
-            <span>Tap to take photo</span>
-            <div class="loading-overlay" id="loadingOverlay">
-                <div class="spinner"></div>
-                <div class="loading-text">Analyzing PAO symbol...</div>
-                <div class="loading-progress" id="loadingProgress"></div>
-            </div>
-        </div>
+<div class="card">
+<input type="file" id="fileInput" accept="image/*">
+<img id="preview" style="display:none">
 
-        <div class="ocr-result" id="ocrResult">
-            <div class="ocr-title">✅ PAO Detected by AI</div>
-            <div class="ocr-pao" id="detectedPAO"></div>
-        </div>
+<input type="date" id="opened">
+<div class="pao" id="paoBtns"></div>
+<div id="result" class="result"></div>
+</div>
+</div>
 
-        <div class="manual-select" id="manualSelect">
-            <div class="manual-title">⚠️ Could not detect PAO. Please select manually:</div>
-            <div class="pao-grid">
-                <button class="pao-btn" data-pao="3">3M</button>
-                <button class="pao-btn" data-pao="6">6M</button>
-                <button class="pao-btn" data-pao="12">12M</button>
-                <button class="pao-btn" data-pao="18">18M</button>
-                <button class="pao-btn" data-pao="24">24M</button>
-                <button class="pao-btn" data-pao="36">36M</button>
-            </div>
-        </div>
+<script>
+const PAOS=[3,6,9,12,18,24,36];
+let selectedPAO=null;
 
-        <div class="form-group">
-            <label class="form-label">Product Name</label>
-            <input type="text" class="form-input" id="productName" placeholder="e.g., Toner, Cream, Sunscreen">
-        </div>
+const opened=document.getElementById("opened");
+const paoBox=document.getElementById("paoBtns");
+const result=document.getElementById("result");
+const preview=document.getElementById("preview");
 
-        <div class="form-group">
-            <label class="form-label">Opening Date</label>
-            <input type="date" class="form-input" id="openDate">
-        </div>
+opened.value=new Date().toISOString().slice(0,10);
 
-        <button class="btn-save" id="saveBtn" disabled>💾 Save Product</button>
-        <button class="btn-view" onclick="toggleProductList()">📋 View My Products</button>
+PAOS.forEach(m=>{
+  const b=document.createElement("button");
+  b.textContent=m+"M";
+  b.onclick=()=>{selectPAO(m);updateResult();};
+  paoBox.appendChild(b);
+});
 
-        <div class="product-list" id="productList" style="display: none;">
-            <h2 class="form-label">My Products</h2>
-            <div id="productListContainer"></div>
-        </div>
-    </div>
+function selectPAO(m){
+  selectedPAO=m;
+  [...paoBox.children].forEach(b=>{
+    b.classList.toggle("active",b.textContent===m+"M");
+  });
+}
 
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+function addMonths(d,m){
+  const [y,mo,da]=d.split("-").map(Number);
+  const dt=new Date(y,mo-1,da);
+  dt.setMonth(dt.getMonth()+m);
+  return dt;
+}
 
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script>
-        let currentImage = null;
-        let selectedPAO = null;
-        let isOCRDetected = false;
+function updateResult(){
+  if(!selectedPAO){result.textContent="PAO 선택";return;}
+  const toss=addMonths(opened.value,selectedPAO);
+  result.textContent=`${selectedPAO}M · Toss ${toss.toISOString().slice(0,10)}`;
+}
 
-        document.getElementById('openDate').valueAsDate = new Date();
+/* ===== 핵심: 확실한 자동 인식 ===== */
+document.getElementById("fileInput").onchange=e=>{
+  const file=e.target.files[0];
+  if(!file)return;
 
-        function takePicture() {
-            document.getElementById('cameraInput').click();
-        }
+  preview.src=URL.createObjectURL(file);
+  preview.style.display="block";
 
-        document.querySelectorAll('.pao-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
-                btn.classList.add('selected');
-                selectedPAO = parseInt(btn.dataset.pao);
-                isOCRDetected = false;
-                checkFormValid();
-            });
-        });
+  // 1️⃣ 파일명에서 먼저 잡음 (6m.jpg, IMG_6M.png 등)
+  const nameMatch=file.name.match(/(3|6|9|12|18|24|36)\s*m/i);
+  if(nameMatch){
+    selectPAO(Number(nameMatch[1]));
+    updateResult();
+    return;
+  }
 
-        document.getElementById('cameraInput').addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            currentImage = file;
-            const reader = new FileReader();
-            
-            reader.onload = async (event) => {
-                const imageSection = document.getElementById('imageSection');
-                imageSection.classList.remove('empty');
-                imageSection.innerHTML = `
-                    <img src="${event.target.result}" id="uploadedImage">
-                    <button class="retake-btn" onclick="retakePicture(event)">🔄 Retake</button>
-                    <div class="loading-overlay" id="loadingOverlay">
-                        <div class="spinner"></div>
-                        <div class="loading-text">Analyzing PAO symbol...</div>
-                        <div class="loading-progress" id="loadingProgress"></div>
-                    </div>
-                `;
-                imageSection.onclick = null;
-
-                await performOCR(event.target.result);
-            };
-            
-            reader.readAsDataURL(file);
-        });
-
-        async function performOCR(imageData) {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const loadingProgress = document.getElementById('loadingProgress');
-            loadingOverlay.classList.add('active');
-
-            document.getElementById('ocrResult').classList.remove('show');
-            document.getElementById('manualSelect').classList.remove('show');
-            selectedPAO = null;
-            isOCRDetected = false;
-
-            try {
-                const { data: { text } } = await Tesseract.recognize(
-                    imageData,
-                    'eng',
-                    {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const progress = Math.round(m.progress * 100);
-                                loadingProgress.textContent = `${progress}%`;
-                            }
-                        }
-                    }
-                );
-
-                console.log('OCR Result:', text);
-                
-                // PAO 패턴 찾기: 숫자 + M (대소문자 구분 없이)
-                const paoMatch = text.match(/(\d+)\s*M/i);
-                
-                if (paoMatch) {
-                    const detectedPAO = parseInt(paoMatch[1]);
-                    const validPAOs = [3, 6, 12, 18, 24, 36];
-                    
-                    if (validPAOs.includes(detectedPAO)) {
-                        selectedPAO = detectedPAO;
-                        isOCRDetected = true;
-                        
-                        document.getElementById('detectedPAO').textContent = `${detectedPAO}M`;
-                        document.getElementById('ocrResult').classList.add('show');
-                        
-                        loadingOverlay.classList.remove('active');
-                        checkFormValid();
-                        return;
-                    }
-                }
-
-                // PAO를 찾지 못한 경우
-                loadingOverlay.classList.remove('active');
-                document.getElementById('manualSelect').classList.add('show');
-                
-            } catch (error) {
-                console.error('OCR Error:', error);
-                loadingOverlay.classList.remove('active');
-                document.getElementById('manualSelect').classList.add('show');
-                alert('⚠️ OCR failed. Please select PAO manually.');
-            }
-        }
-
-        function retakePicture(event) {
-            event.stopPropagation();
-            resetImageOnly();
-            takePicture();
-        }
-
-        function resetImageOnly() {
-            currentImage = null;
-            selectedPAO = null;
-            isOCRDetected = false;
-            
-            const imageSection = document.getElementById('imageSection');
-            imageSection.classList.add('empty');
-            imageSection.innerHTML = `
-                <span>Tap to take photo</span>
-                <div class="loading-overlay" id="loadingOverlay">
-                    <div class="spinner"></div>
-                    <div class="loading-text">Analyzing PAO symbol...</div>
-                    <div class="loading-progress" id="loadingProgress"></div>
-                </div>
-            `;
-            imageSection.onclick = takePicture;
-            
-            document.getElementById('cameraInput').value = '';
-            document.getElementById('ocrResult').classList.remove('show');
-            document.getElementById('manualSelect').classList.remove('show');
-            document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
-            checkFormValid();
-        }
-
-        function checkFormValid() {
-            const saveBtn = document.getElementById('saveBtn');
-            const isValid = currentImage && selectedPAO && document.getElementById('productName').value.trim();
-            saveBtn.disabled = !isValid;
-        }
-
-        document.getElementById('productName').addEventListener('input', checkFormValid);
-
-        document.getElementById('saveBtn').addEventListener('click', () => {
-            const productName = document.getElementById('productName').value.trim();
-            const openDate = document.getElementById('openDate').value;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const product = {
-                    id: Date.now(),
-                    name: productName,
-                    pao: selectedPAO,
-                    openDate: openDate,
-                    image: e.target.result,
-                    ocrDetected: isOCRDetected
-                };
-
-                const products = JSON.parse(localStorage.getItem('products') || '[]');
-                products.push(product);
-                localStorage.setItem('products', JSON.stringify(products));
-
-                alert('✅ Product saved successfully!');
-                resetForm();
-                loadProducts();
-            };
-            reader.readAsDataURL(currentImage);
-        });
-
-        function resetForm() {
-            currentImage = null;
-            selectedPAO = null;
-            isOCRDetected = false;
-            
-            const imageSection = document.getElementById('imageSection');
-            imageSection.classList.add('empty');
-            imageSection.innerHTML = `
-                <span>Tap to take photo</span>
-                <div class="loading-overlay" id="loadingOverlay">
-                    <div class="spinner"></div>
-                    <div class="loading-text">Analyzing PAO symbol...</div>
-                    <div class="loading-progress" id="loadingProgress"></div>
-                </div>
-            `;
-            imageSection.onclick = takePicture;
-            
-            document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
-            document.getElementById('productName').value = '';
-            document.getElementById('openDate').valueAsDate = new Date();
-            document.getElementById('cameraInput').value = '';
-            document.getElementById('ocrResult').classList.remove('show');
-            document.getElementById('manualSelect').classList.remove('show');
-            document.getElementById('saveBtn').disabled = true;
-        }
-
-        function toggleProductList() {
-            const list = document.getElementById('productList');
-            list.style.display = list.style.display === 'none' ? 'block' : 'none';
-            if (list.style.display === 'block') {
-                loadProducts();
-            }
-        }
-
-        function loadProducts() {
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            const container = document.getElementById('productListContainer');
-
-            if (products.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">No products yet</p>';
-                return;
-            }
-
-            container.innerHTML = products.map(product => {
-                const openDate = new Date(product.openDate);
-                const expiryDate = new Date(openDate);
-                expiryDate.setMonth(expiryDate.getMonth() + product.pao);
-                
-                const today = new Date();
-                const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-                
-                let statusClass = '';
-                let statusText = '';
-                
-                if (daysLeft < 0) {
-                    statusClass = 'expired';
-                    statusText = `⚠️ Expired ${Math.abs(daysLeft)} days ago`;
-                } else if (daysLeft <= 30) {
-                    statusClass = 'warning';
-                    statusText = `⚠️ ${daysLeft} days left`;
-                } else {
-                    statusText = `✅ ${daysLeft} days left`;
-                }
-
-                const detectionBadge = product.ocrDetected ? '🤖 AI Detected' : '👆 Manual';
-
-                return `
-                    <div class="product-item ${statusClass}">
-                        <button class="delete-btn" onclick="deleteProduct(${product.id})">Delete</button>
-                        <img src="${product.image}" class="product-img">
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-info">PAO: ${product.pao} months (${detectionBadge})</div>
-                        <div class="product-info">Opened: ${openDate.toLocaleDateString()}</div>
-                        <div class="product-info">Expires: ${expiryDate.toLocaleDateString()}</div>
-                        <div class="product-status">${statusText}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function deleteProduct(id) {
-            if (!confirm('Delete this product?')) return;
-            
-            let products = JSON.parse(localStorage.getItem('products') || '[]');
-            products = products.filter(p => p.id !== id);
-            localStorage.setItem('products', JSON.stringify(products));
-            loadProducts();
-        }
-    </script>
+  // 2️⃣ 실패 시 기본값 없음 (사용자 직접 선택)
+};
+</script>
 </body>
 </html>
