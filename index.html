@@ -1,338 +1,39 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmetic Tracker</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+async function detectPAOFromImage(imageBase64) {
+    try {
+        showMessage('🔍 Analyzing image...', 'success');
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        
-        h1 {
-            font-size: 24px;
-            margin-bottom: 30px;
-            color: #333;
-            text-align: center;
-        }
-        
-        .upload-area {
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 20px;
-        }
-        
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-        
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #f0f2ff;
-        }
-        
-        #preview {
-            max-width: 100%;
-            max-height: 300px;
-            display: none;
-            margin: 20px auto;
-            border-radius: 10px;
-        }
-        
-        input[type="text"], input[type="date"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 15px;
-            transition: border 0.3s;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .pao-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .pao-btn {
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            background: white;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .pao-btn:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-        
-        .pao-btn.selected {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        .submit-btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .submit-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .product-list {
-            margin-top: 30px;
-        }
-        
-        .product-item {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .product-info h3 {
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-        
-        .product-info p {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .delete-btn {
-            background: #ff4757;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        
-        .message {
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>📦 Cosmetic Tracker</h1>
-        
-        <div id="message"></div>
-        
-        <form id="productForm">
-            <div class="upload-area" id="uploadArea">
-                <p>🖼️ Click or drag image here</p>
-                <input type="file" id="imageInput" accept="image/*" hidden>
-            </div>
-            <img id="preview" alt="Preview">
-            
-            <input type="text" id="productName" placeholder="Product Name (Optional)">
-            
-            <input type="date" id="openedDate" required>
-            
-            <label>Period After Opening (PAO):</label>
-            <div class="pao-buttons">
-                <button type="button" class="pao-btn" data-pao="3">3M</button>
-                <button type="button" class="pao-btn" data-pao="6">6M</button>
-                <button type="button" class="pao-btn" data-pao="12">12M</button>
-                <button type="button" class="pao-btn" data-pao="18">18M</button>
-                <button type="button" class="pao-btn" data-pao="24">24M</button>
-                <button type="button" class="pao-btn" data-pao="36">36M</button>
-            </div>
-            
-            <button type="submit" class="submit-btn">Add to Shelf</button>
-        </form>
-        
-        <div class="product-list" id="productList"></div>
-    </div>
-
-    <script>
-        // 상태 관리
-        let selectedPAO = null;
-        let imageBase64 = null;
-        
-        // 날짜 기본값 (오늘)
-        document.getElementById('openedDate').valueAsDate = new Date();
-        
-        // 이미지 업로드
-        const uploadArea = document.getElementById('uploadArea');
-        const imageInput = document.getElementById('imageInput');
-        const preview = document.getElementById('preview');
-        
-        uploadArea.addEventListener('click', () => imageInput.click());
-        
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageBase64 })
         });
         
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
+        const data = await response.json();
+        console.log('Detection result:', data);
         
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) handleImage(file);
-        });
-        
-        imageInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) handleImage(file);
-        });
-        
-        function handleImage(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-                imageBase64 = e.target.result.split(',')[1];
-            };
-            reader.readAsDataURL(file);
-        }
-        
-        // PAO 선택
-        document.querySelectorAll('.pao-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        if (data.success && data.pao && data.pao.length > 0) {
+            const detectedPAO = data.pao[0];
+            const method = data.method || 'Unknown';
+            
+            showMessage(`✅ ${detectedPAO}M found! (${method})`, 'success');
+            
+            // 감지된 PAO 자동 선택
+            const btn = document.querySelector(`[data-pao="${detectedPAO}"]`);
+            if (btn) {
                 document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
-                selectedPAO = parseInt(btn.dataset.pao);
-            });
-        });
-        
-        // 폼 제출
-        document.getElementById('productForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            if (!selectedPAO) {
-                showMessage('Please select PAO', 'error');
-                return;
+                selectedPAO = detectedPAO;
             }
             
-            const product = {
-                id: Date.now(),
-                name: document.getElementById('productName').value || 'Unnamed Product',
-                openedDate: document.getElementById('openedDate').value,
-                pao: selectedPAO,
-                image: imageBase64
-            };
-            
-            saveProduct(product);
-            showMessage('Product added!', 'success');
-            resetForm();
-            loadProducts();
-        });
-        
-        // LocalStorage 저장
-        function saveProduct(product) {
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            products.push(product);
-            localStorage.setItem('products', JSON.stringify(products));
+            // OCR 텍스트가 있으면 콘솔에 출력
+            if (data.text) {
+                console.log('OCR detected text:', data.text);
+            }
+        } else {
+            showMessage('⚠️ No PAO detected. Please select manually.', 'error');
         }
-        
-        // 제품 목록 로드
-        function loadProducts() {
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            const list = document.getElementById('productList');
-            
-            list.innerHTML = products.map(p => `
-                <div class="product-item">
-                    <div class="product-info">
-                        <h3>${p.name}</h3>
-                        <p>Opened: ${p.openedDate} | PAO: ${p.pao}M</p>
-                    </div>
-                    <button class="delete-btn" onclick="deleteProduct(${p.id})">Delete</button>
-                </div>
-            `).join('');
-        }
-        
-        // 제품 삭제
-        function deleteProduct(id) {
-            let products = JSON.parse(localStorage.getItem('products') || '[]');
-            products = products.filter(p => p.id !== id);
-            localStorage.setItem('products', JSON.stringify(products));
-            loadProducts();
-        }
-        
-        // 폼 리셋
-        function resetForm() {
-            document.getElementById('productForm').reset();
-            document.getElementById('openedDate').valueAsDate = new Date();
-            preview.style.display = 'none';
-            document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
-            selectedPAO = null;
-            imageBase64 = null;
-        }
-        
-        // 메시지 표시
-        function showMessage(text, type) {
-            const msg = document.getElementById('message');
-            msg.innerHTML = `<div class="message ${type}">${text}</div>`;
-            setTimeout(() => msg.innerHTML = '', 3000);
-        }
-        
-        // 초기 로드
-        loadProducts();
-    </script>
-</body>
-</html>
+    } catch (error) {
+        console.error('Detection error:', error);
+        showMessage('❌ Detection failed', 'error');
+    }
+}
