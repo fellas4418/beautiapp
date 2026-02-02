@@ -196,7 +196,7 @@
       font-size: 14px;
     }
 
-    /* 감지 메시지 - 고정 표시 */
+    /* 감지 메시지 */
     .detection-message {
       background: #10b981;
       color: white;
@@ -490,7 +490,7 @@
       <div class="analyzing-text">Analyzing image...</div>
     </div>
 
-    <!-- 감지 메시지 (고정 표시) -->
+    <!-- 감지 메시지 -->
     <div class="detection-message" id="detectionMessage"></div>
 
     <!-- 다른 사진 선택 -->
@@ -571,7 +571,6 @@
     // 🔔 알림 기능
     // ========================================
 
-    // 알림 권한 확인 및 배너 표시
     function checkNotificationPermission() {
       const banner = document.getElementById('notificationBanner');
       
@@ -582,14 +581,9 @@
 
       if (Notification.permission === 'default') {
         banner.classList.add('show');
-      } else if (Notification.permission === 'granted') {
-        console.log('✅ Notifications enabled');
-      } else {
-        console.log('❌ Notifications denied');
       }
     }
 
-    // 알림 권한 요청
     window.enableNotifications = async function() {
       const banner = document.getElementById('notificationBanner');
       
@@ -600,27 +594,22 @@
           banner.classList.remove('show');
           showMessage('✅ Notifications enabled!', 'success');
           
-          // 테스트 알림
           new Notification('🧴 PAO Tracker', {
             body: 'Notifications are now enabled!',
             icon: '🔔'
           });
-        } else {
-          showMessage('❌ Notifications denied', 'error');
         }
       } catch (error) {
         console.error('Notification error:', error);
       }
     };
 
-    // 만료 임박 제품 확인 및 알림
     function checkExpiringProducts(products) {
       if (Notification.permission !== 'granted') return;
 
       const today = new Date();
       const notifiedToday = localStorage.getItem('notificationDate') === today.toDateString();
       
-      // 하루에 한 번만 알림 (배터리 절약)
       if (notifiedToday) return;
 
       let expiringSoonCount = 0;
@@ -630,33 +619,27 @@
         const expiry = new Date(product.expiryDate);
         const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
 
-        // 7일 이내 만료
         if (daysLeft > 0 && daysLeft <= 7) {
           expiringSoonCount++;
         }
 
-        // 이미 만료됨
         if (daysLeft < 0) {
           expiredCount++;
         }
       });
 
-      // 알림 발송
       if (expiredCount > 0) {
         new Notification('🚨 Products Expired!', {
           body: `${expiredCount} product(s) have expired. Check your vanity!`,
-          icon: '🧴',
-          badge: '🚨'
+          icon: '🧴'
         });
       } else if (expiringSoonCount > 0) {
         new Notification('⚠️ Expiring Soon!', {
           body: `${expiringSoonCount} product(s) expiring within 7 days`,
-          icon: '🧴',
-          badge: '⚠️'
+          icon: '🧴'
         });
       }
 
-      // 오늘 알림 완료 기록
       localStorage.setItem('notificationDate', today.toDateString());
     }
 
@@ -699,11 +682,9 @@
       }
     });
 
-    // 이미지 처리 (개선된 버전)
     async function handleImageFile(file) {
       uploadedImageFile = file;
 
-      // 미리보기
       const reader = new FileReader();
       reader.onload = (e) => {
         previewImg.src = e.target.result;
@@ -713,12 +694,10 @@
       };
       reader.readAsDataURL(file);
 
-      // Base64 변환
       const base64 = await fileToBase64(file);
 
-      // 분석 시작
       analyzingSpinner.classList.add('active');
-      detectionMessage.classList.remove('active'); // 기존 메시지 숨김
+      detectionMessage.classList.remove('active');
 
       try {
         const response = await fetch('https://pao-detector-final.ohryee.workers.dev', {
@@ -728,18 +707,17 @@
         });
 
         const data = await response.json();
-        console.log('📊 API Response:', data); // 디버깅용
 
         if (data.success && data.pao && data.pao.length > 0) {
           const detectedMonths = data.pao[0].months;
           selectPAOButton(detectedMonths);
-          showMessage(`✅ ${detectedMonths}M PAO detected!`, 'success');
+          showMessage(`✅ ${detectedMonths}M detected!`, 'success');
         } else {
           showMessage('❌ No PAO found. Please select manually.', 'error');
         }
 
       } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('Error:', error);
         showMessage('⚠️ Analysis failed. Please try again.', 'error');
       } finally {
         analyzingSpinner.classList.remove('active');
@@ -754,24 +732,24 @@
       });
     }
 
-    // 메시지 표시 (고정 - 사라지지 않음)
     function showMessage(text, type) {
       detectionMessage.textContent = text;
       detectionMessage.className = 'detection-message active';
       if (type === 'error') {
         detectionMessage.classList.add('error');
       }
-      // setTimeout 제거 - 계속 표시됨
+      setTimeout(() => {
+        detectionMessage.classList.remove('active');
+      }, 3000);
     }
 
-    // 업로드 초기화
     window.resetUpload = function() {
       imagePreview.style.display = 'none';
       uploadArea.style.display = 'block';
       retrySection.style.display = 'none';
       imageInput.value = '';
       uploadedImageFile = null;
-      detectionMessage.classList.remove('active'); // 메시지도 숨김
+      detectionMessage.classList.remove('active');
     };
 
     // ========================================
@@ -919,7 +897,6 @@
           productList.appendChild(card);
         });
 
-        // 🔔 만료 확인 및 알림
         checkExpiringProducts(products);
 
       } catch (error) {
