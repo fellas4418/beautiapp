@@ -97,6 +97,8 @@ document.getElementById("fileInput").onchange=e=>{
   paoDetection.textContent="Scanning...";
   paoDetection.style.display="block";
 
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
   // 이미지 전처리 (명암 대비 강화)
   const img = new Image();
   img.onload = () => {
