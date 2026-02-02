@@ -99,33 +99,55 @@ document.getElementById("fileInput").onchange=e=>{
 
   const img = new Image();
   img.src = URL.createObjectURL(file);
-  // 이미지 전처리 (명암 대비 강화)
   img.onload = () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.filter = 'contrast(2) brightness(1.2)';
-    ctx.drawImage(img, 0, 0);
+    
+    // 고해상도 처리 (2배 확대)
+    canvas.width = img.width * 2;
+    canvas.height = img.height * 2;
+    
+    // 강력한 전처리
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.filter = 'contrast(3) brightness(1.5) grayscale(100%)';
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    
+    // 디버깅용: 전처리된 이미지 확인
+    const debugImg = document.createElement('img');
+    debugImg.src = canvas.toDataURL();
+    debugImg.style.cssText = 'width:100%;margin-top:10px;border:2px solid yellow';
+    preview.parentElement.appendChild(debugImg);
     
     Tesseract.recognize(canvas, 'eng', {
-      tessedit_char_whitelist: '0123456789M '
+      tessedit_char_whitelist: '0123456789MmPAOperiodafteropening',
+      tessedit_pageseg_mode: Tesseract.PSM.AUTO
     })
     .then(({data:{text}})=>{
-      console.log("OCR 결과:", text);
-      const ocrMatch=text.match(/\b(3|6|9|12|18|24|36)\s*M\b/i);
+      console.log("===== OCR 전체 결과 =====");
+      console.log(text);
+      console.log("========================");
+      
+      // 더 유연한 정규식 (공백/줄바꿈 허용)
+      const ocrMatch=text.match(/(3|6|9|12|18|24|36)\s*[MmOo]/i);
+      
       if(ocrMatch){
         const detected=Number(ocrMatch[1]);
         selectPAO(detected);
         updateResult();
         paoDetection.textContent=`Detected ${detected}M`;
+        paoDetection.style.background='#1b4d3e';
       }else{
-        paoDetection.textContent="Couldn't read the symbol. Retake the photo.";
+        paoDetection.textContent="OCR failed. Select manually below ↓";
+        paoDetection.style.background='#4d1b1b';
       }
     })
-    .catch(()=>{
+    .catch((err)=>{
+      console.error("OCR 에러:", err);
       paoDetection.textContent="Scan failed. Try again.";
+      paoDetection.style.background='#4d1b1b';
     });
+  };
 };
 </script>
 </body>
