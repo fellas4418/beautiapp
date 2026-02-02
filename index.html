@@ -1,933 +1,531 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Keep or Toss - 화장품 유통기한 관리</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-      min-height: 100vh;
-      padding: 20px;
-      color: #ecf0f1;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    header {
-      text-align: center;
-      color: white;
-      margin-bottom: 30px;
-    }
-
-    header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-
-    header p {
-      font-size: 1.1rem;
-      opacity: 0.9;
-    }
-
-    .main-content {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .card {
-      background: #2c3e50;
-      border-radius: 15px;
-      padding: 25px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      border: 1px solid #34495e;
-    }
-
-    h2 {
-      color: #3498db;
-      margin-bottom: 20px;
-      font-size: 1.5rem;
-    }
-
-    .image-upload {
-      margin-bottom: 20px;
-    }
-
-    .choose-image-btn {
-      width: 100%;
-      padding: 12px;
-      background: #3498db;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.3s;
-    }
-
-    .choose-image-btn:hover {
-      background: #2980b9;
-    }
-
-    .image-preview {
-      margin-top: 15px;
-      border: 2px dashed #4a5f7f;
-      border-radius: 8px;
-      min-height: 200px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background: #1a252f;
-    }
-
-    .image-preview img {
-      max-width: 100%;
-      max-height: 300px;
-      object-fit: contain;
-    }
-
-    .image-preview span {
-      color: #7f8c8d;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      color: #bdc3c7;
-      font-weight: 500;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border: 2px solid #4a5f7f;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: border-color 0.3s;
-      background: #1a252f;
-      color: #ecf0f1;
-    }
-
-    .form-group input:focus {
-      outline: none;
-      border-color: #3498db;
-    }
-
-    .pao-section {
-      margin-bottom: 20px;
-    }
-
-    .pao-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .ocr-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      transition: all 0.3s;
-    }
-
-    .ocr-badge.detecting {
-      background: #f39c12;
-      color: #fff;
-      animation: blink 1s infinite;
-    }
-
-    .ocr-badge.success {
-      background: #27ae60;
-      color: white;
-    }
-
-    .ocr-badge.failed {
-      background: #e74c3c;
-      color: white;
-    }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-
-    .pao-buttons {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .pao-option {
-      padding: 12px;
-      border: 2px solid #4a5f7f;
-      background: #1a252f;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.3s;
-      position: relative;
-      color: #ecf0f1;
-    }
-
-    .pao-option:hover {
-      border-color: #3498db;
-      background: #243342;
-    }
-
-    .pao-option.active {
-      border-color: #3498db;
-      background: #3498db;
-      color: white;
-      font-weight: bold;
-    }
-
-    .pao-option.suggested {
-      border-color: #27ae60;
-      background: rgba(39, 174, 96, 0.2);
-      color: #2ecc71;
-      animation: pulse 1s ease-in-out;
-    }
-
-    .pao-option.suggested::after {
-      content: '✓ AI 감지';
-      position: absolute;
-      top: -10px;
-      right: -10px;
-      background: #27ae60;
-      color: white;
-      font-size: 0.65rem;
-      padding: 3px 7px;
-      border-radius: 10px;
-      font-weight: bold;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-
-    .pao-option.active.suggested {
-      border-color: #3498db;
-      background: linear-gradient(135deg, #3498db 0%, #27ae60 100%);
-      color: white;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    .action-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .btn {
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.3s;
-      font-weight: 500;
-    }
-
-    .btn-primary {
-      background: #27ae60;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #229954;
-    }
-
-    .btn-secondary {
-      background: #7f8c8d;
-      color: white;
-    }
-
-    .btn-secondary:hover {
-      background: #6c7a7b;
-    }
-
-    .message {
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      display: none;
-      font-size: 0.9rem;
-    }
-
-    .error-message {
-      background: #c0392b;
-      color: white;
-      border: 1px solid #e74c3c;
-    }
-
-    .info-message {
-      background: #16a085;
-      color: white;
-      border: 1px solid #1abc9c;
-    }
-
-    .ocr-loading {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid #34495e;
-      border-top: 2px solid #3498db;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .shelf-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .shelf-section {
-      margin-bottom: 30px;
-    }
-
-    .shelf-section h3 {
-      padding: 10px 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      color: white;
-      font-size: 1.2rem;
-    }
-
-    .shelf-section.expired h3 {
-      background: #c0392b;
-    }
-
-    .shelf-section.warning h3 {
-      background: #f39c12;
-    }
-
-    .shelf-section.safe h3 {
-      background: #27ae60;
-    }
-
-    .product-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 15px;
-    }
-
-    .product-card {
-      background: #1a252f;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      transition: transform 0.3s;
-      border: 1px solid #34495e;
-    }
-
-    .product-card:hover {
-      transform: translateY(-5px);
-    }
-
-    .product-card img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-    }
-
-    .product-info {
-      padding: 15px;
-    }
-
-    .product-info h4 {
-      margin-bottom: 8px;
-      color: #ecf0f1;
-      font-size: 1rem;
-    }
-
-    .product-info p {
-      font-size: 0.85rem;
-      color: #95a5a6;
-      margin-bottom: 5px;
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      margin-top: 5px;
-    }
-
-    .status-badge.expired {
-      background: #c0392b;
-      color: white;
-    }
-
-    .status-badge.warning {
-      background: #f39c12;
-      color: white;
-    }
-
-    .status-badge.safe {
-      background: #27ae60;
-      color: white;
-    }
-
-    .delete-btn {
-      width: 100%;
-      padding: 8px;
-      background: #c0392b;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background 0.3s;
-    }
-
-    .delete-btn:hover {
-      background: #a93226;
-    }
-
-    .empty-shelf {
-      text-align: center;
-      color: #7f8c8d;
-      padding: 40px;
-      font-size: 1.1rem;
-    }
-
-    .reset-all {
-      text-align: center;
-      margin-top: 20px;
-    }
-
-    .btn-danger {
-      background: #c0392b;
-      color: white;
-      padding: 12px 30px;
-    }
-
-    .btn-danger:hover {
-      background: #a93226;
-    }
-
-    @media (max-width: 768px) {
-      .main-content {
-        grid-template-columns: 1fr;
-      }
-
-      .pao-buttons {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .product-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      }
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(1);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - Cosmetic Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .badge-gemini {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .image-upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            position: relative;
+        }
+
+        .image-upload-area:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .image-upload-area.dragover {
+            border-color: #667eea;
+            background: #e8e8ff;
+        }
+
+        #image-input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        input[type="text"],
+        input[type="date"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .pao-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .pao-btn {
+            padding: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .pao-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: rgba(102, 126, 234, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .pao-btn.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .pao-btn.detected {
+            border-color: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
+            }
+        }
+
+        .ocr-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .ocr-badge.detecting {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .ocr-badge.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .ocr-badge.failed {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .ocr-loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #f57c00;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .info-message {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🧴 Keep or Toss</h1>
-      <p>화장품 개봉 후 사용기한(PAO) 관리 시스템</p>
-    </header>
-
-    <div class="main-content">
-      <div class="card">
-        <h2>Add Product</h2>
-        
-        <div class="message error-message" id="errorMessage"></div>
-        <div class="message info-message" id="infoMessage"></div>
-
-        <div class="image-upload">
-          <button class="choose-image-btn" id="chooseImageBtn">📷 Choose Image</button>
-          <input type="file" id="imageInput" accept="image/*">
-          <div class="image-preview" id="imagePreview">
-            <span>이미지 미리보기</span>
-          </div>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Add Product</h1>
         </div>
 
-        <div class="form-group">
-          <label for="productName">Product Name (Optional)</label>
-          <input type="text" id="productName" placeholder="e.g. 에스더의 세럼">
-        </div>
+        <div id="error-message" class="error-message"></div>
 
-        <div class="form-group">
-          <label for="openedDate">Opened Date</label>
-          <input type="date" id="openedDate">
-        </div>
+        <form id="product-form">
+            <div class="form-group">
+                <label>Product Image <span class="badge-gemini">✓ AI 분석</span></label>
+                <div class="image-upload-area" id="upload-area">
+                    <div class="upload-icon">🖼️</div>
+                    <p style="color: #999; margin-top: 10px;">Click or drag image here</p>
+                    <input type="file" id="image-input" accept="image/*" required>
+                    <img id="image-preview" class="image-preview" alt="Preview">
+                </div>
+            </div>
 
-        <div class="pao-section">
-          <div class="pao-label">
-            <label>Period After Opening (PAO)</label>
-            <span class="ocr-badge" id="ocrStatus" style="display: none;"></span>
-          </div>
-          <div class="pao-buttons" id="paoButtons">
-            <button class="pao-option" data-pao="3">3M</button>
-            <button class="pao-option" data-pao="6">6M</button>
-            <button class="pao-option" data-pao="9">9M</button>
-            <button class="pao-option" data-pao="12">12M</button>
-            <button class="pao-option" data-pao="24">24M</button>
-            <button class="pao-option" data-pao="36">36M</button>
-          </div>
-        </div>
+            <div class="form-group">
+                <label for="product-name">Product Name (Optional)</label>
+                <input type="text" id="product-name" placeholder="e.g., 에스티로더 세럼">
+            </div>
 
-        <div class="action-buttons">
-          <button class="btn btn-primary" id="addToShelfBtn">Add to Shelf</button>
-          <button class="btn btn-secondary" id="clearBtn">Clear</button>
-        </div>
-      </div>
+            <div class="form-group">
+                <label for="opened-date">Opened Date</label>
+                <input type="date" id="opened-date" required>
+            </div>
 
-      <div class="card">
-        <div class="shelf-header">
-          <h2>🏷️ My Shelf</h2>
-          <button class="btn btn-secondary" id="clearShelfBtn">Clear Shelf</button>
-        </div>
-        <div id="shelfContainer"></div>
-      </div>
+            <div class="form-group">
+                <label>Period After Opening (PAO) <span class="badge-gemini">✓ AI 감지</span></label>
+                <div id="ocr-status" class="ocr-badge" style="display: none;">
+                    <span class="ocr-loading"></span> 감지 중...
+                </div>
+                <div class="pao-grid">
+                    <button type="button" class="pao-btn" data-value="3">
+                        <span class="pao-months">3M</span>
+                    </button>
+                    <button type="button" class="pao-btn" data-value="6">
+                        <span class="pao-months">6M</span>
+                    </button>
+                    <button type="button" class="pao-btn" data-value="12">
+                        <span class="pao-months">12M</span>
+                    </button>
+                    <button type="button" class="pao-btn" data-value="18">
+                        <span class="pao-months">18M</span>
+                    </button>
+                    <button type="button" class="pao-btn" data-value="24">
+                        <span class="pao-months">24M</span>
+                    </button>
+                    <button type="button" class="pao-btn" data-value="36">
+                        <span class="pao-months">36M</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="info-message" class="info-message"></div>
+
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">Clear</button>
+                <button type="submit" class="btn btn-primary">Add to Shelf</button>
+            </div>
+        </form>
     </div>
 
-    <div class="reset-all">
-      <button class="btn btn-danger" id="resetAllBtn">⚠️ Reset All</button>
-    </div>
-  </div>
+    <script>
+        const WORKER_URL = 'YOUR_CLOUDFLARE_WORKER_URL'; // ✅ 여기에 Worker URL 입력
+        
+        const uploadArea = document.getElementById('upload-area');
+        const imageInput = document.getElementById('image-input');
+        const imagePreview = document.getElementById('image-preview');
+        const productNameInput = document.getElementById('product-name');
+        const openedDateInput = document.getElementById('opened-date');
+        const paoBtns = document.querySelectorAll('.pao-btn');
+        const ocrStatus = document.getElementById('ocr-status');
+        const errorMessage = document.getElementById('error-message');
+        const infoMessage = document.getElementById('info-message');
+        const form = document.getElementById('product-form');
 
-  <script>
-    const WORKER_URL = 'https://pao-ocr-worker.ohryee.workers.dev/ocr';
+        let selectedPAO = null;
+        let uploadedImageFile = null;
 
-    const imageInput = document.getElementById('imageInput');
-    const chooseImageBtn = document.getElementById('chooseImageBtn');
-    const imagePreview = document.getElementById('imagePreview');
-    const productNameInput = document.getElementById('productName');
-    const openedDateInput = document.getElementById('openedDate');
-    const paoButtons = document.querySelectorAll('.pao-option');
-    const addToShelfBtn = document.getElementById('addToShelfBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const shelfContainer = document.getElementById('shelfContainer');
-    const clearShelfBtn = document.getElementById('clearShelfBtn');
-    const resetAllBtn = document.getElementById('resetAllBtn');
-    const errorMessage = document.getElementById('errorMessage');
-    const infoMessage = document.getElementById('infoMessage');
-    const ocrStatus = document.getElementById('ocrStatus');
+        // 오늘 날짜 기본값 설정
+        openedDateInput.valueAsDate = new Date();
 
-    let selectedPAO = null;
-    let uploadedImage = null;
-    let products = [];
+        // 이미지 업로드 영역 클릭
+        uploadArea.addEventListener('click', () => imageInput.click());
 
-    document.addEventListener('DOMContentLoaded', () => {
-      loadProducts();
-      renderShelf();
-      setDefaultDate();
-      
-      chooseImageBtn.addEventListener('click', () => imageInput.click());
-      imageInput.addEventListener('change', handleImageUpload);
-      addToShelfBtn.addEventListener('click', addProduct);
-      clearBtn.addEventListener('click', clearForm);
-      clearShelfBtn.addEventListener('click', clearShelf);
-      resetAllBtn.addEventListener('click', resetAll);
-
-      paoButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const pao = parseInt(btn.dataset.pao);
-          selectPAO(pao);
+        // 드래그 앤 드롭
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
         });
-      });
-    });
 
-    function setDefaultDate() {
-      const today = new Date().toISOString().split('T')[0];
-      openedDateInput.value = today;
-    }
-
-    async function handleImageUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      if (!file.type.startsWith('image/')) {
-        showError('이미지 파일만 업로드 가능합니다.');
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        showError('이미지 크기는 5MB 이하여야 합니다.');
-        return;
-      }
-
-      // ✅ 이전 인식 결과 초기화
-      resetOCRStatus();
-      clearPAOSuggestions();
-
-      uploadedImage = file;
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        imagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-      };
-      reader.readAsDataURL(file);
-
-      analyzeImageInBackground(file);
-    }
-
-    // ✅ OCR 상태 초기화 함수
-    function resetOCRStatus() {
-      ocrStatus.style.display = 'none';
-      ocrStatus.className = 'ocr-badge';
-      ocrStatus.innerHTML = '';
-    }
-
-    // ✅ PAO 제안 초기화 함수
-    function clearPAOSuggestions() {
-      paoButtons.forEach(btn => {
-        btn.classList.remove('suggested', 'active');
-      });
-      selectedPAO = null;
-    }
-
-    async function analyzeImageInBackground(file) {
-      ocrStatus.style.display = 'inline-block';
-      ocrStatus.className = 'ocr-badge detecting';
-      ocrStatus.innerHTML = '<span class="ocr-loading"></span> 감지 중...';
-
-      try {
-        const base64 = await fileToBase64(file);
-        const imageData = base64.split(',')[1];
-        
-        console.log('🔍 Sending image to OCR...');
-        
-        const response = await fetch(WORKER_URL, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ image: imageData })
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
         });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageUpload(file);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(file);
+            }
+        });
+
+        function handleImageUpload(file) {
+            uploadedImageFile = file;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // OCR 분석 시작
+            analyzeImageInBackground(file);
         }
-        
-        const result = await response.json();
-        console.log('📥 OCR Response:', result);
 
-        if (result.success && result.pao && result.pao.length > 0) {
-          ocrStatus.className = 'ocr-badge success';
-          ocrStatus.textContent = `✓ ${result.pao.join(', ')}M 감지됨`;
-          
-          highlightDetectedPAO(result.pao);
-          
-          // 하나만 감지된 경우 자동 선택
-          if (result.pao.length === 1) {
-            selectPAO(result.pao[0]);
-          }
-        } else {
-          ocrStatus.className = 'ocr-badge failed';
-          ocrStatus.textContent = '✗ 자동 감지 실패';
-          showInfo('PAO를 자동으로 찾지 못했습니다. 수동으로 선택해주세요.');
-          console.warn('❌ OCR failed:', result.error || 'No PAO detected');
+        async function analyzeImageInBackground(file) {
+            ocrStatus.style.display = 'inline-block';
+            ocrStatus.className = 'ocr-badge detecting';
+            ocrStatus.innerHTML = '<span class="ocr-loading"></span> 감지 중...';
+
+            try {
+                const base64 = await fileToBase64(file);
+                const imageData = base64.split(',')[1];
+                
+                console.log('🔍 Sending image to OCR...');
+                
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageData })
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const result = await response.json();
+                console.log('📥 OCR Response:', result);
+
+                if (result.success && result.pao && result.pao.length > 0) {
+                    // ✅ 유효한 PAO만 필터링 (3, 6, 12, 18, 24, 36)
+                    const validPAO = result.pao.filter(p => [3, 6, 12, 18, 24, 36].includes(p));
+                    
+                    if (validPAO.length === 0) {
+                        throw new Error('Invalid PAO values detected');
+                    }
+                    
+                    ocrStatus.className = 'ocr-badge success';
+                    
+                    if (validPAO.length === 1) {
+                        // ✅ 1개 감지: 바로 선택
+                        ocrStatus.textContent = `✓ ${validPAO[0]}M 자동 선택`;
+                        selectPAO(validPAO[0]);
+                    } else {
+                        // ⚠️ 여러 개 감지: 가장 작은 값 선택 (더 안전)
+                        const minPAO = Math.min(...validPAO);
+                        ocrStatus.textContent = `✓ ${validPAO.join('/')}M 중 ${minPAO}M 선택`;
+                        highlightDetectedPAO(validPAO);
+                        selectPAO(minPAO);
+                        
+                        showInfo(`💡 ${validPAO.join(', ')}M이 감지되었습니다. 안전하게 ${minPAO}M을 선택했습니다. 필요시 수동 변경하세요.`);
+                    }
+                    
+                } else {
+                    ocrStatus.className = 'ocr-badge failed';
+                    ocrStatus.textContent = '✗ 수동 선택 필요';
+                    showInfo('PAO를 찾지 못했습니다. 수동으로 선택해주세요.');
+                }
+                
+            } catch (error) {
+                console.error('❌ OCR Error:', error);
+                ocrStatus.className = 'ocr-badge failed';
+                ocrStatus.textContent = '✗ 인식 실패';
+                showInfo('이미지 분석 실패. 수동으로 선택해주세요.');
+            }
         }
-        
-      } catch (error) {
-        console.error('❌ OCR Error:', error);
-        ocrStatus.className = 'ocr-badge failed';
-        ocrStatus.textContent = '✗ 감지 실패';
-        showInfo('이미지 분석 중 오류가 발생했습니다. 수동으로 선택해주세요.');
-      }
-    }
 
-    function highlightDetectedPAO(paoValues) {
-      // ✅ 기존 제안 모두 제거
-      paoButtons.forEach(btn => {
-        btn.classList.remove('suggested');
-      });
-
-      // ✅ 새로운 감지 결과만 표시
-      paoValues.forEach(pao => {
-        const btn = document.querySelector(`.pao-option[data-pao="${pao}"]`);
-        if (btn) {
-          btn.classList.add('suggested');
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         }
-      });
-    }
 
-    function selectPAO(pao) {
-      selectedPAO = pao;
-      
-      // ✅ 모든 active 제거 후 선택
-      paoButtons.forEach(btn => {
-        btn.classList.remove('active');
-      });
-      
-      const selectedBtn = document.querySelector(`.pao-option[data-pao="${pao}"]`);
-      if (selectedBtn) {
-        selectedBtn.classList.add('active');
-      }
-    }
-
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function addProduct() {
-      if (!uploadedImage) {
-        showError('이미지를 업로드해주세요.');
-        return;
-      }
-
-      if (!selectedPAO) {
-        showError('PAO를 선택해주세요.');
-        return;
-      }
-
-      const productName = productNameInput.value.trim() || 'Unnamed Product';
-      const openedDate = openedDateInput.value;
-
-      if (!openedDate) {
-        showError('개봉일을 선택해주세요.');
-        return;
-      }
-
-      const opened = new Date(openedDate);
-      const expiry = new Date(opened);
-      expiry.setMonth(expiry.getMonth() + selectedPAO);
-
-      const today = new Date();
-      const daysRemaining = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-
-      let safetyStatus = 'safe';
-      if (daysRemaining < 0) {
-        safetyStatus = 'expired';
-      } else if (daysRemaining <= 30) {
-        safetyStatus = 'warning';
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const product = {
-          id: Date.now(),
-          name: productName,
-          image: e.target.result,
-          openedDate: openedDate,
-          pao: selectedPAO,
-          expiryDate: expiry.toISOString().split('T')[0],
-          daysRemaining: daysRemaining,
-          safetyStatus: safetyStatus
-        };
-
-        products.push(product);
-        saveProducts();
-        renderShelf();
-        clearForm();
-        showInfo('✅ 제품이 추가되었습니다!');
-      };
-      reader.readAsDataURL(uploadedImage);
-    }
-
-    function clearForm() {
-      imageInput.value = '';
-      imagePreview.innerHTML = '<span>이미지 미리보기</span>';
-      productNameInput.value = '';
-      setDefaultDate();
-      
-      // ✅ 완전한 초기화
-      resetOCRStatus();
-      clearPAOSuggestions();
-      
-      uploadedImage = null;
-      hideMessages();
-    }
-
-    function renderShelf() {
-      if (products.length === 0) {
-        shelfContainer.innerHTML = '<p class="empty-shelf">No products yet. Add your first item!</p>';
-        return;
-      }
-
-      const sortedProducts = [...products].sort((a, b) => {
-        const statusOrder = { expired: 0, warning: 1, safe: 2 };
-        if (statusOrder[a.safetyStatus] !== statusOrder[b.safetyStatus]) {
-          return statusOrder[a.safetyStatus] - statusOrder[b.safetyStatus];
+        function selectPAO(months) {
+            paoBtns.forEach(btn => {
+                if (parseInt(btn.dataset.value) === months) {
+                    btn.classList.add('selected');
+                    selectedPAO = months;
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
         }
-        return a.daysRemaining - b.daysRemaining;
-      });
 
-      const expired = sortedProducts.filter(p => p.safetyStatus === 'expired');
-      const warning = sortedProducts.filter(p => p.safetyStatus === 'warning');
-      const safe = sortedProducts.filter(p => p.safetyStatus === 'safe');
-
-      shelfContainer.innerHTML = '';
-
-      if (expired.length > 0) {
-        const section = createShelfSection('🚨 TOSS', 'expired', expired);
-        shelfContainer.appendChild(section);
-      }
-
-      if (warning.length > 0) {
-        const section = createShelfSection('⚠️ USE SOON', 'warning', warning);
-        shelfContainer.appendChild(section);
-      }
-
-      if (safe.length > 0) {
-        const section = createShelfSection('✅ SAFE TO USE', 'safe', safe);
-        shelfContainer.appendChild(section);
-      }
-    }
-
-    function createShelfSection(title, status, products) {
-      const section = document.createElement('div');
-      section.classList.add('shelf-section', status);
-      
-      const header = document.createElement('h3');
-      header.textContent = title;
-      section.appendChild(header);
-
-      const grid = document.createElement('div');
-      grid.classList.add('product-grid');
-
-      products.forEach(product => {
-        const card = createProductCard(product);
-        grid.appendChild(card);
-      });
-
-      section.appendChild(grid);
-      return section;
-    }
-
-    function createProductCard(product) {
-      const card = document.createElement('div');
-      card.classList.add('product-card', product.safetyStatus);
-
-      const statusText = product.daysRemaining < 0 
-        ? `기한 만료 (${Math.abs(product.daysRemaining)}일 지남)`
-        : `D-${product.daysRemaining}`;
-
-      card.innerHTML = `
-        <img src="${product.image}" alt="${product.name}">
-        <div class="product-info">
-          <h4>${product.name}</h4>
-          <p>개봉일: ${product.openedDate}</p>
-          <p>PAO: ${product.pao}M</p>
-          <p class="status-badge ${product.safetyStatus}">${statusText}</p>
-        </div>
-        <button class="delete-btn" onclick="deleteProduct(${product.id})">Delete</button>
-      `;
-
-      return card;
-    }
-
-    function deleteProduct(id) {
-      if (confirm('정말 이 제품을 삭제하시겠습니까?')) {
-        products = products.filter(p => p.id !== id);
-        saveProducts();
-        renderShelf();
-        showInfo('제품이 삭제되었습니다.');
-      }
-    }
-
-    function clearShelf() {
-      if (products.length === 0) {
-        showInfo('선반이 비어있습니다.');
-        return;
-      }
-
-      if (confirm('모든 제품을 삭제하시겠습니까?')) {
-        products = [];
-        saveProducts();
-        renderShelf();
-        showInfo('모든 제품이 삭제되었습니다.');
-      }
-    }
-
-    function resetAll() {
-      if (confirm('⚠️ 모든 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-        products = [];
-        saveProducts();
-        renderShelf();
-        clearForm();
-        showInfo('모든 데이터가 초기화되었습니다.');
-      }
-    }
-
-    function saveProducts() {
-      try {
-        localStorage.setItem('keepOrTossProducts', JSON.stringify(products));
-      } catch (error) {
-        console.warn('⚠️ localStorage 저장 실패 (샌드박스 환경):', error.message);
-      }
-    }
-
-    function loadProducts() {
-      try {
-        const stored = localStorage.getItem('keepOrTossProducts');
-        if (stored) {
-          products = JSON.parse(stored);
+        function highlightDetectedPAO(paoArray) {
+            paoBtns.forEach(btn => {
+                const value = parseInt(btn.dataset.value);
+                if (paoArray.includes(value)) {
+                    btn.classList.add('detected');
+                }
+            });
         }
-      } catch (error) {
-        console.warn('⚠️ localStorage 로드 실패 (샌드박스 환경):', error.message);
-        products = [];
-      }
-    }
 
-    function showError(message) {
-      errorMessage.textContent = message;
-      errorMessage.style.display = 'block';
-      infoMessage.style.display = 'none';
-      setTimeout(() => {
-        errorMessage.style.display = 'none';
-      }, 5000);
-    }
+        // PAO 버튼 클릭 이벤트
+        paoBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const value = parseInt(btn.dataset.value);
+                selectPAO(value);
+            });
+        });
 
-    function showInfo(message) {
-      infoMessage.textContent = message;
-      infoMessage.style.display = 'block';
-      errorMessage.style.display = 'none';
-      setTimeout(() => {
-        infoMessage.style.display = 'none';
-      }, 5000);
-    }
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
 
-    function hideMessages() {
-      errorMessage.style.display = 'none';
-      infoMessage.style.display = 'none';
-    }
-  </script>
+        function showInfo(message) {
+            infoMessage.textContent = message;
+            infoMessage.style.display = 'block';
+        }
+
+        // 폼 제출
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!uploadedImageFile) {
+                showError('PAO를 선택해주세요.');
+                return;
+            }
+
+            if (!selectedPAO) {
+                showError('PAO를 선택해주세요.');
+                return;
+            }
+
+            const productData = {
+                image: await fileToBase64(uploadedImageFile),
+                productName: productNameInput.value.trim(),
+                openedDate: openedDateInput.value,
+                pao: selectedPAO
+            };
+
+            console.log('✅ Product Data:', productData);
+            
+            // ✅ 실제로는 여기서 서버에 저장
+            alert(`제품이 추가되었습니다!\n\nPAO: ${selectedPAO}개월\n개봉일: ${productData.openedDate}`);
+            
+            // 리스트 페이지로 이동
+            // window.location.href = '/shelf';
+        });
+    </script>
 </body>
 </html>
