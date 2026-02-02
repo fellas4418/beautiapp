@@ -118,6 +118,11 @@
             font-weight: 700;
             margin-top: 16px;
         }
+        .loading-progress {
+            color: white;
+            font-size: 14px;
+            margin-top: 8px;
+        }
         .ocr-result {
             background: #f0f4ff;
             border: 2px solid #667eea;
@@ -306,45 +311,6 @@
             font-weight: 600;
             cursor: pointer;
         }
-        .api-setup {
-            background: #e3f2fd;
-            border: 2px solid #2196f3;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .api-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1976d2;
-            margin-bottom: 12px;
-        }
-        .api-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #90caf9;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: monospace;
-            margin-bottom: 8px;
-        }
-        .api-hint {
-            font-size: 12px;
-            color: #1976d2;
-            margin-top: 8px;
-        }
-        .btn-set-api {
-            width: 100%;
-            padding: 12px;
-            background: #2196f3;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 8px;
-        }
     </style>
 </head>
 <body>
@@ -354,23 +320,17 @@
             <p>AI-powered OCR for PAO detection</p>
         </div>
 
-        <div class="api-setup" id="apiSetup">
-            <div class="api-title">🔑 Google Cloud Vision API Key</div>
-            <input type="text" class="api-input" id="apiKeyInput" placeholder="Enter your API key here">
-            <div class="api-hint">Get free API key at: console.cloud.google.com</div>
-            <button class="btn-set-api" onclick="setApiKey()">Save API Key</button>
-        </div>
-
         <div class="image-section empty" id="imageSection" onclick="takePicture()">
             <span>Tap to take photo</span>
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
                 <div class="loading-text">Analyzing PAO symbol...</div>
+                <div class="loading-progress" id="loadingProgress"></div>
             </div>
         </div>
 
         <div class="ocr-result" id="ocrResult">
-            <div class="ocr-title">✅ PAO Detected</div>
+            <div class="ocr-title">✅ PAO Detected by AI</div>
             <div class="ocr-pao" id="detectedPAO"></div>
         </div>
 
@@ -407,37 +367,15 @@
 
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
 
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script>
         let currentImage = null;
         let selectedPAO = null;
         let isOCRDetected = false;
-        let apiKey = localStorage.getItem('visionApiKey') || '';
 
         document.getElementById('openDate').valueAsDate = new Date();
 
-        if (apiKey) {
-            document.getElementById('apiSetup').style.display = 'none';
-            document.getElementById('apiKeyInput').value = apiKey;
-        }
-
-        function setApiKey() {
-            const key = document.getElementById('apiKeyInput').value.trim();
-            if (!key) {
-                alert('Please enter an API key');
-                return;
-            }
-            apiKey = key;
-            localStorage.setItem('visionApiKey', key);
-            document.getElementById('apiSetup').style.display = 'none';
-            alert('✅ API key saved!');
-        }
-
         function takePicture() {
-            if (!apiKey) {
-                alert('⚠️ Please set your Google Cloud Vision API key first');
-                document.getElementById('apiSetup').style.display = 'block';
-                return;
-            }
             document.getElementById('cameraInput').click();
         }
 
@@ -467,6 +405,7 @@
                     <div class="loading-overlay" id="loadingOverlay">
                         <div class="spinner"></div>
                         <div class="loading-text">Analyzing PAO symbol...</div>
+                        <div class="loading-progress" id="loadingProgress"></div>
                     </div>
                 `;
                 imageSection.onclick = null;
@@ -479,6 +418,7 @@
 
         async function performOCR(imageData) {
             const loadingOverlay = document.getElementById('loadingOverlay');
+            const loadingProgress = document.getElementById('loadingProgress');
             loadingOverlay.classList.add('active');
 
             document.getElementById('ocrResult').classList.remove('show');
@@ -487,30 +427,22 @@
             isOCRDetected = false;
 
             try {
-                const base64Image = imageData.split(',')[1];
-                
-                const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        requests: [{
-                            image: { content: base64Image },
-                            features: [{ type: 'TEXT_DETECTION' }]
-                        }]
-                    })
-                });
+                const { data: { text } } = await Tesseract.recognize(
+                    imageData,
+                    'eng',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const progress = Math.round(m.progress * 100);
+                                loadingProgress.textContent = `${progress}%`;
+                            }
+                        }
+                    }
+                );
 
-                const result = await response.json();
-                
-                if (result.error) {
-                    throw new Error(result.error.message);
-                }
-
-                const text = result.responses[0]?.textAnnotations?.[0]?.description || '';
                 console.log('OCR Result:', text);
                 
+                // PAO 패턴 찾기: 숫자 + M (대소문자 구분 없이)
                 const paoMatch = text.match(/(\d+)\s*M/i);
                 
                 if (paoMatch) {
@@ -530,14 +462,15 @@
                     }
                 }
 
+                // PAO를 찾지 못한 경우
                 loadingOverlay.classList.remove('active');
                 document.getElementById('manualSelect').classList.add('show');
                 
             } catch (error) {
                 console.error('OCR Error:', error);
-                alert('⚠️ OCR failed: ' + error.message + '\nPlease select manually.');
                 loadingOverlay.classList.remove('active');
                 document.getElementById('manualSelect').classList.add('show');
+                alert('⚠️ OCR failed. Please select PAO manually.');
             }
         }
 
@@ -559,6 +492,7 @@
                 <div class="loading-overlay" id="loadingOverlay">
                     <div class="spinner"></div>
                     <div class="loading-text">Analyzing PAO symbol...</div>
+                    <div class="loading-progress" id="loadingProgress"></div>
                 </div>
             `;
             imageSection.onclick = takePicture;
@@ -616,6 +550,7 @@
                 <div class="loading-overlay" id="loadingOverlay">
                     <div class="spinner"></div>
                     <div class="loading-text">Analyzing PAO symbol...</div>
+                    <div class="loading-progress" id="loadingProgress"></div>
                 </div>
             `;
             imageSection.onclick = takePicture;
@@ -667,7 +602,7 @@
                     statusText = `✅ ${daysLeft} days left`;
                 }
 
-                const detectionBadge = product.ocrDetected ? '🤖 OCR' : '👆 Manual';
+                const detectionBadge = product.ocrDetected ? '🤖 AI Detected' : '👆 Manual';
 
                 return `
                     <div class="product-item ${statusClass}">
