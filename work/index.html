@@ -99,7 +99,8 @@ document.getElementById("fileInput").onchange=e=>{
 
   Tesseract.recognize(file,'eng')
     .then(({data:{text}})=>{
-      const ocrMatch=text.match(/(3|6|9|12|18|24|36)\s*M/i);
+      console.log("OCR 결과:", text);
+      const ocrMatch=text.match(/\b(3|6|9|12|18|24|36)\s*M\b/i);
       if(ocrMatch){
         const detected=Number(ocrMatch[1]);
         selectPAO(detected);
