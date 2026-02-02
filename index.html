@@ -126,6 +126,17 @@
         }
         .delete-btn:hover { background: #c82333; }
         h3 { margin-top: 20px; margin-bottom: 10px; }
+        canvas { display: none; }
+        .debug { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin: 10px 0; 
+            font-size: 12px;
+            font-family: monospace;
+            max-height: 100px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -141,6 +152,7 @@
         </div>
 
         <img id="previewImage" class="preview-image" style="display: none;">
+        <canvas id="canvas"></canvas>
         <div id="status"></div>
 
         <div>
@@ -184,6 +196,8 @@
         const previewImage = document.getElementById('previewImage');
         const status = document.getElementById('status');
         const saveBtn = document.getElementById('saveBtn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
         uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -213,6 +227,18 @@
             if (file) handleFile(file);
         });
 
+        // 이미지 전처리 함수
+        function preprocessImage(img) {
+            canvas.width = img.width * 2;
+            canvas.height = img.height * 2;
+            
+            // 그레이스케일 + 대비 증가
+            ctx.filter = 'contrast(200%) brightness(100%) grayscale(100%)';
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            return canvas.toDataURL('image/png');
+        }
+
         async function handleFile(file) {
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -225,45 +251,87 @@
                 status.className = 'status analyzing';
 
                 try {
-                    console.log('🚀 Starting OCR...');
-                    
-                    const { data: { text } } = await Tesseract.recognize(
-                        currentImage,
-                        'eng',
-                        { 
-                            logger: m => {
-                                if (m.status === 'recognizing text') {
-                                    status.innerHTML = `🔍 Recognizing... ${Math.round(m.progress * 100)}%`;
+                    // 이미지 전처리
+                    const img = new Image();
+                    img.onload = async () => {
+                        const processedImage = preprocessImage(img);
+                        
+                        console.log('🚀 Starting OCR...');
+                        
+                        const { data: { text } } = await Tesseract.recognize(
+                            processedImage,
+                            'eng',
+                            { 
+                                logger: m => {
+                                    if (m.status === 'recognizing text') {
+                                        status.innerHTML = `🔍 Recognizing... ${Math.round(m.progress * 100)}%`;
+                                    }
                                 }
-                                console.log(m);
+                            }
+                        );
+
+                        console.log('📝 Original text:', text);
+
+                        // 더 유연한 패턴 매칭
+                        const validMonths = [3, 6, 12, 18, 24, 36];
+                        let foundMonths = null;
+
+                        // 패턴 1: 숫자 + M (공백 무시, 대소문자 무시)
+                        const pattern1 = text.replace(/\s+/g, '').match(/(\d+)[Mm]/g);
+                        if (pattern1) {
+                            console.log('Pattern 1 matches:', pattern1);
+                            for (const match of pattern1) {
+                                const num = parseInt(match);
+                                if (validMonths.includes(num)) {
+                                    foundMonths = num;
+                                    break;
+                                }
                             }
                         }
-                    );
 
-                    console.log('📝 Detected text:', text);
-
-                    const validMonths = [3, 6, 12, 18, 24, 36];
-                    const matches = text.match(/(\d+)\s*M\b/gi);
-                    
-                    let foundMonths = null;
-                    if (matches) {
-                        for (const match of matches) {
-                            const num = parseInt(match);
-                            if (validMonths.includes(num)) {
-                                foundMonths = num;
-                                break;
+                        // 패턴 2: 단독 숫자 (6, 12 등)
+                        if (!foundMonths) {
+                            const nums = text.match(/\b(\d+)\b/g);
+                            if (nums) {
+                                console.log('Found numbers:', nums);
+                                for (const numStr of nums) {
+                                    const num = parseInt(numStr);
+                                    if (validMonths.includes(num)) {
+                                        foundMonths = num;
+                                        break;
+                                    }
+                                }
                             }
                         }
-                    }
 
-                    if (foundMonths) {
-                        selectPAO(foundMonths);
-                        status.innerHTML = `✅ Detected PAO: ${foundMonths} months`;
-                        status.className = 'status success';
-                    } else {
-                        status.innerHTML = 'ℹ️ Could not detect PAO. Please select manually.';
-                        status.className = 'status manual';
-                    }
+                        // 패턴 3: 6M 형태 (G, 0 등 오인식 보정)
+                        if (!foundMonths) {
+                            const corrected = text.replace(/[GO0]/gi, '6').replace(/[I1l]/gi, '1');
+                            const pattern3 = corrected.match(/(\d+)[Mm]/g);
+                            if (pattern3) {
+                                console.log('Pattern 3 (corrected):', pattern3);
+                                for (const match of pattern3) {
+                                    const num = parseInt(match);
+                                    if (validMonths.includes(num)) {
+                                        foundMonths = num;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (foundMonths) {
+                            console.log('✅ PAO detected:', foundMonths);
+                            selectPAO(foundMonths);
+                            status.innerHTML = `✅ Detected PAO: ${foundMonths} months<div class="debug">Detected: ${text.substring(0, 100)}</div>`;
+                            status.className = 'status success';
+                        } else {
+                            console.log('❌ No PAO found');
+                            status.innerHTML = `ℹ️ Could not detect PAO. Please select manually.<div class="debug">Detected: ${text.substring(0, 100)}</div>`;
+                            status.className = 'status manual';
+                        }
+                    };
+                    img.src = currentImage;
 
                 } catch (error) {
                     console.error('❌ OCR Error:', error);
@@ -401,8 +469,6 @@
 
         document.getElementById('openingDate').value = new Date().toISOString().split('T')[0];
         loadProducts();
-
-        console.log('✅ App loaded. Tesseract version:', Tesseract);
     </script>
 </body>
 </html>
