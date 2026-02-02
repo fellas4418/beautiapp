@@ -1,939 +1,317 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PAO Tracker</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 480px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 24px;
-      padding: 32px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .header h1 {
-      font-size: 28px;
-      color: #1f2937;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .header p {
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    /* 알림 권한 배너 */
-    .notification-banner {
-      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-      color: white;
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 24px;
-      display: none;
-      align-items: center;
-      gap: 12px;
-      animation: slideDown 0.3s;
-    }
-
-    .notification-banner.show {
-      display: flex;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .notification-icon {
-      font-size: 24px;
-      flex-shrink: 0;
-    }
-
-    .notification-content {
-      flex: 1;
-    }
-
-    .notification-title {
-      font-weight: 700;
-      font-size: 15px;
-      margin-bottom: 4px;
-    }
-
-    .notification-text {
-      font-size: 13px;
-      opacity: 0.95;
-    }
-
-    .notification-btn {
-      background: white;
-      color: #f59e0b;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      flex-shrink: 0;
-    }
-
-    .notification-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    /* 이미지 업로드 영역 */
-    .upload-area {
-      border: 3px dashed #d1d5db;
-      border-radius: 16px;
-      padding: 32px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-bottom: 24px;
-      background: #f9fafb;
-    }
-
-    .upload-area:hover {
-      border-color: #6366f1;
-      background: #eef2ff;
-    }
-
-    .upload-area.dragover {
-      border-color: #6366f1;
-      background: #eef2ff;
-      transform: scale(1.02);
-    }
-
-    .upload-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-    }
-
-    .upload-text {
-      color: #374151;
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .upload-subtext {
-      color: #9ca3af;
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
-    #imageInput {
-      display: none;
-    }
-
-    /* 이미지 미리보기 */
-    .image-preview {
-      margin-bottom: 20px;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .image-preview img {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    /* 분석중 스피너 */
-    .analyzing-spinner {
-      text-align: center;
-      padding: 20px;
-      display: none;
-    }
-
-    .analyzing-spinner.active {
-      display: block;
-    }
-
-    .spinner {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #6366f1;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .analyzing-text {
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    /* 감지 메시지 */
-    .detection-message {
-      background: #10b981;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      text-align: center;
-      margin-bottom: 20px;
-      font-weight: 600;
-      display: none;
-      animation: fadeIn 0.3s;
-    }
-
-    .detection-message.active {
-      display: block;
-    }
-
-    .detection-message.error {
-      background: #ef4444;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* PAO 버튼 */
-    .section-title {
-      font-size: 16px;
-      color: #374151;
-      margin-bottom: 16px;
-      font-weight: 600;
-    }
-
-    .pao-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .pao-button {
-      background: white;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 16px;
-      font-size: 15px;
-      font-weight: 600;
-      color: #374151;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .pao-button:hover {
-      border-color: #6366f1;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-    }
-
-    .pao-button.selected {
-      background: #6366f1;
-      border-color: #6366f1;
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    }
-
-    /* 입력 필드 */
-    .input-group {
-      margin-bottom: 20px;
-    }
-
-    .input-label {
-      display: block;
-      font-size: 14px;
-      color: #374151;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .input-field {
-      width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      font-size: 15px;
-      transition: all 0.2s;
-    }
-
-    .input-field:focus {
-      outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-    }
-
-    /* 액션 버튼 */
-    .action-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-
-    .btn {
-      padding: 14px 24px;
-      border: none;
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background: #6366f1;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #4f46e5;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn-secondary {
-      background: #f3f4f6;
-      color: #374151;
-    }
-
-    .btn-secondary:hover {
-      background: #e5e7eb;
-    }
-
-    /* 제품 목록 */
-    .products-section {
-      border-top: 1px solid #e5e7eb;
-      padding-top: 24px;
-    }
-
-    .products-title {
-      font-size: 18px;
-      color: #1f2937;
-      margin-bottom: 16px;
-      font-weight: 700;
-    }
-
-    .product-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .product-card {
-      background: #f9fafb;
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      transition: all 0.2s;
-    }
-
-    .product-card:hover {
-      background: #f3f4f6;
-      transform: translateX(4px);
-    }
-
-    .product-thumbnail {
-      width: 60px;
-      height: 60px;
-      border-radius: 8px;
-      object-fit: cover;
-      background: #e5e7eb;
-      flex-shrink: 0;
-    }
-
-    .product-info {
-      flex: 1;
-    }
-
-    .product-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 4px;
-    }
-
-    .product-dates {
-      font-size: 13px;
-      color: #6b7280;
-    }
-
-    .product-expiry {
-      display: inline-block;
-      background: #fef3c7;
-      color: #92400e;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-top: 4px;
-    }
-
-    .product-expiry.expired {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .product-expiry.soon {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .product-expiry.good {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    .delete-btn {
-      background: #fee2e2;
-      color: #991b1b;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-
-    .delete-btn:hover {
-      background: #fecaca;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #9ca3af;
-    }
-
-    .empty-icon {
-      font-size: 64px;
-      margin-bottom: 12px;
-      opacity: 0.5;
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        padding: 24px;
-      }
-
-      .pao-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧴 PAO Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+        .upload-area {
+            border: 3px dashed #ccc;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .upload-area:hover { border-color: #667eea; background: #f8f9ff; }
+        .upload-area.dragover { border-color: #667eea; background: #f0f2ff; }
+        .preview-image { max-width: 100%; height: auto; border-radius: 10px; margin: 20px 0; }
+        .result { padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; font-weight: bold; }
+        .result.success { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .result.error { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
+        .pao-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
+        .pao-btn {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .pao-btn:hover { border-color: #667eea; background: #f8f9ff; }
+        .pao-btn.selected { border-color: #667eea; background: #667eea; color: white; }
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: #667eea; color: white; margin-bottom: 10px; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-secondary { background: #f1f3f5; color: #495057; }
+        .btn-secondary:hover { background: #e9ecef; }
+        .product-list {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+        .product-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .product-item.expired { background: #ffe6e6; }
+        .product-item.warning { background: #fff3cd; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- 헤더 -->
-    <div class="header">
-      <h1>🧴 PAO Tracker</h1>
-      <p>Track cosmetic expiration after opening</p>
-    </div>
+    <div class="container">
+        <h1>🧴 PAO Tracker</h1>
+        <p class="subtitle">Track cosmetic expiration after opening</p>
 
-    <!-- 알림 권한 요청 배너 -->
-    <div class="notification-banner" id="notificationBanner">
-      <div class="notification-icon">🔔</div>
-      <div class="notification-content">
-        <div class="notification-title">Enable Notifications</div>
-        <div class="notification-text">Get alerts before products expire</div>
-      </div>
-      <button class="notification-btn" onclick="enableNotifications()">Enable</button>
-    </div>
-
-    <!-- 이미지 업로드 -->
-    <div class="upload-area" id="uploadArea">
-      <div class="upload-icon">📸</div>
-      <div class="upload-text">Upload product image</div>
-      <div class="upload-subtext">Click or drag to analyze PAO</div>
-      <input type="file" id="imageInput" accept="image/*">
-    </div>
-
-    <!-- 이미지 미리보기 -->
-    <div class="image-preview" id="imagePreview" style="display: none;">
-      <img id="previewImg" src="" alt="Preview">
-    </div>
-
-    <!-- 분석중 스피너 -->
-    <div class="analyzing-spinner" id="analyzingSpinner">
-      <div class="spinner"></div>
-      <div class="analyzing-text">Analyzing image...</div>
-    </div>
-
-    <!-- 감지 메시지 -->
-    <div class="detection-message" id="detectionMessage"></div>
-
-    <!-- 다른 사진 선택 -->
-    <div class="input-group" id="retrySection" style="display: none;">
-      <button class="btn btn-secondary" onclick="resetUpload()" style="width: 100%;">
-        📸 Select another image
-      </button>
-    </div>
-
-    <!-- PAO 선택 -->
-    <div class="section-title">Period After Opening (PAO)</div>
-    <div class="pao-grid" id="paoGrid">
-      <button class="pao-button" data-months="3">3 months</button>
-      <button class="pao-button" data-months="6">6 months</button>
-      <button class="pao-button" data-months="12">12 months</button>
-      <button class="pao-button" data-months="18">18 months</button>
-      <button class="pao-button" data-months="24">24 months</button>
-      <button class="pao-button" data-months="36">36 months</button>
-    </div>
-
-    <!-- 제품명 -->
-    <div class="input-group">
-      <label class="input-label">Product Name</label>
-      <input type="text" class="input-field" id="productName" placeholder="e.g., Toner, Cream, Sunscreen">
-    </div>
-
-    <!-- 개봉일 -->
-    <div class="input-group">
-      <label class="input-label">Opening Date</label>
-      <input type="date" class="input-field" id="openingDate">
-    </div>
-
-    <!-- 액션 버튼 -->
-    <div class="action-buttons">
-      <button class="btn btn-primary" onclick="saveProduct()">Save</button>
-      <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
-    </div>
-
-    <!-- 제품 목록 -->
-    <div class="products-section">
-      <div class="products-title">My Vanity</div>
-      <div class="product-list" id="productList">
-        <div class="empty-state">
-          <div class="empty-icon">📦</div>
-          <div>No products registered yet</div>
+        <div class="upload-area" id="uploadArea">
+            <p style="font-size: 48px;">📷</p>
+            <p><strong>Upload product image</strong></p>
+            <p style="color: #999; font-size: 14px;">Click or drag to analyze PAO</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
-      </div>
+
+        <img id="previewImage" class="preview-image" style="display: none;">
+        <div id="result"></div>
+
+        <div>
+            <h3>Period After Opening (PAO)</h3>
+            <div class="pao-options">
+                <button class="pao-btn" data-months="3">3 months</button>
+                <button class="pao-btn" data-months="6">6 months</button>
+                <button class="pao-btn" data-months="12">12 months</button>
+                <button class="pao-btn" data-months="18">18 months</button>
+                <button class="pao-btn" data-months="24">24 months</button>
+                <button class="pao-btn" data-months="36">36 months</button>
+            </div>
+        </div>
+
+        <div>
+            <h3>Product Name</h3>
+            <input type="text" id="productName" placeholder="e.g., Toner, Cream, Sunscreen">
+        </div>
+
+        <div>
+            <h3>Opening Date</h3>
+            <input type="date" id="openingDate" value="2026-02-02">
+        </div>
+
+        <button class="btn btn-primary" id="saveBtn">Save</button>
+        <button class="btn btn-secondary" id="clearBtn">Clear</button>
+
+        <div class="product-list">
+            <h2>My Vanity</h2>
+            <div id="productList"></div>
+        </div>
     </div>
-  </div>
 
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
+    <script>
+        let selectedMonths = null;
+        let currentImage = null;
 
-    // Firebase 설정
-    const firebaseConfig = {
-      apiKey: "AIzaSyAYCoGHnRjd9v3b9zVFPoxUr4p5pYO_3cs",
-      authDomain: "beauti-app.firebaseapp.com",
-      projectId: "beauti-app",
-      storageBucket: "beauti-app.firebasestorage.app",
-      messagingSenderId: "518456244603",
-      appId: "1:518456244603:web:e9d1f83ca37c8f7cd38f2a"
-    };
+        // ⚠️ 여기를 본인의 Worker URL로 변경하세요!
+        const WORKER_URL = 'https://pao-detector-final.YOUR-ACCOUNT.workers.dev/';
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewImage = document.getElementById('previewImage');
+        const result = document.getElementById('result');
 
-    // 전역 변수
-    let selectedPeriod = null;
-    let uploadedImageFile = null;
+        uploadArea.addEventListener('click', () => fileInput.click());
 
-    // 오늘 날짜 기본값
-    document.getElementById('openingDate').valueAsDate = new Date();
-
-    // ========================================
-    // 🔔 알림 기능
-    // ========================================
-
-    function checkNotificationPermission() {
-      const banner = document.getElementById('notificationBanner');
-      
-      if (!('Notification' in window)) {
-        console.log('This browser does not support notifications');
-        return;
-      }
-
-      if (Notification.permission === 'default') {
-        banner.classList.add('show');
-      }
-    }
-
-    window.enableNotifications = async function() {
-      const banner = document.getElementById('notificationBanner');
-      
-      try {
-        const permission = await Notification.requestPermission();
-        
-        if (permission === 'granted') {
-          banner.classList.remove('show');
-          showMessage('✅ Notifications enabled!', 'success');
-          
-          new Notification('🧴 PAO Tracker', {
-            body: 'Notifications are now enabled!',
-            icon: '🔔'
-          });
-        }
-      } catch (error) {
-        console.error('Notification error:', error);
-      }
-    };
-
-    function checkExpiringProducts(products) {
-      if (Notification.permission !== 'granted') return;
-
-      const today = new Date();
-      const notifiedToday = localStorage.getItem('notificationDate') === today.toDateString();
-      
-      if (notifiedToday) return;
-
-      let expiringSoonCount = 0;
-      let expiredCount = 0;
-
-      products.forEach(product => {
-        const expiry = new Date(product.expiryDate);
-        const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-
-        if (daysLeft > 0 && daysLeft <= 7) {
-          expiringSoonCount++;
-        }
-
-        if (daysLeft < 0) {
-          expiredCount++;
-        }
-      });
-
-      if (expiredCount > 0) {
-        new Notification('🚨 Products Expired!', {
-          body: `${expiredCount} product(s) have expired. Check your vanity!`,
-          icon: '🧴'
-        });
-      } else if (expiringSoonCount > 0) {
-        new Notification('⚠️ Expiring Soon!', {
-          body: `${expiringSoonCount} product(s) expiring within 7 days`,
-          icon: '🧴'
-        });
-      }
-
-      localStorage.setItem('notificationDate', today.toDateString());
-    }
-
-    // ========================================
-    // 이미지 업로드
-    // ========================================
-
-    const uploadArea = document.getElementById('uploadArea');
-    const imageInput = document.getElementById('imageInput');
-    const imagePreview = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('previewImg');
-    const analyzingSpinner = document.getElementById('analyzingSpinner');
-    const detectionMessage = document.getElementById('detectionMessage');
-    const retrySection = document.getElementById('retrySection');
-
-    uploadArea.addEventListener('click', () => imageInput.click());
-
-    uploadArea.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      uploadArea.classList.add('dragover');
-    });
-
-    uploadArea.addEventListener('dragleave', () => {
-      uploadArea.classList.remove('dragover');
-    });
-
-    uploadArea.addEventListener('drop', (e) => {
-      e.preventDefault();
-      uploadArea.classList.remove('dragover');
-      const file = e.dataTransfer.files[0];
-      if (file && file.type.startsWith('image/')) {
-        handleImageFile(file);
-      }
-    });
-
-    imageInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        handleImageFile(file);
-      }
-    });
-
-    async function handleImageFile(file) {
-      uploadedImageFile = file;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImg.src = e.target.result;
-        imagePreview.style.display = 'block';
-        uploadArea.style.display = 'none';
-        retrySection.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
-
-      const base64 = await fileToBase64(file);
-
-      analyzingSpinner.classList.add('active');
-      detectionMessage.classList.remove('active');
-
-      try {
-        const response = await fetch('https://pao-detector-final.ohryee.workers.dev', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: base64 })
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
         });
 
-        const data = await response.json();
-
-        if (data.success && data.pao && data.pao.length > 0) {
-          const detectedMonths = data.pao[0].months;
-          selectPAOButton(detectedMonths);
-          showMessage(`✅ ${detectedMonths}M detected!`, 'success');
-        } else {
-          showMessage('❌ No PAO found. Please select manually.', 'error');
-        }
-
-      } catch (error) {
-        console.error('Error:', error);
-        showMessage('⚠️ Analysis failed. Please try again.', 'error');
-      } finally {
-        analyzingSpinner.classList.remove('active');
-      }
-    }
-
-    function fileToBase64(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function showMessage(text, type) {
-      detectionMessage.textContent = text;
-      detectionMessage.className = 'detection-message active';
-      if (type === 'error') {
-        detectionMessage.classList.add('error');
-      }
-      setTimeout(() => {
-        detectionMessage.classList.remove('active');
-      }, 3000);
-    }
-
-    window.resetUpload = function() {
-      imagePreview.style.display = 'none';
-      uploadArea.style.display = 'block';
-      retrySection.style.display = 'none';
-      imageInput.value = '';
-      uploadedImageFile = null;
-      detectionMessage.classList.remove('active');
-    };
-
-    // ========================================
-    // PAO 버튼
-    // ========================================
-
-    const paoButtons = document.querySelectorAll('.pao-button');
-    paoButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        paoButtons.forEach(btn => btn.classList.remove('selected'));
-        button.classList.add('selected');
-        selectedPeriod = parseInt(button.dataset.months);
-      });
-    });
-
-    function selectPAOButton(months) {
-      paoButtons.forEach(btn => btn.classList.remove('selected'));
-      const targetButton = Array.from(paoButtons).find(btn => parseInt(btn.dataset.months) === months);
-      if (targetButton) {
-        targetButton.classList.add('selected');
-        selectedPeriod = months;
-      }
-    }
-
-    // ========================================
-    // 제품 저장
-    // ========================================
-
-    window.saveProduct = async function() {
-      const productName = document.getElementById('productName').value.trim() || 'No Name';
-      const openingDate = document.getElementById('openingDate').value;
-
-      if (!selectedPeriod) {
-        alert('Please select PAO period');
-        return;
-      }
-
-      if (!openingDate) {
-        alert('Please select opening date');
-        return;
-      }
-
-      const opening = new Date(openingDate);
-      const expiry = new Date(opening);
-      expiry.setMonth(expiry.getMonth() + selectedPeriod);
-
-      try {
-        showMessage('⏳ Uploading...', 'success');
-
-        let imageURL = null;
-
-        if (uploadedImageFile) {
-          const timestamp = Date.now();
-          const fileName = `products/${timestamp}_${uploadedImageFile.name}`;
-          const storageRef = ref(storage, fileName);
-          
-          await uploadBytes(storageRef, uploadedImageFile);
-          imageURL = await getDownloadURL(storageRef);
-        }
-
-        await addDoc(collection(db, 'products'), {
-          name: productName,
-          paoMonths: selectedPeriod,
-          openingDate: openingDate,
-          expiryDate: expiry.toISOString().split('T')[0],
-          imageURL: imageURL,
-          createdAt: new Date().toISOString()
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
         });
 
-        showMessage('✅ Product saved!', 'success');
-        clearForm();
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        async function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                currentImage = e.target.result;
+                previewImage.src = currentImage;
+                previewImage.style.display = 'block';
+
+                result.innerHTML = '🔍 AI 분석 중...';
+                result.className = 'result';
+
+                try {
+                    console.log('🚀 Sending to API:', WORKER_URL);
+                    
+                    const response = await fetch(WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image: currentImage })
+                    });
+
+                    console.log('📊 API Response:', response);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('📦 Parsed Data:', data);
+
+                    if (data.success && data.pao && data.pao.length > 0) {
+                        const months = data.pao[0].months;
+                        result.innerHTML = `✅ PAO ${months}개월 감지! 아래 버튼을 확인하세요.`;
+                        result.className = 'result success';
+                        selectPAO(months);
+                    } else {
+                        result.innerHTML = '❌ No PAO found. Please select manually.';
+                        result.className = 'result error';
+                    }
+                } catch (error) {
+                    console.error('❌ Error:', error);
+                    result.innerHTML = `❌ 에러: ${error.message}`;
+                    result.className = 'result error';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.querySelectorAll('.pao-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectPAO(parseInt(btn.dataset.months));
+            });
+        });
+
+        function selectPAO(months) {
+            document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
+            const btn = document.querySelector(`[data-months="${months}"]`);
+            if (btn) {
+                btn.classList.add('selected');
+                selectedMonths = months;
+            }
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            if (!selectedMonths) {
+                alert('PAO를 선택해주세요!');
+                return;
+            }
+            const name = document.getElementById('productName').value || '제품명 없음';
+            const openDate = document.getElementById('openingDate').value;
+            
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            products.push({
+                name,
+                months: selectedMonths,
+                openDate,
+                image: currentImage
+            });
+            localStorage.setItem('products', JSON.stringify(products));
+            
+            alert('저장 완료!');
+            loadProducts();
+            clearForm();
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', clearForm);
+
+        function clearForm() {
+            fileInput.value = '';
+            previewImage.style.display = 'none';
+            result.innerHTML = '';
+            document.getElementById('productName').value = '';
+            document.querySelectorAll('.pao-btn').forEach(b => b.classList.remove('selected'));
+            selectedMonths = null;
+            currentImage = null;
+        }
+
+        function loadProducts() {
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            const list = document.getElementById('productList');
+            
+            if (products.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #999;">저장된 제품이 없습니다</p>';
+                return;
+            }
+
+            list.innerHTML = products.map((p, i) => {
+                const openDate = new Date(p.openDate);
+                const expDate = new Date(openDate);
+                expDate.setMonth(expDate.getMonth() + p.months);
+                
+                const today = new Date();
+                const daysLeft = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+                
+                let status = '';
+                let className = 'product-item';
+                if (daysLeft < 0) {
+                    status = '⚠️ 만료됨';
+                    className += ' expired';
+                } else if (daysLeft < 30) {
+                    status = `⏰ ${daysLeft}일 남음`;
+                    className += ' warning';
+                } else {
+                    status = `✅ ${daysLeft}일 남음`;
+                }
+
+                return `
+                    <div class="${className}">
+                        <strong>${p.name}</strong><br>
+                        PAO: ${p.months}개월<br>
+                        개봉일: ${p.openDate}<br>
+                        만료일: ${expDate.toISOString().split('T')[0]}<br>
+                        ${status}
+                        <button onclick="deleteProduct(${i})" style="float: right; background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">삭제</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteProduct(index) {
+            const products = JSON.parse(localStorage.getItem('products') || '[]');
+            products.splice(index, 1);
+            localStorage.setItem('products', JSON.stringify(products));
+            loadProducts();
+        }
+
         loadProducts();
-
-      } catch (error) {
-        console.error('Error:', error);
-        showMessage('❌ Failed to save', 'error');
-      }
-    };
-
-    window.clearForm = function() {
-      document.getElementById('productName').value = '';
-      document.getElementById('openingDate').valueAsDate = new Date();
-      paoButtons.forEach(btn => btn.classList.remove('selected'));
-      selectedPeriod = null;
-      resetUpload();
-    };
-
-    // ========================================
-    // 제품 목록 로드
-    // ========================================
-
-    async function loadProducts() {
-      const productList = document.getElementById('productList');
-      
-      try {
-        const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
-          productList.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-icon">📦</div>
-              <div>No products registered yet</div>
-            </div>
-          `;
-          return;
-        }
-
-        const today = new Date();
-        const products = [];
-        productList.innerHTML = '';
-
-        snapshot.forEach(docSnap => {
-          const product = docSnap.data();
-          products.push(product);
-
-          const expiry = new Date(product.expiryDate);
-          const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
-
-          let expiryClass = 'good';
-          let expiryText = `${daysLeft} days left`;
-
-          if (daysLeft < 0) {
-            expiryClass = 'expired';
-            expiryText = 'Expired';
-          } else if (daysLeft <= 30) {
-            expiryClass = 'soon';
-            expiryText = `${daysLeft} days left`;
-          }
-
-          const card = document.createElement('div');
-          card.className = 'product-card';
-          card.innerHTML = `
-            ${product.imageURL ? `<img src="${product.imageURL}" class="product-thumbnail">` : '<div class="product-thumbnail"></div>'}
-            <div class="product-info">
-              <div class="product-name">${product.name}</div>
-              <div class="product-dates">
-                Opened: ${product.openingDate}<br>
-                Expires: ${product.expiryDate}
-              </div>
-              <div class="product-expiry ${expiryClass}">${expiryText}</div>
-            </div>
-            <button class="delete-btn" onclick="deleteProduct('${docSnap.id}', '${product.imageURL || ''}')">Delete</button>
-          `;
-          productList.appendChild(card);
-        });
-
-        checkExpiringProducts(products);
-
-      } catch (error) {
-        console.error('Error loading products:', error);
-      }
-    }
-
-    // ========================================
-    // 제품 삭제
-    // ========================================
-
-    window.deleteProduct = async function(id, imageURL) {
-      if (!confirm('Delete this product?')) return;
-
-      try {
-        if (imageURL) {
-          const imageRef = ref(storage, imageURL);
-          await deleteObject(imageRef).catch(err => console.warn('Image delete failed:', err));
-        }
-
-        await deleteDoc(doc(db, 'products', id));
-        
-        showMessage('✅ Deleted!', 'success');
-        loadProducts();
-      } catch (error) {
-        console.error('Error:', error);
-        showMessage('❌ Failed to delete', 'error');
-      }
-    };
-
-    // ========================================
-    // 초기화
-    // ========================================
-
-    checkNotificationPermission();
-    loadProducts();
-
-  </script>
+    </script>
 </body>
 </html>
