@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🧴 PAO Tracker</title>
-    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js'></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -175,15 +174,29 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
     <script>
         let selectedMonths = null;
         let currentImage = null;
+        let ocrWorker = null;
 
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const previewImage = document.getElementById('previewImage');
         const status = document.getElementById('status');
         const saveBtn = document.getElementById('saveBtn');
+
+        // Tesseract 초기화
+        async function initOCR() {
+            try {
+                ocrWorker = await Tesseract.createWorker('eng');
+                console.log('✅ OCR initialized');
+            } catch (error) {
+                console.error('❌ OCR init failed:', error);
+            }
+        }
+
+        initOCR();
 
         uploadArea.addEventListener('click', () => fileInput.click());
 
@@ -225,19 +238,11 @@
                 status.className = 'status analyzing';
 
                 try {
-                    const result = await Tesseract.recognize(
-                        currentImage,
-                        'eng',
-                        {
-                            logger: m => {
-                                if (m.status === 'recognizing text') {
-                                    status.innerHTML = `🔍 Recognizing text... ${Math.round(m.progress * 100)}%`;
-                                }
-                            }
-                        }
-                    );
+                    if (!ocrWorker) {
+                        throw new Error('OCR not initialized');
+                    }
 
-                    const text = result.data.text;
+                    const { data: { text } } = await ocrWorker.recognize(currentImage);
                     console.log('Detected text:', text);
 
                     const validMonths = [3, 6, 12, 18, 24, 36];
@@ -301,20 +306,24 @@
             const name = document.getElementById('productName').value || 'Unnamed Product';
             const openDate = document.getElementById('openingDate').value;
             
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            products.push({
-                id: Date.now(),
-                name,
-                months: selectedMonths,
-                openDate,
-                image: currentImage,
-                createdAt: new Date().toISOString()
-            });
-            localStorage.setItem('products', JSON.stringify(products));
-            
-            alert('✅ Saved successfully!');
-            loadProducts();
-            clearForm();
+            try {
+                const products = JSON.parse(localStorage.getItem('products') || '[]');
+                products.push({
+                    id: Date.now(),
+                    name,
+                    months: selectedMonths,
+                    openDate,
+                    image: currentImage,
+                    createdAt: new Date().toISOString()
+                });
+                localStorage.setItem('products', JSON.stringify(products));
+                alert('✅ Saved successfully!');
+                loadProducts();
+                clearForm();
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('⚠️ Save failed. Please check console.');
+            }
         });
 
         document.getElementById('clearBtn').addEventListener('click', clearForm);
@@ -333,55 +342,65 @@
         }
 
         function loadProducts() {
-            const products = JSON.parse(localStorage.getItem('products') || '[]');
-            const list = document.getElementById('productList');
-            
-            if (products.length === 0) {
-                list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No products saved yet</p>';
-                return;
-            }
-
-            list.innerHTML = products.map((p, i) => {
-                const openDate = new Date(p.openDate);
-                const expDate = new Date(openDate);
-                expDate.setMonth(expDate.getMonth() + p.months);
+            try {
+                const products = JSON.parse(localStorage.getItem('products') || '[]');
+                const list = document.getElementById('productList');
                 
-                const today = new Date();
-                const daysLeft = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-                
-                let status = '';
-                let className = 'product-item';
-                
-                if (daysLeft < 0) {
-                    status = '⚠️ Expired';
-                    className += ' expired';
-                } else if (daysLeft < 30) {
-                    status = `⏰ ${daysLeft} days left`;
-                    className += ' warning';
-                } else {
-                    status = `✅ ${daysLeft} days left`;
+                if (products.length === 0) {
+                    list.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No products saved yet</p>';
+                    return;
                 }
 
-                return `
-                    <div class="${className}">
-                        <button class="delete-btn" onclick="deleteProduct(${i})">Delete</button>
-                        ${p.image ? `<img src="${p.image}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">` : ''}
-                        <strong style="font-size: 18px;">${p.name}</strong><br>
-                        <span style="color: #666;">PAO: ${p.months} months</span><br>
-                        <span style="color: #666;">Opened: ${p.openDate}</span><br>
-                        <span style="color: #666;">Expires: ${expDate.toISOString().split('T')[0]}</span><br>
-                        <strong style="font-size: 16px; margin-top: 5px; display: inline-block;">${status}</strong>
-                    </div>
-                `;
-            }).join('');
+                list.innerHTML = products.map((p, i) => {
+                    const openDate = new Date(p.openDate);
+                    const expDate = new Date(openDate);
+                    expDate.setMonth(expDate.getMonth() + p.months);
+                    
+                    const today = new Date();
+                    const daysLeft = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+                    
+                    let status = '';
+                    let className = 'product-item';
+                    
+                    if (daysLeft < 0) {
+                        status = '⚠️ Expired';
+                        className += ' expired';
+                    } else if (daysLeft < 30) {
+                        status = `⏰ ${daysLeft} days left`;
+                        className += ' warning';
+                    } else {
+                        status = `✅ ${daysLeft} days left`;
+                    }
+
+                    return `
+                        <div class="${className}">
+                            <button class="delete-btn" onclick="deleteProduct(${i})">Delete</button>
+                            ${p.image ? `<img src="${p.image}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">` : ''}
+                            <strong style="font-size: 18px;">${p.name}</strong><br>
+                            <span style="color: #666;">PAO: ${p.months} months</span><br>
+                            <span style="color: #666;">Opened: ${p.openDate}</span><br>
+                            <span style="color: #666;">Expires: ${expDate.toISOString().split('T')[0]}</span><br>
+                            <strong style="font-size: 16px; margin-top: 5px; display: inline-block;">${status}</strong>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Load error:', error);
+                document.getElementById('productList').innerHTML = '<p style="text-align: center; color: #f44; padding: 20px;">⚠️ Cannot load products</p>';
+            }
         }
 
         window.deleteProduct = function(index) {
             if (confirm('Are you sure you want to delete this product?')) {
-                const products = JSON.parse(localStorage.getItem('products') || '[]');
-                products.splice(index, 1);
-                localStorage.setItem('products', JSON.stringify(products));
-                loadProducts();
+                try {
+                    const products = JSON.parse(localStorage.getItem('products') || '[]');
+                    products.splice(index, 1);
+                    localStorage.setItem('products', JSON.stringify(products));
+                    loadProducts();
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('⚠️ Delete failed');
+                }
             }
         };
 
