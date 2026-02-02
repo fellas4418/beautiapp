@@ -62,7 +62,6 @@
       font-size: 1.5rem;
     }
 
-    /* Add Product Section */
     .image-upload {
       margin-bottom: 20px;
     }
@@ -145,15 +144,17 @@
 
     .ocr-badge {
       display: inline-block;
-      padding: 3px 8px;
-      border-radius: 5px;
+      padding: 4px 10px;
+      border-radius: 12px;
       font-size: 0.75rem;
       font-weight: bold;
+      transition: all 0.3s;
     }
 
     .ocr-badge.detecting {
       background: #f39c12;
       color: #fff;
+      animation: blink 1s infinite;
     }
 
     .ocr-badge.success {
@@ -164,6 +165,11 @@
     .ocr-badge.failed {
       background: #e74c3c;
       color: white;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
 
     .pao-buttons {
@@ -193,25 +199,34 @@
       border-color: #3498db;
       background: #3498db;
       color: white;
+      font-weight: bold;
     }
 
     .pao-option.suggested {
       border-color: #27ae60;
-      background: #1e8449;
-      color: white;
+      background: rgba(39, 174, 96, 0.2);
+      color: #2ecc71;
       animation: pulse 1s ease-in-out;
     }
 
     .pao-option.suggested::after {
-      content: '✓ 감지됨';
+      content: '✓ AI 감지';
       position: absolute;
-      top: -8px;
-      right: -8px;
+      top: -10px;
+      right: -10px;
       background: #27ae60;
       color: white;
-      font-size: 0.7rem;
-      padding: 2px 6px;
+      font-size: 0.65rem;
+      padding: 3px 7px;
       border-radius: 10px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .pao-option.active.suggested {
+      border-color: #3498db;
+      background: linear-gradient(135deg, #3498db 0%, #27ae60 100%);
+      color: white;
     }
 
     @keyframes pulse {
@@ -253,7 +268,6 @@
       background: #6c7a7b;
     }
 
-    /* Messages */
     .message {
       padding: 12px;
       border-radius: 8px;
@@ -274,7 +288,6 @@
       border: 1px solid #1abc9c;
     }
 
-    /* Loading Indicator */
     .ocr-loading {
       display: inline-block;
       width: 16px;
@@ -290,7 +303,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Shelf Section */
     .shelf-header {
       display: flex;
       justify-content: space-between;
@@ -409,7 +421,6 @@
       font-size: 1.1rem;
     }
 
-    /* Reset All Button */
     .reset-all {
       text-align: center;
       margin-top: 20px;
@@ -425,7 +436,6 @@
       background: #a93226;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .main-content {
         grid-template-columns: 1fr;
@@ -444,7 +454,6 @@
       display: none;
     }
 
-    /* Date input styling for dark mode */
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(1);
     }
@@ -458,7 +467,6 @@
     </header>
 
     <div class="main-content">
-      <!-- Add Product Section -->
       <div class="card">
         <h2>Add Product</h2>
         
@@ -504,7 +512,6 @@
         </div>
       </div>
 
-      <!-- My Shelf Section -->
       <div class="card">
         <div class="shelf-header">
           <h2>🏷️ My Shelf</h2>
@@ -514,17 +521,14 @@
       </div>
     </div>
 
-    <!-- Reset All Button -->
     <div class="reset-all">
       <button class="btn btn-danger" id="resetAllBtn">⚠️ Reset All</button>
     </div>
   </div>
 
   <script>
-    // Configuration
     const WORKER_URL = 'https://pao-ocr-worker.ohryee.workers.dev/ocr';
 
-    // DOM Elements
     const imageInput = document.getElementById('imageInput');
     const chooseImageBtn = document.getElementById('chooseImageBtn');
     const imagePreview = document.getElementById('imagePreview');
@@ -540,18 +544,15 @@
     const infoMessage = document.getElementById('infoMessage');
     const ocrStatus = document.getElementById('ocrStatus');
 
-    // State
     let selectedPAO = null;
     let uploadedImage = null;
     let products = [];
 
-    // Initialize
     document.addEventListener('DOMContentLoaded', () => {
       loadProducts();
       renderShelf();
       setDefaultDate();
       
-      // Event Listeners
       chooseImageBtn.addEventListener('click', () => imageInput.click());
       imageInput.addEventListener('change', handleImageUpload);
       addToShelfBtn.addEventListener('click', addProduct);
@@ -559,7 +560,6 @@
       clearShelfBtn.addEventListener('click', clearShelf);
       resetAllBtn.addEventListener('click', resetAll);
 
-      // PAO button listeners
       paoButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           const pao = parseInt(btn.dataset.pao);
@@ -568,43 +568,55 @@
       });
     });
 
-    // Set default date to today
     function setDefaultDate() {
       const today = new Date().toISOString().split('T')[0];
       openedDateInput.value = today;
     }
 
-    // Handle image upload
     async function handleImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         showError('이미지 파일만 업로드 가능합니다.');
         return;
       }
 
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         showError('이미지 크기는 5MB 이하여야 합니다.');
         return;
       }
 
+      // ✅ 이전 인식 결과 초기화
+      resetOCRStatus();
+      clearPAOSuggestions();
+
       uploadedImage = file;
       
-      // Show preview
       const reader = new FileReader();
       reader.onload = (e) => {
         imagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
       };
       reader.readAsDataURL(file);
 
-      // Analyze image in background
       analyzeImageInBackground(file);
     }
 
-    // Analyze image in background
+    // ✅ OCR 상태 초기화 함수
+    function resetOCRStatus() {
+      ocrStatus.style.display = 'none';
+      ocrStatus.className = 'ocr-badge';
+      ocrStatus.innerHTML = '';
+    }
+
+    // ✅ PAO 제안 초기화 함수
+    function clearPAOSuggestions() {
+      paoButtons.forEach(btn => {
+        btn.classList.remove('suggested', 'active');
+      });
+      selectedPAO = null;
+    }
+
     async function analyzeImageInBackground(file) {
       ocrStatus.style.display = 'inline-block';
       ocrStatus.className = 'ocr-badge detecting';
@@ -624,6 +636,10 @@
           body: JSON.stringify({ image: imageData })
         });
         
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
         console.log('📥 OCR Response:', result);
 
@@ -633,6 +649,7 @@
           
           highlightDetectedPAO(result.pao);
           
+          // 하나만 감지된 경우 자동 선택
           if (result.pao.length === 1) {
             selectPAO(result.pao[0]);
           }
@@ -651,12 +668,13 @@
       }
     }
 
-    // Highlight detected PAO buttons
     function highlightDetectedPAO(paoValues) {
+      // ✅ 기존 제안 모두 제거
       paoButtons.forEach(btn => {
         btn.classList.remove('suggested');
       });
 
+      // ✅ 새로운 감지 결과만 표시
       paoValues.forEach(pao => {
         const btn = document.querySelector(`.pao-option[data-pao="${pao}"]`);
         if (btn) {
@@ -665,10 +683,10 @@
       });
     }
 
-    // Select PAO
     function selectPAO(pao) {
       selectedPAO = pao;
       
+      // ✅ 모든 active 제거 후 선택
       paoButtons.forEach(btn => {
         btn.classList.remove('active');
       });
@@ -679,7 +697,6 @@
       }
     }
 
-    // Convert file to base64
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -689,7 +706,6 @@
       });
     }
 
-    // Add product to shelf
     function addProduct() {
       if (!uploadedImage) {
         showError('이미지를 업로드해주세요.');
@@ -745,24 +761,20 @@
       reader.readAsDataURL(uploadedImage);
     }
 
-    // Clear form
     function clearForm() {
       imageInput.value = '';
       imagePreview.innerHTML = '<span>이미지 미리보기</span>';
       productNameInput.value = '';
       setDefaultDate();
-      selectedPAO = null;
+      
+      // ✅ 완전한 초기화
+      resetOCRStatus();
+      clearPAOSuggestions();
+      
       uploadedImage = null;
-      
-      paoButtons.forEach(btn => {
-        btn.classList.remove('active', 'suggested');
-      });
-      
-      ocrStatus.style.display = 'none';
       hideMessages();
     }
 
-    // Render shelf
     function renderShelf() {
       if (products.length === 0) {
         shelfContainer.innerHTML = '<p class="empty-shelf">No products yet. Add your first item!</p>';
@@ -799,7 +811,6 @@
       }
     }
 
-    // Create shelf section
     function createShelfSection(title, status, products) {
       const section = document.createElement('div');
       section.classList.add('shelf-section', status);
@@ -820,7 +831,6 @@
       return section;
     }
 
-    // Create product card
     function createProductCard(product) {
       const card = document.createElement('div');
       card.classList.add('product-card', product.safetyStatus);
@@ -843,7 +853,6 @@
       return card;
     }
 
-    // Delete product
     function deleteProduct(id) {
       if (confirm('정말 이 제품을 삭제하시겠습니까?')) {
         products = products.filter(p => p.id !== id);
@@ -853,7 +862,6 @@
       }
     }
 
-    // Clear shelf
     function clearShelf() {
       if (products.length === 0) {
         showInfo('선반이 비어있습니다.');
@@ -868,7 +876,6 @@
       }
     }
 
-    // Reset all
     function resetAll() {
       if (confirm('⚠️ 모든 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
         products = [];
@@ -879,31 +886,26 @@
       }
     }
 
-    // Local storage
-    // Local storage (오류 처리 추가)
-function saveProducts() {
-  try {
-    localStorage.setItem('keepOrTossProducts', JSON.stringify(products));
-  } catch (error) {
-    console.warn('localStorage 저장 실패:', error);
-    // 인메모리로만 유지
-  }
-}
-
-function loadProducts() {
-  try {
-    const stored = localStorage.getItem('keepOrTossProducts');
-    if (stored) {
-      products = JSON.parse(stored);
+    function saveProducts() {
+      try {
+        localStorage.setItem('keepOrTossProducts', JSON.stringify(products));
+      } catch (error) {
+        console.warn('⚠️ localStorage 저장 실패 (샌드박스 환경):', error.message);
+      }
     }
-  } catch (error) {
-    console.warn('localStorage 로드 실패:', error);
-    // 빈 배열로 시작
-    products = [];
-  }
-}
 
-    // UI feedback
+    function loadProducts() {
+      try {
+        const stored = localStorage.getItem('keepOrTossProducts');
+        if (stored) {
+          products = JSON.parse(stored);
+        }
+      } catch (error) {
+        console.warn('⚠️ localStorage 로드 실패 (샌드박스 환경):', error.message);
+        products = [];
+      }
+    }
+
     function showError(message) {
       errorMessage.textContent = message;
       errorMessage.style.display = 'block';
