@@ -1,14 +1,14 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Keep or Toss</title>
+<title>화장품 사용기한 관리</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
 * { box-sizing: border-box; }
-body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif; }
 .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
 .card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
 h2 { margin: 0 0 20px 0; font-size: 28px; }
@@ -19,11 +19,12 @@ button:hover { background: #2a3142; transform: translateY(-2px); }
 button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
 .result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
 input[type="date"], input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; }
-input[type="file"] { width: 100%; padding: 10px; background: #1a1d2e; border: 2px dashed #333; border-radius: 8px; color: #e8e8ea; cursor: pointer; }
+input[type="file"] { width: 100%; padding: 10px; background: #1a1d2e; border: 2px dashed #333; border-radius: 8px; color: #e8e8ea; cursor: pointer; margin-top: 10px; }
 input[type="file"]::-webkit-file-upload-button { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 .status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
 .add-btn { background: linear-gradient(135deg, #20c997, #17a2b8); width: 100%; margin-top: 12px; padding: 14px; font-size: 16px; }
 .add-btn:hover { background: linear-gradient(135deg, #17a2b8, #20c997); }
+.add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .vanity-list { margin-top: 16px; }
 .vanity-item { background: #1a1d2e; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 .vanity-item .info { flex: 1; }
@@ -33,28 +34,36 @@ input[type="file"]::-webkit-file-upload-button { background: #667eea; color: whi
 .vanity-item.expired { border-left: 4px solid #dc3545; }
 .vanity-item.warning { border-left: 4px solid #ffc107; }
 .vanity-item.safe { border-left: 4px solid #20c997; }
+.vanity-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 12px; }
+label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
 </style>
 </head>
 
 <body>
 <div class="wrap">
-<h2>Keep or Toss</h2>
+<h2>💄 화장품 사용기한 관리</h2>
 
 <div class="card">
+<label>제품명</label>
+<input type="text" id="productName" placeholder="제품 이름을 입력하세요">
+
+<label>개봉일자</label>
+<input type="date" id="opened">
+
+<label>사용기한 (PAO) 선택</label>
+<div class="pao" id="paoBtns"></div>
+
+<label>제품 사진 (선택사항)</label>
 <input type="file" id="fileInput" accept="image/*">
 <img id="preview" style="display:none">
-<div id="debugImg" style="display:none"></div>
 
-<input type="text" id="productName" placeholder="Product name (optional)">
-<input type="date" id="opened">
-<div class="pao" id="paoBtns"></div>
-<div id="result" class="result">Upload image or select PAO</div>
+<div id="result" class="result">사용기한을 선택해주세요</div>
 <div id="status" class="status" style="display:none"></div>
-<button class="add-btn" onclick="addToVanity()">➕ Add to Vanity</button>
+<button class="add-btn" onclick="addToVanity()">➕ 내 화장대에 추가</button>
 </div>
 
 <div class="card">
-<h3 style="margin:0 0 12px 0">💄 My Vanity</h3>
+<h3 style="margin:0 0 12px 0">💄 내 화장대</h3>
 <div id="vanityList" class="vanity-list"></div>
 </div>
 </div>
@@ -69,17 +78,15 @@ const paoBox = document.getElementById("paoBtns");
 const result = document.getElementById("result");
 const preview = document.getElementById("preview");
 const status = document.getElementById("status");
-const debugImg = document.getElementById("debugImg");
 const vanityList = document.getElementById("vanityList");
 
 opened.value = new Date().toISOString().slice(0, 10);
 
-// localStorage에서 화장대 목록 로드
 let vanityItems = JSON.parse(localStorage.getItem('vanityItems') || '[]');
 
 PAOS.forEach(m => {
   const b = document.createElement("button");
-  b.textContent = m + "M";
+  b.textContent = m + "개월";
   b.onclick = () => { selectPAO(m); updateResult(); };
   paoBox.appendChild(b);
 });
@@ -87,7 +94,7 @@ PAOS.forEach(m => {
 function selectPAO(m) {
   selectedPAO = m;
   [...paoBox.children].forEach(b => {
-    b.classList.toggle("active", b.textContent === m + "M");
+    b.classList.toggle("active", b.textContent === m + "개월");
   });
 }
 
@@ -99,18 +106,18 @@ function addMonths(d, m) {
 }
 
 function updateResult() {
-  if (!selectedPAO) { result.textContent = "Select PAO period"; return; }
+  if (!selectedPAO) { result.textContent = "사용기한을 선택해주세요"; return; }
   const toss = addMonths(opened.value, selectedPAO);
-  result.textContent = `${selectedPAO}M · Toss ${toss.toISOString().slice(0, 10)}`;
+  result.textContent = `${selectedPAO}개월 · 폐기일 ${toss.toISOString().slice(0, 10)}`;
 }
 
 function addToVanity() {
   if (!selectedPAO) {
-    alert('Please select PAO period first!');
+    alert('사용기한을 먼저 선택해주세요!');
     return;
   }
 
-  const name = productName.value.trim() || 'Unnamed Product';
+  const name = productName.value.trim() || '이름 없는 제품';
   const openDate = opened.value;
   const tossDate = addMonths(openDate, selectedPAO).toISOString().slice(0, 10);
   
@@ -128,17 +135,16 @@ function addToVanity() {
   
   renderVanity();
   
-  // 초기화
   productName.value = '';
   preview.style.display = 'none';
-  debugImg.style.display = 'none';
   status.style.display = 'none';
+  document.getElementById('fileInput').value = '';
   
-  alert('✅ Added to vanity!');
+  alert('✅ 화장대에 추가되었습니다!');
 }
 
 function deleteItem(id) {
-  if (!confirm('Delete this item?')) return;
+  if (!confirm('이 제품을 삭제하시겠습니까?')) return;
   vanityItems = vanityItems.filter(item => item.id !== id);
   localStorage.setItem('vanityItems', JSON.stringify(vanityItems));
   renderVanity();
@@ -146,7 +152,7 @@ function deleteItem(id) {
 
 function renderVanity() {
   if (vanityItems.length === 0) {
-    vanityList.innerHTML = '<div style="text-align:center;color:#666;padding:20px">No items yet</div>';
+    vanityList.innerHTML = '<div style="text-align:center;color:#666;padding:20px">아직 등록된 제품이 없습니다</div>';
     return;
   }
 
@@ -156,28 +162,50 @@ function renderVanity() {
     const daysLeft = Math.ceil((new Date(item.toss) - new Date(today)) / (1000 * 60 * 60 * 24));
     
     let statusClass = 'safe';
-    let statusText = `${daysLeft} days left`;
+    let statusText = `${daysLeft}일 남음`;
     
     if (daysLeft < 0) {
       statusClass = 'expired';
-      statusText = `Expired ${Math.abs(daysLeft)} days ago`;
+      statusText = `만료 ${Math.abs(daysLeft)}일 지남`;
     } else if (daysLeft <= 30) {
       statusClass = 'warning';
-      statusText = `⚠ ${daysLeft} days left`;
+      statusText = `⚠ ${daysLeft}일 남음`;
     }
 
     return `
       <div class="vanity-item ${statusClass}">
-        ${item.image ? `<img src="${item.image}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;margin-right:12px">` : ''}
+        ${item.image ? `<img src="${item.image}">` : ''}
         <div class="info">
           <div class="name">${item.name}</div>
-          <div class="date">${item.pao}M · Opened ${item.opened}</div>
+          <div class="date">${item.pao}개월 · 개봉일 ${item.opened}</div>
           <div class="date">${statusText}</div>
         </div>
         <button class="delete" onclick="deleteItem(${item.id})">🗑</button>
       </div>
     `;
   }).join('');
+}
+
+// 🔍 개선된 PAO 추출 함수
+function extractPAO(text) {
+  const clean = text.replace(/\s+/g, '').toUpperCase();
+  
+  const patterns = [
+    /(\d+)M/,
+    /(\d+)\s*M/,
+  ];
+  
+  for (let pattern of patterns) {
+    const match = clean.match(pattern);
+    if (match) {
+      const num = parseInt(match[1]);
+      if (PAOS.includes(num)) {
+        return num;
+      }
+    }
+  }
+  
+  return null;
 }
 
 document.getElementById("fileInput").onchange = async (e) => {
@@ -190,119 +218,43 @@ document.getElementById("fileInput").onchange = async (e) => {
   status.style.display = "block";
   status.style.background = "#4d4d1b";
   status.style.color = "#f0ad4e";
-  status.textContent = "🔍 Detecting PAO symbol...";
+  status.textContent = "🔍 사용기한 인식 중...";
 
-  console.clear();
-  console.log("=".repeat(50));
-  console.log("📸 이미지 로드 완료:", file.name);
+  try {
+    const { data: { text } } = await Tesseract.recognize(file, 'eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round(m.progress * 100);
+          status.textContent = `🔍 분석 중... ${pct}%`;
+        }
+      }
+    });
 
-  const img = new Image();
-  img.onload = async () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    canvas.width = img.width * 3;
-    canvas.height = img.height * 3;
-
-    console.log(`📐 크기: ${img.width}x${img.height} → ${canvas.width}x${canvas.height}`);
-
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    ctx.filter = 'invert(1) contrast(3) brightness(0.8) grayscale(100%)';
-    const temp = document.createElement('canvas');
-    temp.width = canvas.width;
-    temp.height = canvas.height;
-    temp.getContext('2d').drawImage(canvas, 0, 0);
+    console.log("OCR 결과:", text);
     
-    ctx.filter = 'none';
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(temp, 0, 0);
-
-    let data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < data.data.length; i += 4) {
-      const avg = (data.data[i] + data.data[i + 1] + data.data[i + 2]) / 3;
-      const val = avg > 180 ? 255 : 0;
-      data.data[i] = data.data[i + 1] = data.data[i + 2] = val;
-    }
-    ctx.putImageData(data, 0, 0);
-
-    console.log("✓ 전처리 완료");
-
-    const dbg = document.createElement('img');
-    dbg.src = canvas.toDataURL();
-    dbg.style.cssText = 'width:100%;margin-top:10px;border:3px solid lime';
-    debugImg.innerHTML = '';
-    debugImg.appendChild(dbg);
-    debugImg.style.display = 'block';
-
-    console.log("🤖 Tesseract OCR 시작...");
-
-    try {
-      const { data: { text } } = await Tesseract.recognize(canvas, 'eng', {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            const pct = Math.round(m.progress * 100);
-            status.textContent = `🔍 Analyzing... ${pct}%`;
-          }
-        }
-      });
-
-      console.log("=".repeat(50));
-      console.log("📄 OCR 원문:");
-      console.log(text);
-      console.log("=".repeat(50));
-
-      const lines = text.split(/[\n\r]/);
-      const matches = [];
-      
-      for (const line of lines) {
-        if (/may/i.test(line)) {
-          console.log(`⊘ 스킵: "${line.trim()}" (may 포함)`);
-          continue;
-        }
-        
-        const match = line.match(/\b(3|6|9|12|18|24|36)\s*M\b/i);
-        if (match) {
-          matches.push(match[0]);
-          console.log(`✓ 발견: "${line.trim()}" → ${match[0]}`);
-        }
-      }
-
-      if (matches.length > 0) {
-        const shortest = matches.sort((a, b) => a.length - b.length)[0];
-        const num = parseInt(shortest.match(/\d+/)[0]);
-
-        console.log("✅ 최종 후보:", matches);
-        console.log("🎯 최종 선택:", num + "M");
-
-        selectPAO(num);
-        updateResult();
-        status.style.background = "#1b4d3e";
-        status.style.color = "#20c997";
-        status.textContent = `✓ Detected ${num}M`;
-      } else {
-        console.log("❌ PAO 패턴 못 찾음");
-        status.style.background = "#4d1b1b";
-        status.style.color = "#ff6b6b";
-        status.textContent = "❌ Not detected. Select manually ↓";
-      }
-    } catch (err) {
-      console.error("❌ OCR 에러:", err);
+    const pao = extractPAO(text);
+    
+    if (pao) {
+      selectPAO(pao);
+      updateResult();
+      status.style.background = "#1b4d3e";
+      status.style.color = "#20c997";
+      status.textContent = `✓ ${pao}개월 인식됨`;
+    } else {
       status.style.background = "#4d1b1b";
       status.style.color = "#ff6b6b";
-      status.textContent = "⚠ Error. Select manually";
+      status.textContent = "❌ 인식 실패. 수동으로 선택해주세요 ↓";
     }
-  };
-
-  img.src = URL.createObjectURL(file);
+  } catch (err) {
+    console.error(err);
+    status.style.background = "#4d1b1b";
+    status.style.color = "#ff6b6b";
+    status.textContent = "⚠ 오류 발생. 수동으로 선택해주세요";
+  }
 };
 
 opened.onchange = updateResult;
 
-// 초기 렌더링
 renderVanity();
 </script>
 </body>
