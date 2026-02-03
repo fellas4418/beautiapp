@@ -7,15 +7,33 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
-body{margin:0;background:#0b0c10;color:#e8e8ea;font-family:system-ui}
-.wrap{max-width:420px;margin:0 auto;padding:16px}
-.card{background:#111318;border-radius:16px;padding:14px}
-img{width:100%;border-radius:12px;margin-top:10px}
-.pao{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-button{padding:10px;border-radius:10px;border:none;background:#1f2430;color:#fff;font-weight:700}
-button.active{outline:2px solid #20c997}
-.result{margin-top:12px;font-weight:800}
-input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;border:none}
+* { box-sizing: border-box; }
+body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+.wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
+.card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+h2 { margin: 0 0 20px 0; font-size: 28px; }
+img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; }
+.pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+button:hover { background: #2a3142; transform: translateY(-2px); }
+button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
+.result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
+input[type="date"], input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; }
+input[type="file"] { width: 100%; padding: 10px; background: #1a1d2e; border: 2px dashed #333; border-radius: 8px; color: #e8e8ea; cursor: pointer; }
+input[type="file"]::-webkit-file-upload-button { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
+.add-btn { background: linear-gradient(135deg, #20c997, #17a2b8); width: 100%; margin-top: 12px; padding: 14px; font-size: 16px; }
+.add-btn:hover { background: linear-gradient(135deg, #17a2b8, #20c997); }
+.vanity-list { margin-top: 16px; }
+.vanity-item { background: #1a1d2e; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.vanity-item .info { flex: 1; }
+.vanity-item .name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.vanity-item .date { font-size: 12px; color: #888; }
+.vanity-item .delete { background: #dc3545; padding: 8px 12px; border-radius: 6px; font-size: 12px; }
+.vanity-item.expired { border-left: 4px solid #dc3545; }
+.vanity-item.warning { border-left: 4px solid #ffc107; }
+.vanity-item.safe { border-left: 4px solid #20c997; }
+.vanity-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-right: 12px; }
 </style>
 </head>
 
@@ -27,130 +45,192 @@ input[type="date"]{width:100%;margin-top:10px;padding:8px;border-radius:8px;bord
 <input type="file" id="fileInput" accept="image/*">
 <img id="preview" style="display:none">
 
+<input type="text" id="productName" placeholder="Product name (optional)">
 <input type="date" id="opened">
 <div class="pao" id="paoBtns"></div>
-<div id="result" class="result"></div>
-<div id="pao-detection" style="display:none; margin-top:10px; padding:10px; background:#1b4d3e; border-radius:8px; text-align:center; font-weight:bold; color:#20c997;"></div>
+<div id="result" class="result">Upload image or select PAO</div>
+<div id="status" class="status" style="display:none"></div>
+<button class="add-btn" onclick="addToVanity()">➕ Add to Vanity</button>
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 12px 0">💄 My Vanity</h3>
+<div id="vanityList" class="vanity-list"></div>
 </div>
 </div>
 
 <script>
-const PAOS=[3,6,9,12,18,24,36];
-let selectedPAO=null;
+const PAOS = [3, 6, 9, 12, 18, 24, 36];
+let selectedPAO = null;
 
-const opened=document.getElementById("opened");
-const paoBox=document.getElementById("paoBtns");
-const result=document.getElementById("result");
-const preview=document.getElementById("preview");
+const opened = document.getElementById("opened");
+const productName = document.getElementById("productName");
+const paoBox = document.getElementById("paoBtns");
+const result = document.getElementById("result");
+const preview = document.getElementById("preview");
+const status = document.getElementById("status");
+const vanityList = document.getElementById("vanityList");
 
-opened.value=new Date().toISOString().slice(0,10);
+opened.value = new Date().toISOString().slice(0, 10);
 
-PAOS.forEach(m=>{
-  const b=document.createElement("button");
-  b.textContent=m+"M";
-  b.onclick=()=>{selectPAO(m);updateResult();};
+let vanityItems = JSON.parse(localStorage.getItem('vanityItems') || '[]');
+
+PAOS.forEach(m => {
+  const b = document.createElement("button");
+  b.textContent = m + "M";
+  b.onclick = () => { selectPAO(m); updateResult(); };
   paoBox.appendChild(b);
 });
 
-function selectPAO(m){
-  selectedPAO=m;
-  [...paoBox.children].forEach(b=>{
-    b.classList.toggle("active",b.textContent===m+"M");
+function selectPAO(m) {
+  selectedPAO = m;
+  [...paoBox.children].forEach(b => {
+    b.classList.toggle("active", b.textContent === m + "M");
   });
 }
 
-function addMonths(d,m){
-  const [y,mo,da]=d.split("-").map(Number);
-  const dt=new Date(y,mo-1,da);
-  dt.setMonth(dt.getMonth()+m);
+function addMonths(d, m) {
+  const [y, mo, da] = d.split("-").map(Number);
+  const dt = new Date(y, mo - 1, da);
+  dt.setMonth(dt.getMonth() + m);
   return dt;
 }
 
-function updateResult(){
-  if(!selectedPAO){result.textContent="PAO 선택";return;}
-  const toss=addMonths(opened.value,selectedPAO);
-  result.textContent=`${selectedPAO}M · Toss ${toss.toISOString().slice(0,10)}`;
+function updateResult() {
+  if (!selectedPAO) { result.textContent = "Select PAO period"; return; }
+  const toss = addMonths(opened.value, selectedPAO);
+  result.textContent = `${selectedPAO}M · Toss ${toss.toISOString().slice(0, 10)}`;
 }
 
-/* ===== 핵심: 확실한 자동 인식 ===== */
-document.getElementById("fileInput").onchange=e=>{
-  const file=e.target.files[0];
-  if(!file)return;
-
-  preview.src=URL.createObjectURL(file);
-  preview.style.display="block";
-
-  // 1️⃣ 파일명에서 먼저 잡음 (6m.jpg, IMG_6M.png 등)
-  const nameMatch=file.name.match(/(3|6|9|12|18|24|36)\s*m/i);
-  if(nameMatch){
-    const detected=Number(nameMatch[1]);
-    selectPAO(detected);
-    updateResult();
-    const paoDetection=document.getElementById("pao-detection");
-    paoDetection.textContent=`Detected ${detected}M`;
-    paoDetection.style.display="block";
+function addToVanity() {
+  if (!selectedPAO) {
+    alert('Please select PAO period first!');
     return;
   }
 
-  // 2️⃣ 파일명 실패 시 OCR 실행
-  const paoDetection=document.getElementById("pao-detection");
-  paoDetection.textContent="Scanning...";
-  paoDetection.style.display="block";
-
-  const img = new Image();
-  img.onload = () => {
-    console.log("이미지 로드 완료, OCR 시작");
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    // 고해상도 처리 (2배 확대)
-    canvas.width = img.width * 2;
-    canvas.height = img.height * 2;
-    
-    // 강력한 전처리
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.filter = 'contrast(3) brightness(1.5) grayscale(100%)';
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    
-    // 디버깅용: 전처리된 이미지 확인
-    const debugImg = document.createElement('img');
-    debugImg.src = canvas.toDataURL();
-    debugImg.style.cssText = 'width:100%;margin-top:10px;border:2px solid yellow';
-    preview.parentElement.appendChild(debugImg);
-    
-    Tesseract.recognize(canvas, 'eng', {
-      tessedit_char_whitelist: '0123456789MmPAOperiodafteropening',
-      tessedit_pageseg_mode: Tesseract.PSM.AUTO
-    })
-    .then(({data:{text}})=>{
-      console.log("===== OCR 전체 결과 =====");
-      console.log(text);
-      console.log("========================");
-      
-      // 더 유연한 정규식 (공백/줄바꿈 허용)
-      const ocrMatch=text.match(/(3|6|9|12|18|24|36)\s*[MmOo]/i);
-      
-      if(ocrMatch){
-        const detected=Number(ocrMatch[1]);
-        selectPAO(detected);
-        updateResult();
-        paoDetection.textContent=`Detected ${detected}M`;
-        paoDetection.style.background='#1b4d3e';
-      }else{
-        paoDetection.textContent="OCR failed. Select manually below ↓";
-        paoDetection.style.background='#4d1b1b';
-      }
-    })
-    .catch((err)=>{
-      console.error("OCR 에러:", err);
-      paoDetection.textContent="Scan failed. Try again.";
-      paoDetection.style.background='#4d1b1b';
-    });
-  };
+  const name = productName.value.trim() || 'Unnamed Product';
+  const openDate = opened.value;
+  const tossDate = addMonths(openDate, selectedPAO).toISOString().slice(0, 10);
   
-  img.src = URL.createObjectURL(file);
+  const item = {
+    id: Date.now(),
+    name: name,
+    pao: selectedPAO,
+    opened: openDate,
+    toss: tossDate,
+    image: preview.style.display === 'block' ? preview.src : null
+  };
+
+  vanityItems.unshift(item);
+  localStorage.setItem('vanityItems', JSON.stringify(vanityItems));
+  
+  renderVanity();
+  
+  productName.value = '';
+  preview.style.display = 'none';
+  status.style.display = 'none';
+  
+  alert('✅ Added to vanity!');
+}
+
+function deleteItem(id) {
+  if (!confirm('Delete this item?')) return;
+  vanityItems = vanityItems.filter(item => item.id !== id);
+  localStorage.setItem('vanityItems', JSON.stringify(vanityItems));
+  renderVanity();
+}
+
+function renderVanity() {
+  if (vanityItems.length === 0) {
+    vanityList.innerHTML = '<div style="text-align:center;color:#666;padding:20px">No items yet</div>';
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  
+  vanityList.innerHTML = vanityItems.map(item => {
+    const daysLeft = Math.ceil((new Date(item.toss) - new Date(today)) / (1000 * 60 * 60 * 24));
+    
+    let statusClass = 'safe';
+    let statusText = `${daysLeft} days left`;
+    
+    if (daysLeft < 0) {
+      statusClass = 'expired';
+      statusText = `Expired ${Math.abs(daysLeft)} days ago`;
+    } else if (daysLeft <= 30) {
+      statusClass = 'warning';
+      statusText = `⚠ ${daysLeft} days left`;
+    }
+
+    return `
+      <div class="vanity-item ${statusClass}">
+        ${item.image ? `<img src="${item.image}">` : ''}
+        <div class="info">
+          <div class="name">${item.name}</div>
+          <div class="date">${item.pao}M · Opened ${item.opened}</div>
+          <div class="date">${statusText}</div>
+        </div>
+        <button class="delete" onclick="deleteItem(${item.id})">🗑</button>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById("fileInput").onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+
+  status.style.display = "block";
+  status.style.background = "#4d4d1b";
+  status.style.color = "#f0ad4e";
+  status.textContent = "🔍 Detecting PAO...";
+
+  try {
+    const { data: { text } } = await Tesseract.recognize(file, 'eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round(m.progress * 100);
+          status.textContent = `🔍 Analyzing... ${pct}%`;
+        }
+      }
+    });
+
+    // 단순하게: 숫자 + M 패턴 찾기
+    const match = text.match(/\b(\d+)\s*M\b/i);
+    
+    if (match) {
+      const num = parseInt(match[1]);
+      
+      // 유효한 PAO 값인지 확인
+      if (PAOS.includes(num)) {
+        selectPAO(num);
+        updateResult();
+        status.style.background = "#1b4d3e";
+        status.style.color = "#20c997";
+        status.textContent = `✓ Detected ${num}M`;
+      } else {
+        status.style.background = "#4d1b1b";
+        status.style.color = "#ff6b6b";
+        status.textContent = `❌ Found ${num}M but invalid. Select manually ↓`;
+      }
+    } else {
+      status.style.background = "#4d1b1b";
+      status.style.color = "#ff6b6b";
+      status.textContent = "❌ Not detected. Select manually ↓";
+    }
+  } catch (err) {
+    status.style.background = "#4d1b1b";
+    status.style.color = "#ff6b6b";
+    status.textContent = "⚠ Error. Select manually";
+  }
 };
+
+opened.onchange = updateResult;
+
+renderVanity();
 </script>
 </body>
 </html>
