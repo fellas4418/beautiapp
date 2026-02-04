@@ -63,49 +63,67 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 }
 
 .shelf-section { margin-top: 24px; }
-.shelf-item { background: #111318; border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; }
-.shelf-item-placeholder { 
-  height: 120px; 
-  background: linear-gradient(135deg, #1a1d2e 0%, #2a2d3e 100%); 
-  border-radius: 10px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
+
+/* NEW: Compact shelf item styling */
+.shelf-item { 
+  background: #111318; 
+  border-radius: 12px; 
+  padding: 12px; 
   margin-bottom: 10px; 
   position: relative; 
-  overflow: hidden; 
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.shelf-item-placeholder::before { 
-  content: ''; 
-  position: absolute; 
-  top: 0; left: 0; right: 0; bottom: 0; 
-  background: radial-gradient(circle at 30% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%); 
+
+.shelf-item-content {
+  flex: 1;
+  min-width: 0;
 }
-.shelf-item-pao-large { 
-  font-size: 48px; 
-  font-weight: 900; 
-  color: #667eea; 
-  text-shadow: 0 2px 10px rgba(102, 126, 234, 0.3); 
-  position: relative; 
-  z-index: 1; 
+
+.shelf-item-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e8e8ea;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.shelf-item-info { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-.shelf-item-dates { font-size: 13px; color: #888; }
-.shelf-item-date-row { margin: 4px 0; }
-.shelf-item-status { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+
+.shelf-item-meta {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 2px;
+}
+
+.shelf-item-dates {
+  font-size: 11px;
+  color: #666;
+}
+
+.shelf-item-status { 
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  font-size: 12px; 
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .delete-btn { 
   position: absolute; 
-  top: 10px; 
-  right: 10px; 
+  top: 8px; 
+  right: 8px; 
   background: #4d1b1b; 
   color: #ff6b6b; 
-  width: 32px; 
-  height: 32px; 
+  width: 28px; 
+  height: 28px; 
   border-radius: 50%; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  font-size: 18px; 
+  font-size: 16px; 
   cursor: pointer; 
   transition: all 0.2s; 
   padding: 0; 
@@ -120,6 +138,9 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <h2>💄 PAO Calculator</h2>
 
 <div class="card">
+<label>Product Name (optional)</label>
+<input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
+
 <label>Opening Date</label>
 <input type="date" id="opened">
 
@@ -167,6 +188,7 @@ let currentImageDataURL = null;
 let lastStatus = null;
 let ocrProcessed = false;
 
+const productName = document.getElementById("productName");
 const opened = document.getElementById("opened");
 const paoBox = document.getElementById("paoBtns");
 const result = document.getElementById("result");
@@ -437,7 +459,6 @@ function saveShelfToStorage(shelf) {
   }
 }
 
-// NEW: Recalculate status based on current date
 function computeStatusFromExpiry(expiryDate) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -456,7 +477,6 @@ function computeStatusFromExpiry(expiryDate) {
   }
 }
 
-// NEW: Refresh all statuses and save to storage
 function refreshAllStatuses() {
   const shelf = loadShelfFromStorage();
   let updated = false;
@@ -484,10 +504,13 @@ saveBtn.onclick = () => {
   }
 
   const expiryDate = addMonths(opened.value, selectedPAO).toISOString().slice(0, 10);
-  
   const itemStatus = computeStatusFromExpiry(expiryDate);
 
+  // NEW: Get product name or default to "noname"
+  const name = productName.value.trim() || "noname";
+
   const item = {
+    name: name,
     pao: selectedPAO + "M",
     openingDate: opened.value,
     expiryDate: expiryDate,
@@ -502,6 +525,7 @@ saveBtn.onclick = () => {
   
   if (saveSuccess) {
     alert("✓ Saved to My Shelf!");
+    productName.value = ""; // Clear input after save
     renderShelf();
   }
 };
@@ -525,7 +549,6 @@ function deleteItem(createdAt) {
 }
 
 function renderShelf() {
-  // NEW: Refresh statuses before rendering
   const shelf = refreshAllStatuses();
   
   if (shelf.length === 0) {
@@ -536,6 +559,11 @@ function renderShelf() {
   const itemsWithStatus = shelf.map(item => {
     if (!item.createdAt) {
       item.createdAt = Date.now() + Math.random();
+    }
+    
+    // NEW: Ensure name field exists, default to "noname"
+    if (!item.name) {
+      item.name = "noname";
     }
     
     return {
@@ -560,20 +588,17 @@ function renderShelf() {
       statusColor = "#1b4d3e";
     }
     
+    // NEW: Compact card layout
     return `
       <div class="shelf-item">
         <button class="delete-btn" onclick="deleteItem(${item.createdAt})">×</button>
-        <div class="shelf-item-placeholder">
-          <div class="shelf-item-pao-large">${item.pao}</div>
+        <div class="shelf-item-content">
+          <div class="shelf-item-name">${item.name}</div>
+          <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
+          <div class="shelf-item-dates">Opened: ${item.openingDate}</div>
         </div>
-        <div class="shelf-item-info">
-          <div class="shelf-item-dates">
-            <div class="shelf-item-date-row">Opened: ${item.openingDate}</div>
-            <div class="shelf-item-date-row">Expires: ${item.expiryDate}</div>
-          </div>
-          <div class="shelf-item-status" style="background: ${statusColor};">
-            ${itemStatus}
-          </div>
+        <div class="shelf-item-status" style="background: ${statusColor};">
+          ${itemStatus}
         </div>
       </div>
     `;
@@ -598,7 +623,6 @@ opened.onchange = updateResult;
   }
 })();
 
-// NEW: Refresh on page load
 renderShelf();
 </script>
 
