@@ -12,7 +12,7 @@ body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-syste
 .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
 .card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
 h2 { margin: 0 0 20px 0; font-size: 28px; }
-img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; }
+img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 300px; object-fit: contain; }
 .pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
 button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
 button:hover { background: #2a3142; transform: translateY(-2px); }
@@ -23,9 +23,10 @@ input[type="file"] { width: 100%; padding: 10px; background: #1a1d2e; border: 2p
 input[type="file"]::-webkit-file-upload-button { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 .status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
 label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
-.debug { margin-top: 10px; padding: 10px; background: #1a1d2e; border-radius: 8px; font-size: 12px; color: #888; max-height: 150px; overflow-y: auto; display: none; }
+.debug { margin-top: 10px; padding: 10px; background: #1a1d2e; border-radius: 8px; font-size: 11px; color: #888; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; font-family: monospace; }
 .info-box { background: #1a1d2e; padding: 14px; border-radius: 10px; margin-top: 16px; font-size: 14px; line-height: 1.6; color: #aaa; }
 .info-box strong { color: #667eea; }
+.test-btn { background: #dc3545; margin-top: 10px; width: 100%; }
 </style>
 </head>
 
@@ -44,9 +45,11 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <input type="file" id="fileInput" accept="image/*">
 <img id="preview" style="display:none">
 
+<button class="test-btn" onclick="testOCR()">🧪 Test OCR System</button>
+
 <div id="result" class="result">Select a PAO period</div>
 <div id="status" class="status" style="display:none"></div>
-<div id="debug" class="debug"></div>
+<div id="debug" class="debug" style="display:none"></div>
 </div>
 
 <div class="card">
@@ -114,53 +117,132 @@ function updateResult() {
   }
 }
 
+function logDebug(msg) {
+  debug.style.display = "block";
+  debug.textContent += msg + "\n";
+  console.log(msg);
+}
+
 // 🔍 Enhanced PAO extraction function
 function extractPAO(text) {
-  // Original text
-  const original = text;
+  logDebug("=== Starting PAO Extraction ===");
+  logDebug("Original text: " + text);
   
-  // Step 1: Preprocessing - remove spaces, uppercase
+  // Step 1: Preprocessing
   let clean = text.replace(/\s+/g, '').toUpperCase();
+  logDebug("Cleaned text: " + clean);
   
-  // Step 2: Various pattern matching
+  // Step 2: Pattern matching
   const patterns = [
-    /(\d+)M\b/i,                    // 12M (word boundary)
-    /(\d+)\s*M\b/i,                 // 12 M
-    /(\d+)MO/i,                     // 12MO
-    /(\d+)MONTH/i,                  // 12MONTH
-    /PAO[:\s]*(\d+)M/i,            // PAO: 12M
-    /PERIOD[:\s]*(\d+)M/i,         // PERIOD: 12M
-    /[^\d](\d+)M[^\d]/i,           // non-digit before and after
+    { name: "Standard M", regex: /(\d+)M\b/i },
+    { name: "Spaced M", regex: /(\d+)\s*M\b/i },
+    { name: "MO format", regex: /(\d+)MO/i },
+    { name: "MONTH format", regex: /(\d+)MONTH/i },
+    { name: "PAO prefix", regex: /PAO[:\s]*(\d+)M/i },
+    { name: "PERIOD prefix", regex: /PERIOD[:\s]*(\d+)M/i },
+    { name: "Surrounded", regex: /[^\d](\d+)M[^\d]/i },
   ];
   
-  // Try each pattern
-  for (let pattern of patterns) {
-    const match = clean.match(pattern);
+  for (let { name, regex } of patterns) {
+    const match = clean.match(regex);
     if (match) {
       const num = parseInt(match[1]);
+      logDebug(`Pattern "${name}" matched: ${match[0]} -> ${num}`);
       if (PAOS.includes(num)) {
+        logDebug(`✓ Valid PAO found: ${num}M`);
         return num;
+      } else {
+        logDebug(`✗ Number ${num} not in valid PAO list`);
       }
     }
   }
   
-  // Step 3: Extract numbers only
+  // Step 3: Extract all numbers
   const numbers = clean.match(/\d+/g);
+  logDebug("All numbers found: " + (numbers ? numbers.join(", ") : "none"));
+  
   if (numbers) {
     for (let numStr of numbers) {
       const num = parseInt(numStr);
       if (PAOS.includes(num)) {
-        // Check if M is nearby
         const idx = clean.indexOf(numStr);
         const nearby = clean.substring(Math.max(0, idx - 2), Math.min(clean.length, idx + numStr.length + 2));
+        logDebug(`Checking number ${num}, nearby context: "${nearby}"`);
         if (nearby.includes('M')) {
+          logDebug(`✓ Found valid PAO by proximity: ${num}M`);
           return num;
         }
       }
     }
   }
   
+  logDebug("✗ No valid PAO found");
   return null;
+}
+
+async function testOCR() {
+  status.style.display = "block";
+  status.style.background = "#4d4d1b";
+  status.style.color = "#f0ad4e";
+  status.textContent = "🧪 Testing Tesseract.js...";
+  
+  debug.style.display = "block";
+  debug.textContent = "=== OCR System Test ===\n";
+  
+  try {
+    logDebug("Checking Tesseract availability...");
+    
+    if (typeof Tesseract === 'undefined') {
+      throw new Error("Tesseract.js library not loaded!");
+    }
+    
+    logDebug("✓ Tesseract.js is loaded");
+    logDebug("Version: " + (Tesseract.version || "unknown"));
+    
+    // Create a simple test image with text
+    const canvas = document.createElement('canvas');
+    canvas.width = 200;
+    canvas.height = 100;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, 200, 100);
+    ctx.fillStyle = 'black';
+    ctx.font = '40px Arial';
+    ctx.fillText('12M', 50, 60);
+    
+    canvas.toBlob(async (blob) => {
+      logDebug("Testing with generated image '12M'...");
+      
+      const { data: { text } } = await Tesseract.recognize(blob, 'eng', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            const pct = Math.round(m.progress * 100);
+            status.textContent = `🧪 Test running... ${pct}%`;
+          }
+        }
+      });
+      
+      logDebug("Test OCR result: " + text);
+      
+      const pao = extractPAO(text);
+      
+      if (pao === 12) {
+        status.style.background = "#1b4d3e";
+        status.style.color = "#20c997";
+        status.textContent = "✓ OCR system working correctly!";
+      } else {
+        status.style.background = "#4d1b1b";
+        status.style.color = "#ff6b6b";
+        status.textContent = "⚠ OCR system loaded but detection may be inaccurate";
+      }
+    });
+    
+  } catch (err) {
+    logDebug("ERROR: " + err.message);
+    status.style.background = "#4d1b1b";
+    status.style.color = "#ff6b6b";
+    status.textContent = "❌ OCR system failed: " + err.message;
+  }
 }
 
 document.getElementById("fileInput").onchange = async (e) => {
@@ -175,8 +257,17 @@ document.getElementById("fileInput").onchange = async (e) => {
   status.style.color = "#f0ad4e";
   status.textContent = "🔍 Detecting PAO...";
 
+  debug.style.display = "block";
+  debug.textContent = "=== OCR Analysis Started ===\n";
+
   try {
-    const { data: { text } } = await Tesseract.recognize(file, 'eng', {
+    logDebug("File name: " + file.name);
+    logDebug("File size: " + (file.size / 1024).toFixed(2) + " KB");
+    logDebug("File type: " + file.type);
+    
+    logDebug("Starting Tesseract recognition...");
+    
+    const { data: { text, confidence } } = await Tesseract.recognize(file, 'eng', {
       logger: m => {
         if (m.status === 'recognizing text') {
           const pct = Math.round(m.progress * 100);
@@ -185,13 +276,9 @@ document.getElementById("fileInput").onchange = async (e) => {
       }
     });
 
-    // Show debug info
-    debug.style.display = "block";
-    debug.textContent = `Detected text:\n${text}`;
-    
-    console.log("=== OCR Result ===");
-    console.log(text);
-    console.log("==================");
+    logDebug("OCR completed");
+    logDebug("Confidence: " + confidence);
+    logDebug("Raw text output:\n" + text);
     
     const pao = extractPAO(text);
     
@@ -207,16 +294,27 @@ document.getElementById("fileInput").onchange = async (e) => {
       status.textContent = "❌ Detection failed. Please select manually ↓";
     }
   } catch (err) {
-    console.error(err);
+    logDebug("CRITICAL ERROR: " + err.message);
+    logDebug("Stack trace: " + err.stack);
     status.style.background = "#4d1b1b";
     status.style.color = "#ff6b6b";
-    status.textContent = "⚠ Error occurred. Please select manually";
-    debug.style.display = "block";
-    debug.textContent = `Error: ${err.message}`;
+    status.textContent = "⚠ Error: " + err.message;
   }
 };
 
 opened.onchange = updateResult;
+
+// Check Tesseract on page load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (typeof Tesseract === 'undefined') {
+      status.style.display = "block";
+      status.style.background = "#4d1b1b";
+      status.style.color = "#ff6b6b";
+      status.textContent = "⚠ Tesseract.js failed to load. Check your internet connection.";
+    }
+  }, 3000);
+});
 </script>
 </body>
 </html>
