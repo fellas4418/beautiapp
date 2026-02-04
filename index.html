@@ -123,6 +123,8 @@ Look for the jar symbol with a number (e.g., 12M = 12 months).
 <script>
 const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
+const SHELF_STORAGE_KEY = "myShelf"; // Consistent key for localStorage
+
 let selectedPAO = null;
 let currentImageDataURL = null;
 let lastStatus = null;
@@ -209,8 +211,6 @@ function updateResult() {
   statusLabel.style.display = "block";
 
   saveBtn.style.display = "block";
-  
-  renderShelf();
 }
 
 function extractPAO(text) {
@@ -372,8 +372,45 @@ document.getElementById("fileInput").onchange = async (e) => {
   reader.readAsDataURL(file);
 };
 
+// Helper function to load shelf from localStorage
+function loadShelfFromStorage() {
+  try {
+    const stored = localStorage.getItem(SHELF_STORAGE_KEY);
+    if (!stored) {
+      console.log("No shelf data found in localStorage");
+      return [];
+    }
+    const parsed = JSON.parse(stored);
+    console.log("Loaded shelf data:", parsed.length, "items");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error("Error loading shelf from localStorage:", err);
+    return [];
+  }
+}
+
+// Helper function to save shelf to localStorage
+function saveShelfToStorage(shelf) {
+  try {
+    localStorage.setItem(SHELF_STORAGE_KEY, JSON.stringify(shelf));
+    console.log("Saved shelf data:", shelf.length, "items");
+    return true;
+  } catch (err) {
+    console.error("Error saving shelf to localStorage:", err);
+    return false;
+  }
+}
+
 saveBtn.onclick = () => {
-  if (!selectedPAO) return;
+  if (!selectedPAO) {
+    alert("⚠ Please select a PAO period first");
+    return;
+  }
+
+  if (!currentImageDataURL) {
+    alert("⚠ Please upload a product photo first");
+    return;
+  }
 
   const expiryDate = addMonths(opened.value, selectedPAO).toISOString().slice(0, 10);
   
@@ -397,18 +434,19 @@ saveBtn.onclick = () => {
     id: Date.now()
   };
 
-  let shelf = [];
-  const stored = localStorage.getItem("myShelf");
-  if (stored) {
-    shelf = JSON.parse(stored);
-  }
-
+  // FIXED: Load existing shelf first, then append new item
+  const shelf = loadShelfFromStorage();
   shelf.push(item);
-  localStorage.setItem("myShelf", JSON.stringify(shelf));
   
-  alert("✓ Saved to My Shelf!");
+  // FIXED: Save the full updated array
+  const saveSuccess = saveShelfToStorage(shelf);
   
-  renderShelf();
+  if (saveSuccess) {
+    alert("✓ Saved to My Shelf!");
+    renderShelf();
+  } else {
+    alert("⚠ Failed to save to localStorage. Please check console.");
+  }
 };
 
 // Helper function to compute status from expiryDate
@@ -438,29 +476,18 @@ function getStatusPriority(status) {
 
 // Delete item from shelf
 function deleteItem(itemId) {
-  const stored = localStorage.getItem("myShelf");
-  if (!stored) return;
-  
-  let shelf = JSON.parse(stored);
-  shelf = shelf.filter(item => item.id !== itemId);
-  
-  localStorage.setItem("myShelf", JSON.stringify(shelf));
+  const shelf = loadShelfFromStorage();
+  const updatedShelf = shelf.filter(item => item.id !== itemId);
+  saveShelfToStorage(updatedShelf);
   renderShelf();
 }
 
 // Render Shelf Items
 function renderShelf() {
-  const stored = localStorage.getItem("myShelf");
-  
-  if (!stored) {
-    shelfItems.innerHTML = "";
-    return;
-  }
-  
-  const shelf = JSON.parse(stored);
+  const shelf = loadShelfFromStorage();
   
   if (shelf.length === 0) {
-    shelfItems.innerHTML = "";
+    shelfItems.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">No items on shelf yet. Add your first product!</div>';
     return;
   }
   
