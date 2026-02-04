@@ -83,6 +83,7 @@ Look for the jar symbol with a number (e.g., 12M = 12 months).
 </div>
 
 <script>
+const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
 let selectedPAO = null;
 
@@ -95,7 +96,7 @@ const fileName = document.getElementById("fileName");
 
 opened.value = new Date().toISOString().slice(0, 10);
 
-PAOS.forEach(m => {
+SUPPORTED_PAOS.forEach(m => {
   const b = document.createElement("button");
   b.textContent = m + "M";
   b.onclick = () => { selectPAO(m); updateResult(); };
@@ -264,12 +265,16 @@ document.getElementById("fileInput").onchange = async (e) => {
     try {
       const pao = await detectWithGoogle(base64);
       
-      if (pao) {
+      if (pao && SUPPORTED_PAOS.includes(pao)) {
         selectPAO(pao);
         updateResult();
         status.style.background = "#1b4d3e";
         status.style.color = "#20c997";
         status.textContent = `✓ Detected: ${pao}M`;
+      } else if (pao) {
+        status.style.background = "#4d4d1b";
+        status.style.color = "#f0ad4e";
+        status.textContent = `⚠ Detected ${pao}M but not supported. Select manually ↓`;
       } else {
         status.style.background = "#4d1b1b";
         status.style.color = "#ff6b6b";
@@ -291,7 +296,7 @@ opened.onchange = updateResult;
 </script>
 
 <!-- 숨겨진 API 키 -->
-<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
+<input type="text" id="apiKey" value="여기에_본인의_실제_API_키를_입력하세요" style="display:none;" />
 
 </body>
 </html>
