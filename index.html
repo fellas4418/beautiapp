@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PAO Calculator</title>
+<title>PAO 계산기</title>
 
 <style>
 * { box-sizing: border-box; }
@@ -46,9 +46,7 @@ input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius
 .file-name { margin-top: 8px; font-size: 13px; color: #aaa; text-align: center; }
 .status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
 label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
-.api-setup { background: #1f1f2e; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px; color: #aaa; line-height: 1.5; }
 
-/* Subtle animation for status label */
 @keyframes statusFadeUp {
   from {
     opacity: 0;
@@ -64,57 +62,96 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   animation: statusFadeUp 250ms ease-out;
 }
 
-/* Shelf section styles */
 .shelf-section { margin-top: 24px; }
 .shelf-item { background: #111318; border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; }
-.shelf-item img { max-height: 200px; object-fit: contain; margin-bottom: 10px; }
+.shelf-item-placeholder { 
+  height: 120px; 
+  background: linear-gradient(135deg, #1a1d2e 0%, #2a2d3e 100%); 
+  border-radius: 10px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  margin-bottom: 10px; 
+  position: relative; 
+  overflow: hidden; 
+}
+.shelf-item-placeholder::before { 
+  content: ''; 
+  position: absolute; 
+  top: 0; left: 0; right: 0; bottom: 0; 
+  background: radial-gradient(circle at 30% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%); 
+}
+.shelf-item-pao-large { 
+  font-size: 48px; 
+  font-weight: 900; 
+  color: #667eea; 
+  text-shadow: 0 2px 10px rgba(102, 126, 234, 0.3); 
+  position: relative; 
+  z-index: 1; 
+}
 .shelf-item-info { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-.shelf-item-pao { font-size: 14px; color: #aaa; }
-.shelf-item-expiry { font-size: 13px; color: #888; }
+.shelf-item-dates { font-size: 13px; color: #888; }
+.shelf-item-date-row { margin: 4px 0; }
 .shelf-item-status { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; }
-.delete-btn { position: absolute; top: 10px; right: 10px; background: #4d1b1b; color: #ff6b6b; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.2s; padding: 0; }
+.delete-btn { 
+  position: absolute; 
+  top: 10px; 
+  right: 10px; 
+  background: #4d1b1b; 
+  color: #ff6b6b; 
+  width: 32px; 
+  height: 32px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 18px; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  padding: 0; 
+  z-index: 10; 
+}
 .delete-btn:hover { background: #6b2020; transform: scale(1.1); }
 </style>
 </head>
 
 <body>
 <div class="wrap">
-<h2>💄 PAO Calculator</h2>
+<h2>💄 PAO 계산기</h2>
 
 <div class="card">
-<label>Opening Date</label>
+<label>개봉 날짜</label>
 <input type="date" id="opened">
 
-<label>Period After Opening (PAO)</label>
+<label>개봉 후 사용 기간 (PAO)</label>
 <div class="pao" id="paoBtns"></div>
 
-<label>Upload Product Photo</label>
+<label>제품 사진 업로드</label>
 <div class="file-upload-wrapper">
   <input type="file" id="fileInput" accept="image/*">
-  <div class="file-upload-label">📷 Choose Photo</div>
+  <div class="file-upload-label">📷 사진 선택</div>
 </div>
 <div class="file-name" id="fileName"></div>
 
 <img id="preview" style="display:none">
 
-<div id="result" class="result">Select a PAO period</div>
+<div id="result" class="result">PAO 기간을 선택하세요</div>
 <div id="statusLabel" class="status-label" style="display:none"></div>
 <div id="status" class="status" style="display:none"></div>
 
-<button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
+<button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">내 선반에 저장</button>
 </div>
 
 <div class="card">
-<h3 style="margin:0 0 12px 0">ℹ️ About PAO</h3>
+<h3 style="margin:0 0 12px 0">ℹ️ PAO란?</h3>
 <div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa;">
-<strong style="color:#667eea">Period After Opening (PAO)</strong> indicates how long a cosmetic is safe after opening.<br><br>
-Look for the jar symbol with a number (e.g., 12M = 12 months).
+<strong style="color:#667eea">개봉 후 사용 기간 (PAO)</strong>은 화장품 개봉 후 안전하게 사용할 수 있는 기간을 나타냅니다.<br><br>
+제품에 표시된 통 모양 아이콘에서 숫자를 확인하세요 (예: 12M = 12개월).
 </div>
 </div>
 
-<!-- Shelf Section -->
 <div id="shelfSection" class="shelf-section">
-<h2>📦 My Shelf</h2>
+<h2>📦 내 선반</h2>
 <div id="shelfItems"></div>
 </div>
 
@@ -123,7 +160,7 @@ Look for the jar symbol with a number (e.g., 12M = 12 months).
 <script>
 const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
-const SHELF_STORAGE_KEY = "myShelf"; // Consistent key for localStorage
+const SHELF_STORAGE_KEY = "myShelf";
 
 let selectedPAO = null;
 let currentImageDataURL = null;
@@ -165,7 +202,7 @@ function addMonths(d, m) {
 
 function updateResult() {
   if (!selectedPAO) { 
-    result.textContent = "Select a PAO period";
+    result.textContent = "PAO 기간을 선택하세요";
     statusLabel.style.display = "none";
     lastStatus = null;
     return; 
@@ -177,25 +214,25 @@ function updateResult() {
   if (daysLeft < 0) emoji = "❌";
   else if (daysLeft <= 30) emoji = "⚠️";
   
-  result.textContent = `${emoji} ${selectedPAO}M · Expires on ${toss.toISOString().slice(0, 10)}`;
+  result.textContent = `${emoji} ${selectedPAO}M · 만료일: ${toss.toISOString().slice(0, 10)}`;
   
   if (daysLeft < 0) {
-    result.textContent += ` (Expired ${Math.abs(daysLeft)} days ago)`;
+    result.textContent += ` (${Math.abs(daysLeft)}일 전 만료됨)`;
   } else {
-    result.textContent += ` (${daysLeft} days left)`;
+    result.textContent += ` (${daysLeft}일 남음)`;
   }
 
   let statusText = "";
   let statusColor = "";
   
   if (daysLeft < 0) {
-    statusText = "TOSS";
+    statusText = "버리기";
     statusColor = "#4d1b1b";
   } else if (daysLeft <= 60) {
-    statusText = "USE SOON";
+    statusText = "빨리 사용";
     statusColor = "#4d4d1b";
   } else {
-    statusText = "KEEP";
+    statusText = "보관";
     statusColor = "#1b4d3e";
   }
   
@@ -214,7 +251,7 @@ function updateResult() {
 }
 
 function extractPAO(text) {
-  console.log("Detected text:", text);
+  console.log("감지된 텍스트:", text);
   
   const versions = [
     text,
@@ -236,7 +273,7 @@ function extractPAO(text) {
       while ((match = pattern.exec(ver)) !== null) {
         const num = parseInt(match[1]);
         if (PAOS.includes(num)) {
-          console.log("✓ Found PAO:", num);
+          console.log("✓ PAO 발견:", num);
           return num;
         }
       }
@@ -251,7 +288,7 @@ function extractPAO(text) {
         const idx = text.indexOf(numStr);
         const context = text.substring(Math.max(0, idx - 2), Math.min(text.length, idx + numStr.length + 2));
         if (/m/i.test(context)) {
-          console.log("✓ Found PAO by context:", num);
+          console.log("✓ 문맥으로 PAO 발견:", num);
           return num;
         }
       }
@@ -266,7 +303,7 @@ async function detectWithGoogle(base64Image) {
   const key = apiKey.value.trim();
   
   if (!key) {
-    throw new Error("API key not found");
+    throw new Error("API 키를 찾을 수 없습니다");
   }
   
   const base64Content = base64Image.split(',')[1];
@@ -295,12 +332,12 @@ async function detectWithGoogle(base64Image) {
   
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error?.message || `API Error: ${response.status}`);
+    throw new Error(error.error?.message || `API 오류: ${response.status}`);
   }
   
   const data = await response.json();
   
-  console.log("Google Vision Response:", data);
+  console.log("Google Vision 응답:", data);
   
   const textAnnotations = data.responses[0]?.textAnnotations;
   
@@ -331,7 +368,7 @@ document.getElementById("fileInput").onchange = async (e) => {
     preview.style.display = "block";
 
     if (ocrProcessed) {
-      console.log("OCR already processed for this image. Skipping...");
+      console.log("이 이미지는 이미 OCR 처리되었습니다. 건너뜁니다...");
       return;
     }
 
@@ -340,7 +377,7 @@ document.getElementById("fileInput").onchange = async (e) => {
     status.style.display = "block";
     status.style.background = "#4d4d1b";
     status.style.color = "#f0ad4e";
-    status.textContent = "🔍 Analyzing with Google Vision...";
+    status.textContent = "🔍 Google Vision으로 분석 중...";
 
     try {
       const pao = await detectWithGoogle(base64);
@@ -350,65 +387,59 @@ document.getElementById("fileInput").onchange = async (e) => {
         updateResult();
         status.style.background = "#1b4d3e";
         status.style.color = "#20c997";
-        status.textContent = `✓ Detected: ${pao}M`;
+        status.textContent = `✓ 감지됨: ${pao}M`;
       } else if (pao) {
         status.style.background = "#4d4d1b";
         status.style.color = "#f0ad4e";
-        status.textContent = `⚠ Detected ${pao}M but not supported. Select manually ↓`;
+        status.textContent = `⚠ ${pao}M이 감지되었지만 지원하지 않습니다. 수동으로 선택하세요 ↓`;
       } else {
         status.style.background = "#4d1b1b";
         status.style.color = "#ff6b6b";
-        status.textContent = "❌ Could not detect PAO. Select manually ↓";
+        status.textContent = "❌ PAO를 감지하지 못했습니다. 수동으로 선택하세요 ↓";
       }
       
     } catch (err) {
       console.error(err);
       status.style.background = "#4d1b1b";
       status.style.color = "#ff6b6b";
-      status.textContent = "⚠ Error: " + err.message;
+      status.textContent = "⚠ 오류: " + err.message;
     }
   };
   
   reader.readAsDataURL(file);
 };
 
-// Helper function to load shelf from localStorage
 function loadShelfFromStorage() {
   try {
     const stored = localStorage.getItem(SHELF_STORAGE_KEY);
     if (!stored) {
-      console.log("No shelf data found in localStorage");
+      console.log("선반 데이터 없음");
       return [];
     }
     const parsed = JSON.parse(stored);
-    console.log("Loaded shelf data:", parsed.length, "items");
+    console.log("선반 데이터 로드됨:", parsed.length, "개 아이템");
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    console.error("Error loading shelf from localStorage:", err);
+    console.error("선반 로드 오류:", err);
     return [];
   }
 }
 
-// Helper function to save shelf to localStorage
 function saveShelfToStorage(shelf) {
   try {
     localStorage.setItem(SHELF_STORAGE_KEY, JSON.stringify(shelf));
-    console.log("Saved shelf data:", shelf.length, "items");
+    console.log("선반 데이터 저장됨:", shelf.length, "개 아이템");
     return true;
   } catch (err) {
-    console.error("Error saving shelf to localStorage:", err);
+    console.error("선반 저장 오류:", err);
+    alert("⚠ 저장 실패: " + err.message);
     return false;
   }
 }
 
 saveBtn.onclick = () => {
   if (!selectedPAO) {
-    alert("⚠ Please select a PAO period first");
-    return;
-  }
-
-  if (!currentImageDataURL) {
-    alert("⚠ Please upload a product photo first");
+    alert("⚠ 먼저 PAO 기간을 선택하세요");
     return;
   }
 
@@ -418,89 +449,81 @@ saveBtn.onclick = () => {
   let itemStatus = "";
   
   if (daysLeft < 0) {
-    itemStatus = "TOSS";
+    itemStatus = "버리기";
   } else if (daysLeft <= 60) {
-    itemStatus = "USE SOON";
+    itemStatus = "빨리 사용";
   } else {
-    itemStatus = "KEEP";
+    itemStatus = "보관";
   }
 
+  // 이미지 데이터 저장 안 함 (용량 문제 해결)
   const item = {
-    image: currentImageDataURL,
     pao: selectedPAO + "M",
     openingDate: opened.value,
     expiryDate: expiryDate,
     status: itemStatus,
-    id: Date.now()
+    createdAt: Date.now()
   };
 
-  // FIXED: Load existing shelf first, then append new item
   const shelf = loadShelfFromStorage();
   shelf.push(item);
   
-  // FIXED: Save the full updated array
   const saveSuccess = saveShelfToStorage(shelf);
   
   if (saveSuccess) {
-    alert("✓ Saved to My Shelf!");
+    alert("✓ 내 선반에 저장 완료!");
     renderShelf();
-  } else {
-    alert("⚠ Failed to save to localStorage. Please check console.");
   }
 };
 
-// Helper function to compute status from expiryDate
 function computeStatusFromExpiry(expiryDate) {
   const today = new Date();
   const expiry = new Date(expiryDate);
   const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
   
   if (daysLeft < 0) {
-    return "TOSS";
+    return "버리기";
   } else if (daysLeft <= 60) {
-    return "USE SOON";
+    return "빨리 사용";
   } else {
-    return "KEEP";
+    return "보관";
   }
 }
 
-// Helper function to get status priority for sorting
 function getStatusPriority(status) {
   const priorities = {
-    "TOSS": 1,
-    "USE SOON": 2,
-    "KEEP": 3
+    "버리기": 1,
+    "빨리 사용": 2,
+    "보관": 3
   };
   return priorities[status] || 999;
 }
 
-// Delete item from shelf
-function deleteItem(itemId) {
+function deleteItem(createdAt) {
+  if (!confirm("정말 삭제하시겠습니까?")) return;
+  
   const shelf = loadShelfFromStorage();
-  const updatedShelf = shelf.filter(item => item.id !== itemId);
+  const updatedShelf = shelf.filter(item => item.createdAt !== createdAt);
   saveShelfToStorage(updatedShelf);
   renderShelf();
 }
 
-// Render Shelf Items
 function renderShelf() {
   const shelf = loadShelfFromStorage();
   
   if (shelf.length === 0) {
-    shelfItems.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">No items on shelf yet. Add your first product!</div>';
+    shelfItems.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">아직 선반에 제품이 없어요. 첫 제품을 추가해보세요!</div>';
     return;
   }
   
-  // Backfill status for each item and create display array
   const itemsWithStatus = shelf.map(item => {
     let itemStatus = item.status;
     if (!itemStatus || itemStatus === "undefined") {
       itemStatus = computeStatusFromExpiry(item.expiryDate);
     }
     
-    // Backfill ID if missing
-    if (!item.id) {
-      item.id = Date.now() + Math.random();
+    if (!item.createdAt) {
+      item.createdAt = Date.now() + Math.random();
     }
     
     return {
@@ -509,8 +532,6 @@ function renderShelf() {
     };
   });
   
-  // Sort by status priority (TOSS -> USE SOON -> KEEP)
-  // Stable sort preserves original order within same status group
   itemsWithStatus.sort((a, b) => {
     return getStatusPriority(a.displayStatus) - getStatusPriority(b.displayStatus);
   });
@@ -519,9 +540,9 @@ function renderShelf() {
     const itemStatus = item.displayStatus;
     
     let statusColor = "";
-    if (itemStatus === "TOSS") {
+    if (itemStatus === "버리기") {
       statusColor = "#4d1b1b";
-    } else if (itemStatus === "USE SOON") {
+    } else if (itemStatus === "빨리 사용") {
       statusColor = "#4d4d1b";
     } else {
       statusColor = "#1b4d3e";
@@ -529,12 +550,14 @@ function renderShelf() {
     
     return `
       <div class="shelf-item">
-        <button class="delete-btn" onclick="deleteItem(${item.id})">×</button>
-        <img src="${item.image}" alt="Product">
+        <button class="delete-btn" onclick="deleteItem(${item.createdAt})">×</button>
+        <div class="shelf-item-placeholder">
+          <div class="shelf-item-pao-large">${item.pao}</div>
+        </div>
         <div class="shelf-item-info">
-          <div>
-            <div class="shelf-item-pao">PAO: ${item.pao}</div>
-            <div class="shelf-item-expiry">Expires: ${item.expiryDate}</div>
+          <div class="shelf-item-dates">
+            <div class="shelf-item-date-row">개봉: ${item.openingDate}</div>
+            <div class="shelf-item-date-row">만료: ${item.expiryDate}</div>
           </div>
           <div class="shelf-item-status" style="background: ${statusColor};">
             ${itemStatus}
@@ -547,7 +570,23 @@ function renderShelf() {
 
 opened.onchange = updateResult;
 
-// Initial render on page load
+// 일회성 수정: 페이지 로드 시 이미지가 포함된 기존 데이터 정리
+(function cleanupOldData() {
+  try {
+    const stored = localStorage.getItem(SHELF_STORAGE_KEY);
+    if (stored) {
+      const shelf = JSON.parse(stored);
+      if (shelf.length > 0 && shelf[0].image) {
+        console.warn("⚠ 오래된 형식의 데이터 발견. 정리 중...");
+        localStorage.removeItem(SHELF_STORAGE_KEY);
+        console.log("✓ 선반 데이터 초기화 완료. 이제 저장 공간 문제 없이 사용 가능합니다.");
+      }
+    }
+  } catch (err) {
+    console.error("데이터 정리 오류:", err);
+  }
+})();
+
 renderShelf();
 </script>
 
