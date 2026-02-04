@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Cosmetic Expiry Calculator</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<title>PAO Calculator</title>
 
 <style>
 * { box-sizing: border-box; }
@@ -12,13 +11,14 @@ body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-syste
 .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
 .card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
 h2 { margin: 0 0 20px 0; font-size: 28px; }
-img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; background: #000; }
+img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; }
 .pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
 button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
 button:hover { background: #2a3142; transform: translateY(-2px); }
 button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
 .result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
 input[type="date"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; }
+input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d2e; color: #fff; font-size: 14px; }
 
 .file-upload-wrapper { position: relative; margin-top: 10px; }
 .file-upload-wrapper input[type="file"] { 
@@ -41,25 +41,11 @@ input[type="date"] { width: 100%; margin-top: 10px; padding: 10px; border-radius
   cursor: pointer;
   transition: all 0.2s;
 }
-.file-upload-label:hover {
-  background: #5568d3;
-}
-.file-name {
-  margin-top: 8px;
-  font-size: 13px;
-  color: #aaa;
-  text-align: center;
-}
-
+.file-upload-label:hover { background: #5568d3; }
+.file-name { margin-top: 8px; font-size: 13px; color: #aaa; text-align: center; }
 .status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
 label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
-.debug { margin-top: 10px; padding: 10px; background: #1a1d2e; border-radius: 8px; font-size: 11px; color: #888; max-height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; font-family: monospace; border: 1px solid #333; }
-.info-box { background: #1a1d2e; padding: 14px; border-radius: 10px; margin-top: 16px; font-size: 14px; line-height: 1.6; color: #aaa; }
-.info-box strong { color: #667eea; }
-.test-btn { background: #dc3545; margin-top: 10px; width: 100%; }
-canvas { display: none; }
-.processed-images { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-.processed-images img { max-height: 150px; }
+.api-setup { background: #1f1f2e; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px; color: #aaa; line-height: 1.5; }
 </style>
 </head>
 
@@ -68,37 +54,36 @@ canvas { display: none; }
 <h2>💄 PAO Calculator</h2>
 
 <div class="card">
+<label>🔑 Google Cloud Vision API Key</label>
+<input type="text" id="apiKey" placeholder="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" />
+<div class="api-setup">
+Using Google Cloud Vision API for accurate text detection
+</div>
+
 <label>Opening Date</label>
 <input type="date" id="opened">
 
 <label>Period After Opening (PAO)</label>
 <div class="pao" id="paoBtns"></div>
 
-<label>Upload Product Photo (Optional)</label>
+<label>Upload Product Photo</label>
 <div class="file-upload-wrapper">
   <input type="file" id="fileInput" accept="image/*">
   <div class="file-upload-label">📷 Choose Photo</div>
 </div>
 <div class="file-name" id="fileName"></div>
 
-<canvas id="canvas"></canvas>
 <img id="preview" style="display:none">
-
-<div class="processed-images" id="processedImages" style="display:none"></div>
-
-<button class="test-btn" onclick="testOCR()">🧪 Test OCR System</button>
 
 <div id="result" class="result">Select a PAO period</div>
 <div id="status" class="status" style="display:none"></div>
-<div id="debug" class="debug" style="display:none"></div>
 </div>
 
 <div class="card">
 <h3 style="margin:0 0 12px 0">ℹ️ About PAO</h3>
-<div class="info-box">
-<strong>Period After Opening (PAO)</strong> indicates how long a cosmetic product is safe to use after opening.<br><br>
-Look for the open jar symbol on your product with a number (e.g., 12M = 12 months).<br><br>
-Upload a clear photo of the PAO symbol for automatic detection.
+<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa;">
+<strong style="color:#667eea">Period After Opening (PAO)</strong> indicates how long a cosmetic is safe after opening.<br><br>
+Look for the jar symbol with a number (e.g., 12M = 12 months).
 </div>
 </div>
 </div>
@@ -108,14 +93,12 @@ const PAOS = [3, 6, 9, 12, 18, 24, 36];
 let selectedPAO = null;
 
 const opened = document.getElementById("opened");
+const apiKey = document.getElementById("apiKey");
 const paoBox = document.getElementById("paoBtns");
 const result = document.getElementById("result");
 const preview = document.getElementById("preview");
 const status = document.getElementById("status");
-const debug = document.getElementById("debug");
 const fileName = document.getElementById("fileName");
-const canvas = document.getElementById("canvas");
-const processedImages = document.getElementById("processedImages");
 
 opened.value = new Date().toISOString().slice(0, 10);
 
@@ -161,220 +144,108 @@ function updateResult() {
   }
 }
 
-function logDebug(msg) {
-  debug.style.display = "block";
-  debug.textContent += msg + "\n";
-  console.log(msg);
-}
-
-// 🔍 초강력 PAO 추출 - 모든 가능한 패턴
 function extractPAO(text) {
-  logDebug("=== Extracting PAO ===");
-  logDebug("Original text:\n" + text);
+  console.log("Detected text:", text);
   
-  // 여러 버전의 텍스트 생성
   const versions = [
     text,
     text.toUpperCase(),
-    text.toLowerCase(),
     text.replace(/\s+/g, ''),
-    text.replace(/[^a-zA-Z0-9]/g, ''),
     text.replace(/[^a-zA-Z0-9]/g, ' '),
   ];
   
-  logDebug("Text versions: " + versions.length);
-  
-  // 모든 가능한 패턴
   const patterns = [
     /(\d{1,2})\s*M\b/gi,
-    /(\d{1,2})\s*m\b/gi,
     /(\d{1,2})M/gi,
-    /(\d{1,2})m/gi,
-    /(\d{1,2})\s*MO/gi,
-    /(\d{1,2})\s*MONTH/gi,
-    /\bM\s*(\d{1,2})/gi,
-    /PAO\D*(\d{1,2})/gi,
+    /M\s*(\d{1,2})/gi,
   ];
   
-  // 모든 버전에서 모든 패턴 시도
   for (let ver of versions) {
     for (let pattern of patterns) {
-      pattern.lastIndex = 0; // 정규식 리셋
+      pattern.lastIndex = 0;
       let match;
       while ((match = pattern.exec(ver)) !== null) {
         const num = parseInt(match[1]);
-        logDebug(`Pattern ${pattern.source} matched: "${match[0]}" -> ${num}`);
         if (PAOS.includes(num)) {
-          logDebug(`✓ VALID PAO FOUND: ${num}M`);
+          console.log("✓ Found PAO:", num);
           return num;
         }
       }
     }
   }
   
-  // 숫자 + M 조합 직접 찾기
-  const allMatches = text.match(/\d+/g);
-  logDebug("All numbers: " + (allMatches ? allMatches.join(", ") : "none"));
-  
-  if (allMatches) {
-    for (let numStr of allMatches) {
+  // 숫자 주변에 M이 있는지 확인
+  const numbers = text.match(/\d+/g);
+  if (numbers) {
+    for (let numStr of numbers) {
       const num = parseInt(numStr);
       if (PAOS.includes(num)) {
-        // 이 숫자 주변 3글자 확인
         const idx = text.indexOf(numStr);
-        const before = text.substring(Math.max(0, idx - 2), idx);
-        const after = text.substring(idx + numStr.length, Math.min(text.length, idx + numStr.length + 2));
-        const context = before + numStr + after;
-        
-        logDebug(`Number ${num} context: "${context}"`);
-        
-        if (/m/i.test(after) || /m/i.test(before)) {
-          logDebug(`✓ FOUND BY CONTEXT: ${num}M`);
+        const context = text.substring(Math.max(0, idx - 2), Math.min(text.length, idx + numStr.length + 2));
+        if (/m/i.test(context)) {
+          console.log("✓ Found PAO by context:", num);
           return num;
         }
       }
     }
   }
   
-  logDebug("✗ No PAO found");
   return null;
 }
 
-// 다중 이미지 전처리 (3가지 버전)
-function preprocessImages(img) {
-  const results = [];
+// 🔍 Google Cloud Vision API
+async function detectWithGoogle(base64Image) {
+  const key = apiKey.value.trim();
   
-  // 기본 크기 조정
-  let width = img.width;
-  let height = img.height;
-  const maxSize = 2000;
-  
-  if (width > maxSize || height > maxSize) {
-    if (width > height) {
-      height = (height / width) * maxSize;
-      width = maxSize;
-    } else {
-      width = (width / height) * maxSize;
-      height = maxSize;
-    }
+  if (!key) {
+    throw new Error("Please enter your Google Cloud API key");
   }
   
-  // 버전 1: 고대비 (High Contrast)
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, width, height);
+  // base64에서 data:image/... 부분 제거
+  const base64Content = base64Image.split(',')[1];
   
-  let imageData = ctx.getImageData(0, 0, width, height);
-  let data = imageData.data;
-  
-  // 대비 증가
-  const contrast = 100;
-  const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-  
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
-    data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128));
-    data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128));
-  }
-  
-  ctx.putImageData(imageData, 0, 0);
-  results.push({ name: "High Contrast", data: canvas.toDataURL() });
-  
-  // 버전 2: 흑백 + 샤프닝
-  ctx.drawImage(img, 0, 0, width, height);
-  imageData = ctx.getImageData(0, 0, width, height);
-  data = imageData.data;
-  
-  // 그레이스케일
-  for (let i = 0; i < data.length; i += 4) {
-    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    data[i] = data[i + 1] = data[i + 2] = avg;
-  }
-  
-  // 임계값 적용
-  for (let i = 0; i < data.length; i += 4) {
-    const brightness = data[i];
-    const threshold = brightness > 128 ? 255 : 0;
-    data[i] = data[i + 1] = data[i + 2] = threshold;
-  }
-  
-  ctx.putImageData(imageData, 0, 0);
-  results.push({ name: "B&W Threshold", data: canvas.toDataURL() });
-  
-  // 버전 3: 반전 (Inverted)
-  ctx.drawImage(img, 0, 0, width, height);
-  imageData = ctx.getImageData(0, 0, width, height);
-  data = imageData.data;
-  
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = 255 - data[i];
-    data[i + 1] = 255 - data[i + 1];
-    data[i + 2] = 255 - data[i + 2];
-  }
-  
-  ctx.putImageData(imageData, 0, 0);
-  results.push({ name: "Inverted", data: canvas.toDataURL() });
-  
-  return results;
-}
-
-async function testOCR() {
-  status.style.display = "block";
-  status.style.background = "#4d4d1b";
-  status.style.color = "#f0ad4e";
-  status.textContent = "🧪 Testing OCR...";
-  
-  debug.style.display = "block";
-  debug.textContent = "=== OCR Test ===\n";
-  
-  try {
-    if (typeof Tesseract === 'undefined') {
-      throw new Error("Tesseract.js not loaded!");
-    }
-    
-    logDebug("✓ Tesseract.js loaded");
-    
-    const testCanvas = document.createElement('canvas');
-    testCanvas.width = 300;
-    testCanvas.height = 150;
-    const ctx = testCanvas.getContext('2d');
-    
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, 300, 150);
-    ctx.fillStyle = 'black';
-    ctx.font = 'bold 60px Arial';
-    ctx.fillText('12M', 80, 90);
-    
-    const blob = await new Promise(resolve => testCanvas.toBlob(resolve));
-    
-    const { data: { text } } = await Tesseract.recognize(blob, 'eng', {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          status.textContent = `🧪 Testing... ${Math.round(m.progress * 100)}%`;
+  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      requests: [
+        {
+          image: {
+            content: base64Content
+          },
+          features: [
+            {
+              type: 'TEXT_DETECTION',
+              maxResults: 10
+            }
+          ]
         }
-      }
-    });
-    
-    logDebug("Test text: " + text);
-    const pao = extractPAO(text);
-    
-    if (pao === 12) {
-      status.style.background = "#1b4d3e";
-      status.style.color = "#20c997";
-      status.textContent = "✓ OCR working!";
-    } else {
-      status.style.background = "#4d4d1b";
-      status.style.color = "#f0ad4e";
-      status.textContent = "⚠ OCR loaded but uncertain";
-    }
-    
-  } catch (err) {
-    logDebug("ERROR: " + err.message);
-    status.style.background = "#4d1b1b";
-    status.style.color = "#ff6b6b";
-    status.textContent = "❌ Failed: " + err.message;
+      ]
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || `API Error: ${response.status}`);
   }
+  
+  const data = await response.json();
+  
+  console.log("Google Vision Response:", data);
+  
+  // 텍스트 추출
+  const textAnnotations = data.responses[0]?.textAnnotations;
+  
+  if (!textAnnotations || textAnnotations.length === 0) {
+    return null;
+  }
+  
+  // 전체 텍스트
+  const fullText = textAnnotations[0].description;
+  
+  return extractPAO(fullText);
 }
 
 document.getElementById("fileInput").onchange = async (e) => {
@@ -382,92 +253,44 @@ document.getElementById("fileInput").onchange = async (e) => {
   if (!file) return;
 
   fileName.textContent = file.name;
-
-  status.style.display = "block";
-  status.style.background = "#4d4d1b";
-  status.style.color = "#f0ad4e";
-  status.textContent = "📷 Loading...";
-
-  debug.style.display = "block";
-  debug.textContent = "=== OCR Analysis ===\n";
-
-  const img = new Image();
-  img.onload = async () => {
-    preview.src = img.src;
+  
+  const reader = new FileReader();
+  
+  reader.onload = async (event) => {
+    const base64 = event.target.result;
+    
+    preview.src = base64;
     preview.style.display = "block";
-    
-    logDebug(`Image: ${file.name} (${(file.size/1024).toFixed(1)}KB)`);
-    logDebug(`Size: ${img.width}x${img.height}`);
-    
-    try {
-      status.textContent = "🔍 Preprocessing (3 versions)...";
-      
-      const processed = preprocessImages(img);
-      
-      // 전처리된 이미지 표시
-      processedImages.innerHTML = '';
-      processedImages.style.display = 'grid';
-      processed.forEach(p => {
-        const imgEl = document.createElement('img');
-        imgEl.src = p.data;
-        imgEl.title = p.name;
-        processedImages.appendChild(imgEl);
-      });
-      
-      logDebug(`Created ${processed.length} processed versions`);
-      
-      let foundPAO = null;
-      
-      // 각 버전에서 OCR 시도
-      for (let i = 0; i < processed.length; i++) {
-        if (foundPAO) break;
-        
-        const version = processed[i];
-        logDebug(`\n--- Trying ${version.name} ---`);
-        status.textContent = `🔍 Analyzing ${version.name}...`;
-        
-        const { data: { text, confidence } } = await Tesseract.recognize(version.data, 'eng', {
-          logger: m => {
-            if (m.status === 'recognizing text') {
-              const pct = Math.round(m.progress * 100);
-              status.textContent = `🔍 ${version.name} ${pct}%`;
-            }
-          },
-          tessedit_char_whitelist: '0123456789MmOoNnTtHh ',
-        });
 
-        logDebug(`Confidence: ${confidence.toFixed(1)}%`);
-        logDebug(`Text:\n${text}`);
-        
-        const pao = extractPAO(text);
-        if (pao) {
-          foundPAO = pao;
-          logDebug(`✓✓✓ SUCCESS with ${version.name}!`);
-          break;
-        }
-      }
+    status.style.display = "block";
+    status.style.background = "#4d4d1b";
+    status.style.color = "#f0ad4e";
+    status.textContent = "🔍 Analyzing with Google Vision...";
+
+    try {
+      const pao = await detectWithGoogle(base64);
       
-      if (foundPAO) {
-        selectPAO(foundPAO);
+      if (pao) {
+        selectPAO(pao);
         updateResult();
         status.style.background = "#1b4d3e";
         status.style.color = "#20c997";
-        status.textContent = `✓ Detected: ${foundPAO}M`;
+        status.textContent = `✓ Detected: ${pao}M`;
       } else {
         status.style.background = "#4d1b1b";
         status.style.color = "#ff6b6b";
-        status.textContent = "❌ No PAO detected. Select manually ↓";
+        status.textContent = "❌ Could not detect PAO. Select manually ↓";
       }
       
     } catch (err) {
-      logDebug("ERROR: " + err.message);
+      console.error(err);
       status.style.background = "#4d1b1b";
       status.style.color = "#ff6b6b";
       status.textContent = "⚠ Error: " + err.message;
     }
   };
   
-  img.src = URL.createObjectURL(file);
+  reader.readAsDataURL(file);
 };
 
 opened.onchange = updateResult;
