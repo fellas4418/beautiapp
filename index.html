@@ -408,6 +408,21 @@ saveBtn.onclick = () => {
   renderShelf();
 };
 
+// Helper function to compute status from expiryDate
+function computeStatusFromExpiry(expiryDate) {
+  const today = new Date();
+  const expiry = new Date(expiryDate);
+  const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+  
+  if (daysLeft < 0) {
+    return "TOSS";
+  } else if (daysLeft <= 60) {
+    return "USE SOON";
+  } else {
+    return "KEEP";
+  }
+}
+
 // Render Shelf Items
 function renderShelf() {
   const stored = localStorage.getItem("myShelf");
@@ -425,10 +440,16 @@ function renderShelf() {
   }
   
   shelfItems.innerHTML = shelf.map(item => {
+    // Backfill status if missing or undefined
+    let itemStatus = item.status;
+    if (!itemStatus || itemStatus === "undefined") {
+      itemStatus = computeStatusFromExpiry(item.expiryDate);
+    }
+    
     let statusColor = "";
-    if (item.status === "TOSS") {
+    if (itemStatus === "TOSS") {
       statusColor = "#4d1b1b";
-    } else if (item.status === "USE SOON") {
+    } else if (itemStatus === "USE SOON") {
       statusColor = "#4d4d1b";
     } else {
       statusColor = "#1b4d3e";
@@ -443,7 +464,7 @@ function renderShelf() {
             <div class="shelf-item-expiry">Expires: ${item.expiryDate}</div>
           </div>
           <div class="shelf-item-status" style="background: ${statusColor};">
-            ${item.status}
+            ${itemStatus}
           </div>
         </div>
       </div>
