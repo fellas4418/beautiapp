@@ -75,6 +75,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <div id="status" class="status" style="display:none"></div>
 
 <button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
+<button onclick="window.location.href='shelf.html'" style="width:100%; margin-top:10px; background:#667eea;">View My Shelf</button>
 </div>
 
 <div class="card">
@@ -342,13 +343,15 @@ saveBtn.onclick = () => {
 
   shelf.push(item);
   localStorage.setItem("myShelf", JSON.stringify(shelf));
+  
+  alert("✓ Saved to My Shelf!");
 };
 
 opened.onchange = updateResult;
 </script>
 
 <!-- 숨겨진 API 키 -->
-<input type="text" id="apiKey" value="여기에_본인의_실제_API_키를_입력하세요" style="display:none;" />
+<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
 
 </body>
 </html>
