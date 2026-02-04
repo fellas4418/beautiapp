@@ -72,7 +72,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <div id="result" class="result">Select a PAO period</div>
 <div id="status" class="status" style="display:none"></div>
 
-<button id="saveBtn" style="display:none; width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
+<button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
 </div>
 
 <div class="card">
@@ -124,7 +124,6 @@ function addMonths(d, m) {
 function updateResult() {
   if (!selectedPAO) { 
     result.textContent = "Select a PAO period";
-    saveBtn.style.display = "none";
     return; 
   }
   const toss = addMonths(opened.value, selectedPAO);
@@ -142,9 +141,7 @@ function updateResult() {
     result.textContent += ` (${daysLeft} days left)`;
   }
 
-  if (currentImageDataURL) {
-    saveBtn.style.display = "block";
-  }
+  saveBtn.style.display = "block";
 }
 
 function extractPAO(text) {
@@ -303,7 +300,7 @@ document.getElementById("fileInput").onchange = async (e) => {
 };
 
 saveBtn.onclick = () => {
-  if (!selectedPAO || !currentImageDataURL) return;
+  if (!selectedPAO) return;
 
   const expiryDate = addMonths(opened.value, selectedPAO).toISOString().slice(0, 10);
 
