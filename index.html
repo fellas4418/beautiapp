@@ -47,6 +47,22 @@ input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius
 .status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
 label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
 .api-setup { background: #1f1f2e; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px; color: #aaa; line-height: 1.5; }
+
+/* Subtle animation for status label */
+@keyframes statusFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-label.animate {
+  animation: statusFadeUp 250ms ease-out;
+}
 </style>
 </head>
 
@@ -92,6 +108,7 @@ const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
 let selectedPAO = null;
 let currentImageDataURL = null;
+let lastStatus = null;
 
 const opened = document.getElementById("opened");
 const paoBox = document.getElementById("paoBtns");
@@ -129,6 +146,7 @@ function updateResult() {
   if (!selectedPAO) { 
     result.textContent = "Select a PAO period";
     statusLabel.style.display = "none";
+    lastStatus = null;
     return; 
   }
   const toss = addMonths(opened.value, selectedPAO);
@@ -159,6 +177,14 @@ function updateResult() {
   } else {
     statusText = "KEEP";
     statusColor = "#1b4d3e";
+  }
+  
+  // Trigger animation only if status changed
+  if (statusText !== lastStatus) {
+    statusLabel.classList.remove("animate");
+    void statusLabel.offsetWidth; // Force reflow
+    statusLabel.classList.add("animate");
+    lastStatus = statusText;
   }
   
   statusLabel.textContent = statusText;
@@ -351,7 +377,7 @@ opened.onchange = updateResult;
 </script>
 
 <!-- 숨겨진 API 키 -->
-<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
+<input type="text" id="apiKey" value="AIzaSyDbKZv9_YFbECUlIQhK1lcI_G0KcX3eMGc" style="display:none;" />
 
 </body>
 </html>
