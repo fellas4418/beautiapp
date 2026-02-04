@@ -54,12 +54,6 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <h2>💄 PAO Calculator</h2>
 
 <div class="card">
-<label>🔑 Google Cloud Vision API Key</label>
-<input type="text" id="apiKey" placeholder="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" />
-<div class="api-setup">
-Using Google Cloud Vision API for accurate text detection
-</div>
-
 <label>Opening Date</label>
 <input type="date" id="opened">
 
@@ -93,7 +87,6 @@ const PAOS = [3, 6, 9, 12, 18, 24, 36];
 let selectedPAO = null;
 
 const opened = document.getElementById("opened");
-const apiKey = document.getElementById("apiKey");
 const paoBox = document.getElementById("paoBtns");
 const result = document.getElementById("result");
 const preview = document.getElementById("preview");
@@ -195,10 +188,11 @@ function extractPAO(text) {
 
 // 🔍 Google Cloud Vision API
 async function detectWithGoogle(base64Image) {
+  const apiKey = document.getElementById("apiKey");
   const key = apiKey.value.trim();
   
   if (!key) {
-    throw new Error("Please enter your Google Cloud API key");
+    throw new Error("API key not found");
   }
   
   // base64에서 data:image/... 부분 제거
@@ -295,5 +289,9 @@ document.getElementById("fileInput").onchange = async (e) => {
 
 opened.onchange = updateResult;
 </script>
+
+<!-- 숨겨진 API 키 -->
+<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
+
 </body>
 </html>
