@@ -65,8 +65,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 }
 
 /* Shelf section styles */
-.shelf-section { display: none; margin-top: 24px; }
-.shelf-section.visible { display: block; }
+.shelf-section { margin-top: 24px; }
 .shelf-item { background: #111318; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
 .shelf-item img { max-height: 200px; object-fit: contain; margin-bottom: 10px; }
 .shelf-item-info { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
@@ -101,7 +100,6 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <div id="status" class="status" style="display:none"></div>
 
 <button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
-<button id="viewShelfBtn" style="width:100%; margin-top:10px; background:#667eea;">View My Shelf</button>
 </div>
 
 <div class="card">
@@ -136,8 +134,6 @@ const preview = document.getElementById("preview");
 const status = document.getElementById("status");
 const fileName = document.getElementById("fileName");
 const saveBtn = document.getElementById("saveBtn");
-const viewShelfBtn = document.getElementById("viewShelfBtn");
-const shelfSection = document.getElementById("shelfSection");
 const shelfItems = document.getElementById("shelfItems");
 
 opened.value = new Date().toISOString().slice(0, 10);
@@ -211,6 +207,8 @@ function updateResult() {
   statusLabel.style.display = "block";
 
   saveBtn.style.display = "block";
+  
+  renderShelf();
 }
 
 function extractPAO(text) {
@@ -406,20 +404,8 @@ saveBtn.onclick = () => {
   localStorage.setItem("myShelf", JSON.stringify(shelf));
   
   alert("✓ Saved to My Shelf!");
-};
-
-// Toggle Shelf Section
-viewShelfBtn.onclick = () => {
-  const isVisible = shelfSection.classList.contains("visible");
   
-  if (isVisible) {
-    shelfSection.classList.remove("visible");
-    viewShelfBtn.textContent = "View My Shelf";
-  } else {
-    shelfSection.classList.add("visible");
-    viewShelfBtn.textContent = "Hide My Shelf";
-    renderShelf();
-  }
+  renderShelf();
 };
 
 // Render Shelf Items
@@ -466,6 +452,9 @@ function renderShelf() {
 }
 
 opened.onchange = updateResult;
+
+// Initial render on page load
+renderShelf();
 </script>
 
 <input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
