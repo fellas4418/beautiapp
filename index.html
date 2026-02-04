@@ -12,21 +12,54 @@ body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-syste
 .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
 .card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
 h2 { margin: 0 0 20px 0; font-size: 28px; }
-img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 300px; object-fit: contain; }
+img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; background: #000; }
 .pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
 button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
 button:hover { background: #2a3142; transform: translateY(-2px); }
 button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
 .result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
 input[type="date"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; }
-input[type="file"] { width: 100%; padding: 10px; background: #1a1d2e; border: 2px dashed #333; border-radius: 8px; color: #e8e8ea; cursor: pointer; margin-top: 10px; }
-input[type="file"]::-webkit-file-upload-button { background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+.file-upload-wrapper { position: relative; margin-top: 10px; }
+.file-upload-wrapper input[type="file"] { 
+  position: absolute; 
+  opacity: 0; 
+  width: 100%; 
+  height: 100%; 
+  cursor: pointer; 
+  z-index: 2;
+}
+.file-upload-label {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: #667eea;
+  color: white;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.file-upload-label:hover {
+  background: #5568d3;
+}
+.file-name {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #aaa;
+  text-align: center;
+}
+
 .status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
 label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
-.debug { margin-top: 10px; padding: 10px; background: #1a1d2e; border-radius: 8px; font-size: 11px; color: #888; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; font-family: monospace; }
+.debug { margin-top: 10px; padding: 10px; background: #1a1d2e; border-radius: 8px; font-size: 11px; color: #888; max-height: 250px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; font-family: monospace; border: 1px solid #333; }
 .info-box { background: #1a1d2e; padding: 14px; border-radius: 10px; margin-top: 16px; font-size: 14px; line-height: 1.6; color: #aaa; }
 .info-box strong { color: #667eea; }
 .test-btn { background: #dc3545; margin-top: 10px; width: 100%; }
+canvas { display: none; }
+.processed-images { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.processed-images img { max-height: 150px; }
 </style>
 </head>
 
@@ -42,8 +75,16 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <div class="pao" id="paoBtns"></div>
 
 <label>Upload Product Photo (Optional)</label>
-<input type="file" id="fileInput" accept="image/*">
+<div class="file-upload-wrapper">
+  <input type="file" id="fileInput" accept="image/*">
+  <div class="file-upload-label">📷 Choose Photo</div>
+</div>
+<div class="file-name" id="fileName"></div>
+
+<canvas id="canvas"></canvas>
 <img id="preview" style="display:none">
+
+<div class="processed-images" id="processedImages" style="display:none"></div>
 
 <button class="test-btn" onclick="testOCR()">🧪 Test OCR System</button>
 
@@ -57,7 +98,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <div class="info-box">
 <strong>Period After Opening (PAO)</strong> indicates how long a cosmetic product is safe to use after opening.<br><br>
 Look for the open jar symbol on your product with a number (e.g., 12M = 12 months).<br><br>
-You can upload a photo of the PAO symbol and our OCR will try to detect it automatically.
+Upload a clear photo of the PAO symbol for automatic detection.
 </div>
 </div>
 </div>
@@ -72,6 +113,9 @@ const result = document.getElementById("result");
 const preview = document.getElementById("preview");
 const status = document.getElementById("status");
 const debug = document.getElementById("debug");
+const fileName = document.getElementById("fileName");
+const canvas = document.getElementById("canvas");
+const processedImages = document.getElementById("processedImages");
 
 opened.value = new Date().toISOString().slice(0, 10);
 
@@ -123,125 +167,213 @@ function logDebug(msg) {
   console.log(msg);
 }
 
-// 🔍 Enhanced PAO extraction function
+// 🔍 초강력 PAO 추출 - 모든 가능한 패턴
 function extractPAO(text) {
-  logDebug("=== Starting PAO Extraction ===");
-  logDebug("Original text: " + text);
+  logDebug("=== Extracting PAO ===");
+  logDebug("Original text:\n" + text);
   
-  // Step 1: Preprocessing
-  let clean = text.replace(/\s+/g, '').toUpperCase();
-  logDebug("Cleaned text: " + clean);
-  
-  // Step 2: Pattern matching
-  const patterns = [
-    { name: "Standard M", regex: /(\d+)M\b/i },
-    { name: "Spaced M", regex: /(\d+)\s*M\b/i },
-    { name: "MO format", regex: /(\d+)MO/i },
-    { name: "MONTH format", regex: /(\d+)MONTH/i },
-    { name: "PAO prefix", regex: /PAO[:\s]*(\d+)M/i },
-    { name: "PERIOD prefix", regex: /PERIOD[:\s]*(\d+)M/i },
-    { name: "Surrounded", regex: /[^\d](\d+)M[^\d]/i },
+  // 여러 버전의 텍스트 생성
+  const versions = [
+    text,
+    text.toUpperCase(),
+    text.toLowerCase(),
+    text.replace(/\s+/g, ''),
+    text.replace(/[^a-zA-Z0-9]/g, ''),
+    text.replace(/[^a-zA-Z0-9]/g, ' '),
   ];
   
-  for (let { name, regex } of patterns) {
-    const match = clean.match(regex);
-    if (match) {
-      const num = parseInt(match[1]);
-      logDebug(`Pattern "${name}" matched: ${match[0]} -> ${num}`);
-      if (PAOS.includes(num)) {
-        logDebug(`✓ Valid PAO found: ${num}M`);
-        return num;
-      } else {
-        logDebug(`✗ Number ${num} not in valid PAO list`);
-      }
-    }
-  }
+  logDebug("Text versions: " + versions.length);
   
-  // Step 3: Extract all numbers
-  const numbers = clean.match(/\d+/g);
-  logDebug("All numbers found: " + (numbers ? numbers.join(", ") : "none"));
+  // 모든 가능한 패턴
+  const patterns = [
+    /(\d{1,2})\s*M\b/gi,
+    /(\d{1,2})\s*m\b/gi,
+    /(\d{1,2})M/gi,
+    /(\d{1,2})m/gi,
+    /(\d{1,2})\s*MO/gi,
+    /(\d{1,2})\s*MONTH/gi,
+    /\bM\s*(\d{1,2})/gi,
+    /PAO\D*(\d{1,2})/gi,
+  ];
   
-  if (numbers) {
-    for (let numStr of numbers) {
-      const num = parseInt(numStr);
-      if (PAOS.includes(num)) {
-        const idx = clean.indexOf(numStr);
-        const nearby = clean.substring(Math.max(0, idx - 2), Math.min(clean.length, idx + numStr.length + 2));
-        logDebug(`Checking number ${num}, nearby context: "${nearby}"`);
-        if (nearby.includes('M')) {
-          logDebug(`✓ Found valid PAO by proximity: ${num}M`);
+  // 모든 버전에서 모든 패턴 시도
+  for (let ver of versions) {
+    for (let pattern of patterns) {
+      pattern.lastIndex = 0; // 정규식 리셋
+      let match;
+      while ((match = pattern.exec(ver)) !== null) {
+        const num = parseInt(match[1]);
+        logDebug(`Pattern ${pattern.source} matched: "${match[0]}" -> ${num}`);
+        if (PAOS.includes(num)) {
+          logDebug(`✓ VALID PAO FOUND: ${num}M`);
           return num;
         }
       }
     }
   }
   
-  logDebug("✗ No valid PAO found");
+  // 숫자 + M 조합 직접 찾기
+  const allMatches = text.match(/\d+/g);
+  logDebug("All numbers: " + (allMatches ? allMatches.join(", ") : "none"));
+  
+  if (allMatches) {
+    for (let numStr of allMatches) {
+      const num = parseInt(numStr);
+      if (PAOS.includes(num)) {
+        // 이 숫자 주변 3글자 확인
+        const idx = text.indexOf(numStr);
+        const before = text.substring(Math.max(0, idx - 2), idx);
+        const after = text.substring(idx + numStr.length, Math.min(text.length, idx + numStr.length + 2));
+        const context = before + numStr + after;
+        
+        logDebug(`Number ${num} context: "${context}"`);
+        
+        if (/m/i.test(after) || /m/i.test(before)) {
+          logDebug(`✓ FOUND BY CONTEXT: ${num}M`);
+          return num;
+        }
+      }
+    }
+  }
+  
+  logDebug("✗ No PAO found");
   return null;
+}
+
+// 다중 이미지 전처리 (3가지 버전)
+function preprocessImages(img) {
+  const results = [];
+  
+  // 기본 크기 조정
+  let width = img.width;
+  let height = img.height;
+  const maxSize = 2000;
+  
+  if (width > maxSize || height > maxSize) {
+    if (width > height) {
+      height = (height / width) * maxSize;
+      width = maxSize;
+    } else {
+      width = (width / height) * maxSize;
+      height = maxSize;
+    }
+  }
+  
+  // 버전 1: 고대비 (High Contrast)
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, width, height);
+  
+  let imageData = ctx.getImageData(0, 0, width, height);
+  let data = imageData.data;
+  
+  // 대비 증가
+  const contrast = 100;
+  const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));
+    data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128));
+    data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128));
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
+  results.push({ name: "High Contrast", data: canvas.toDataURL() });
+  
+  // 버전 2: 흑백 + 샤프닝
+  ctx.drawImage(img, 0, 0, width, height);
+  imageData = ctx.getImageData(0, 0, width, height);
+  data = imageData.data;
+  
+  // 그레이스케일
+  for (let i = 0; i < data.length; i += 4) {
+    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    data[i] = data[i + 1] = data[i + 2] = avg;
+  }
+  
+  // 임계값 적용
+  for (let i = 0; i < data.length; i += 4) {
+    const brightness = data[i];
+    const threshold = brightness > 128 ? 255 : 0;
+    data[i] = data[i + 1] = data[i + 2] = threshold;
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
+  results.push({ name: "B&W Threshold", data: canvas.toDataURL() });
+  
+  // 버전 3: 반전 (Inverted)
+  ctx.drawImage(img, 0, 0, width, height);
+  imageData = ctx.getImageData(0, 0, width, height);
+  data = imageData.data;
+  
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = 255 - data[i];
+    data[i + 1] = 255 - data[i + 1];
+    data[i + 2] = 255 - data[i + 2];
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
+  results.push({ name: "Inverted", data: canvas.toDataURL() });
+  
+  return results;
 }
 
 async function testOCR() {
   status.style.display = "block";
   status.style.background = "#4d4d1b";
   status.style.color = "#f0ad4e";
-  status.textContent = "🧪 Testing Tesseract.js...";
+  status.textContent = "🧪 Testing OCR...";
   
   debug.style.display = "block";
-  debug.textContent = "=== OCR System Test ===\n";
+  debug.textContent = "=== OCR Test ===\n";
   
   try {
-    logDebug("Checking Tesseract availability...");
-    
     if (typeof Tesseract === 'undefined') {
-      throw new Error("Tesseract.js library not loaded!");
+      throw new Error("Tesseract.js not loaded!");
     }
     
-    logDebug("✓ Tesseract.js is loaded");
-    logDebug("Version: " + (Tesseract.version || "unknown"));
+    logDebug("✓ Tesseract.js loaded");
     
-    // Create a simple test image with text
-    const canvas = document.createElement('canvas');
-    canvas.width = 200;
-    canvas.height = 100;
-    const ctx = canvas.getContext('2d');
+    const testCanvas = document.createElement('canvas');
+    testCanvas.width = 300;
+    testCanvas.height = 150;
+    const ctx = testCanvas.getContext('2d');
+    
     ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, 200, 100);
+    ctx.fillRect(0, 0, 300, 150);
     ctx.fillStyle = 'black';
-    ctx.font = '40px Arial';
-    ctx.fillText('12M', 50, 60);
+    ctx.font = 'bold 60px Arial';
+    ctx.fillText('12M', 80, 90);
     
-    canvas.toBlob(async (blob) => {
-      logDebug("Testing with generated image '12M'...");
-      
-      const { data: { text } } = await Tesseract.recognize(blob, 'eng', {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            const pct = Math.round(m.progress * 100);
-            status.textContent = `🧪 Test running... ${pct}%`;
-          }
+    const blob = await new Promise(resolve => testCanvas.toBlob(resolve));
+    
+    const { data: { text } } = await Tesseract.recognize(blob, 'eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          status.textContent = `🧪 Testing... ${Math.round(m.progress * 100)}%`;
         }
-      });
-      
-      logDebug("Test OCR result: " + text);
-      
-      const pao = extractPAO(text);
-      
-      if (pao === 12) {
-        status.style.background = "#1b4d3e";
-        status.style.color = "#20c997";
-        status.textContent = "✓ OCR system working correctly!";
-      } else {
-        status.style.background = "#4d1b1b";
-        status.style.color = "#ff6b6b";
-        status.textContent = "⚠ OCR system loaded but detection may be inaccurate";
       }
     });
+    
+    logDebug("Test text: " + text);
+    const pao = extractPAO(text);
+    
+    if (pao === 12) {
+      status.style.background = "#1b4d3e";
+      status.style.color = "#20c997";
+      status.textContent = "✓ OCR working!";
+    } else {
+      status.style.background = "#4d4d1b";
+      status.style.color = "#f0ad4e";
+      status.textContent = "⚠ OCR loaded but uncertain";
+    }
     
   } catch (err) {
     logDebug("ERROR: " + err.message);
     status.style.background = "#4d1b1b";
     status.style.color = "#ff6b6b";
-    status.textContent = "❌ OCR system failed: " + err.message;
+    status.textContent = "❌ Failed: " + err.message;
   }
 }
 
@@ -249,72 +381,96 @@ document.getElementById("fileInput").onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  preview.src = URL.createObjectURL(file);
-  preview.style.display = "block";
+  fileName.textContent = file.name;
 
   status.style.display = "block";
   status.style.background = "#4d4d1b";
   status.style.color = "#f0ad4e";
-  status.textContent = "🔍 Detecting PAO...";
+  status.textContent = "📷 Loading...";
 
   debug.style.display = "block";
-  debug.textContent = "=== OCR Analysis Started ===\n";
+  debug.textContent = "=== OCR Analysis ===\n";
 
-  try {
-    logDebug("File name: " + file.name);
-    logDebug("File size: " + (file.size / 1024).toFixed(2) + " KB");
-    logDebug("File type: " + file.type);
+  const img = new Image();
+  img.onload = async () => {
+    preview.src = img.src;
+    preview.style.display = "block";
     
-    logDebug("Starting Tesseract recognition...");
+    logDebug(`Image: ${file.name} (${(file.size/1024).toFixed(1)}KB)`);
+    logDebug(`Size: ${img.width}x${img.height}`);
     
-    const { data: { text, confidence } } = await Tesseract.recognize(file, 'eng', {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          const pct = Math.round(m.progress * 100);
-          status.textContent = `🔍 Analyzing... ${pct}%`;
+    try {
+      status.textContent = "🔍 Preprocessing (3 versions)...";
+      
+      const processed = preprocessImages(img);
+      
+      // 전처리된 이미지 표시
+      processedImages.innerHTML = '';
+      processedImages.style.display = 'grid';
+      processed.forEach(p => {
+        const imgEl = document.createElement('img');
+        imgEl.src = p.data;
+        imgEl.title = p.name;
+        processedImages.appendChild(imgEl);
+      });
+      
+      logDebug(`Created ${processed.length} processed versions`);
+      
+      let foundPAO = null;
+      
+      // 각 버전에서 OCR 시도
+      for (let i = 0; i < processed.length; i++) {
+        if (foundPAO) break;
+        
+        const version = processed[i];
+        logDebug(`\n--- Trying ${version.name} ---`);
+        status.textContent = `🔍 Analyzing ${version.name}...`;
+        
+        const { data: { text, confidence } } = await Tesseract.recognize(version.data, 'eng', {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              const pct = Math.round(m.progress * 100);
+              status.textContent = `🔍 ${version.name} ${pct}%`;
+            }
+          },
+          tessedit_char_whitelist: '0123456789MmOoNnTtHh ',
+        });
+
+        logDebug(`Confidence: ${confidence.toFixed(1)}%`);
+        logDebug(`Text:\n${text}`);
+        
+        const pao = extractPAO(text);
+        if (pao) {
+          foundPAO = pao;
+          logDebug(`✓✓✓ SUCCESS with ${version.name}!`);
+          break;
         }
       }
-    });
-
-    logDebug("OCR completed");
-    logDebug("Confidence: " + confidence);
-    logDebug("Raw text output:\n" + text);
-    
-    const pao = extractPAO(text);
-    
-    if (pao) {
-      selectPAO(pao);
-      updateResult();
-      status.style.background = "#1b4d3e";
-      status.style.color = "#20c997";
-      status.textContent = `✓ Detected ${pao}M successfully!`;
-    } else {
+      
+      if (foundPAO) {
+        selectPAO(foundPAO);
+        updateResult();
+        status.style.background = "#1b4d3e";
+        status.style.color = "#20c997";
+        status.textContent = `✓ Detected: ${foundPAO}M`;
+      } else {
+        status.style.background = "#4d1b1b";
+        status.style.color = "#ff6b6b";
+        status.textContent = "❌ No PAO detected. Select manually ↓";
+      }
+      
+    } catch (err) {
+      logDebug("ERROR: " + err.message);
       status.style.background = "#4d1b1b";
       status.style.color = "#ff6b6b";
-      status.textContent = "❌ Detection failed. Please select manually ↓";
+      status.textContent = "⚠ Error: " + err.message;
     }
-  } catch (err) {
-    logDebug("CRITICAL ERROR: " + err.message);
-    logDebug("Stack trace: " + err.stack);
-    status.style.background = "#4d1b1b";
-    status.style.color = "#ff6b6b";
-    status.textContent = "⚠ Error: " + err.message;
-  }
+  };
+  
+  img.src = URL.createObjectURL(file);
 };
 
 opened.onchange = updateResult;
-
-// Check Tesseract on page load
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (typeof Tesseract === 'undefined') {
-      status.style.display = "block";
-      status.style.background = "#4d1b1b";
-      status.style.color = "#ff6b6b";
-      status.textContent = "⚠ Tesseract.js failed to load. Check your internet connection.";
-    }
-  }, 3000);
-});
 </script>
 </body>
 </html>
