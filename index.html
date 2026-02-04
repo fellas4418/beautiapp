@@ -423,6 +423,16 @@ function computeStatusFromExpiry(expiryDate) {
   }
 }
 
+// Helper function to get status priority for sorting
+function getStatusPriority(status) {
+  const priorities = {
+    "TOSS": 1,
+    "USE SOON": 2,
+    "KEEP": 3
+  };
+  return priorities[status] || 999;
+}
+
 // Render Shelf Items
 function renderShelf() {
   const stored = localStorage.getItem("myShelf");
@@ -439,12 +449,26 @@ function renderShelf() {
     return;
   }
   
-  shelfItems.innerHTML = shelf.map(item => {
-    // Backfill status if missing or undefined
+  // Backfill status for each item and create display array
+  const itemsWithStatus = shelf.map(item => {
     let itemStatus = item.status;
     if (!itemStatus || itemStatus === "undefined") {
       itemStatus = computeStatusFromExpiry(item.expiryDate);
     }
+    return {
+      ...item,
+      displayStatus: itemStatus
+    };
+  });
+  
+  // Sort by status priority (TOSS -> USE SOON -> KEEP)
+  // Stable sort preserves original order within same status group
+  itemsWithStatus.sort((a, b) => {
+    return getStatusPriority(a.displayStatus) - getStatusPriority(b.displayStatus);
+  });
+  
+  shelfItems.innerHTML = itemsWithStatus.map(item => {
+    const itemStatus = item.displayStatus;
     
     let statusColor = "";
     if (itemStatus === "TOSS") {
