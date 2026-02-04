@@ -71,6 +71,8 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 <div id="result" class="result">Select a PAO period</div>
 <div id="status" class="status" style="display:none"></div>
+
+<button id="saveBtn" style="display:none; width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
 </div>
 
 <div class="card">
@@ -86,6 +88,7 @@ Look for the jar symbol with a number (e.g., 12M = 12 months).
 const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
 let selectedPAO = null;
+let currentImageDataURL = null;
 
 const opened = document.getElementById("opened");
 const paoBox = document.getElementById("paoBtns");
@@ -93,6 +96,7 @@ const result = document.getElementById("result");
 const preview = document.getElementById("preview");
 const status = document.getElementById("status");
 const fileName = document.getElementById("fileName");
+const saveBtn = document.getElementById("saveBtn");
 
 opened.value = new Date().toISOString().slice(0, 10);
 
@@ -119,7 +123,8 @@ function addMonths(d, m) {
 
 function updateResult() {
   if (!selectedPAO) { 
-    result.textContent = "Select a PAO period"; 
+    result.textContent = "Select a PAO period";
+    saveBtn.style.display = "none";
     return; 
   }
   const toss = addMonths(opened.value, selectedPAO);
@@ -135,6 +140,10 @@ function updateResult() {
     result.textContent += ` (Expired ${Math.abs(daysLeft)} days ago)`;
   } else {
     result.textContent += ` (${daysLeft} days left)`;
+  }
+
+  if (currentImageDataURL) {
+    saveBtn.style.display = "block";
   }
 }
 
@@ -253,6 +262,7 @@ document.getElementById("fileInput").onchange = async (e) => {
   
   reader.onload = async (event) => {
     const base64 = event.target.result;
+    currentImageDataURL = base64;
     
     preview.src = base64;
     preview.style.display = "block";
@@ -292,11 +302,33 @@ document.getElementById("fileInput").onchange = async (e) => {
   reader.readAsDataURL(file);
 };
 
+saveBtn.onclick = () => {
+  if (!selectedPAO || !currentImageDataURL) return;
+
+  const expiryDate = addMonths(opened.value, selectedPAO).toISOString().slice(0, 10);
+
+  const item = {
+    image: currentImageDataURL,
+    pao: selectedPAO + "M",
+    openingDate: opened.value,
+    expiryDate: expiryDate
+  };
+
+  let shelf = [];
+  const stored = localStorage.getItem("myShelf");
+  if (stored) {
+    shelf = JSON.parse(stored);
+  }
+
+  shelf.push(item);
+  localStorage.setItem("myShelf", JSON.stringify(shelf));
+};
+
 opened.onchange = updateResult;
 </script>
 
 <!-- 숨겨진 API 키 -->
-<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
+<input type="text" id="apiKey" value="여기에_본인의_실제_API_키를_입력하세요" style="display:none;" />
 
 </body>
 </html>
