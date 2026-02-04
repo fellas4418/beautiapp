@@ -66,12 +66,14 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 /* Shelf section styles */
 .shelf-section { margin-top: 24px; }
-.shelf-item { background: #111318; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.shelf-item { background: #111318; border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; }
 .shelf-item img { max-height: 200px; object-fit: contain; margin-bottom: 10px; }
 .shelf-item-info { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
 .shelf-item-pao { font-size: 14px; color: #aaa; }
 .shelf-item-expiry { font-size: 13px; color: #888; }
 .shelf-item-status { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+.delete-btn { position: absolute; top: 10px; right: 10px; background: #4d1b1b; color: #ff6b6b; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; transition: all 0.2s; padding: 0; }
+.delete-btn:hover { background: #6b2020; transform: scale(1.1); }
 </style>
 </head>
 
@@ -391,7 +393,8 @@ saveBtn.onclick = () => {
     pao: selectedPAO + "M",
     openingDate: opened.value,
     expiryDate: expiryDate,
-    status: itemStatus
+    status: itemStatus,
+    id: Date.now()
   };
 
   let shelf = [];
@@ -433,6 +436,18 @@ function getStatusPriority(status) {
   return priorities[status] || 999;
 }
 
+// Delete item from shelf
+function deleteItem(itemId) {
+  const stored = localStorage.getItem("myShelf");
+  if (!stored) return;
+  
+  let shelf = JSON.parse(stored);
+  shelf = shelf.filter(item => item.id !== itemId);
+  
+  localStorage.setItem("myShelf", JSON.stringify(shelf));
+  renderShelf();
+}
+
 // Render Shelf Items
 function renderShelf() {
   const stored = localStorage.getItem("myShelf");
@@ -455,6 +470,12 @@ function renderShelf() {
     if (!itemStatus || itemStatus === "undefined") {
       itemStatus = computeStatusFromExpiry(item.expiryDate);
     }
+    
+    // Backfill ID if missing
+    if (!item.id) {
+      item.id = Date.now() + Math.random();
+    }
+    
     return {
       ...item,
       displayStatus: itemStatus
@@ -481,6 +502,7 @@ function renderShelf() {
     
     return `
       <div class="shelf-item">
+        <button class="delete-btn" onclick="deleteItem(${item.id})">×</button>
         <img src="${item.image}" alt="Product">
         <div class="shelf-item-info">
           <div>
