@@ -17,6 +17,7 @@ button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; 
 button:hover { background: #2a3142; transform: translateY(-2px); }
 button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
 .result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
+.status-label { margin-top: 8px; font-weight: 800; font-size: 15px; text-align: center; padding: 10px; border-radius: 8px; }
 input[type="date"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; }
 input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d2e; color: #fff; font-size: 14px; }
 
@@ -70,6 +71,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <img id="preview" style="display:none">
 
 <div id="result" class="result">Select a PAO period</div>
+<div id="statusLabel" class="status-label" style="display:none"></div>
 <div id="status" class="status" style="display:none"></div>
 
 <button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
@@ -93,6 +95,7 @@ let currentImageDataURL = null;
 const opened = document.getElementById("opened");
 const paoBox = document.getElementById("paoBtns");
 const result = document.getElementById("result");
+const statusLabel = document.getElementById("statusLabel");
 const preview = document.getElementById("preview");
 const status = document.getElementById("status");
 const fileName = document.getElementById("fileName");
@@ -124,6 +127,7 @@ function addMonths(d, m) {
 function updateResult() {
   if (!selectedPAO) { 
     result.textContent = "Select a PAO period";
+    statusLabel.style.display = "none";
     return; 
   }
   const toss = addMonths(opened.value, selectedPAO);
@@ -140,6 +144,25 @@ function updateResult() {
   } else {
     result.textContent += ` (${daysLeft} days left)`;
   }
+
+  // Status classification
+  let statusText = "";
+  let statusColor = "";
+  
+  if (daysLeft < 0) {
+    statusText = "TOSS";
+    statusColor = "#4d1b1b";
+  } else if (daysLeft <= 60) {
+    statusText = "USE SOON";
+    statusColor = "#4d4d1b";
+  } else {
+    statusText = "KEEP";
+    statusColor = "#1b4d3e";
+  }
+  
+  statusLabel.textContent = statusText;
+  statusLabel.style.background = statusColor;
+  statusLabel.style.display = "block";
 
   saveBtn.style.display = "block";
 }
@@ -325,7 +348,7 @@ opened.onchange = updateResult;
 </script>
 
 <!-- 숨겨진 API 키 -->
-<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
+<input type="text" id="apiKey" value="여기에_본인의_실제_API_키를_입력하세요" style="display:none;" />
 
 </body>
 </html>
