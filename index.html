@@ -109,6 +109,7 @@ const PAOS = [3, 6, 9, 12, 18, 24, 36];
 let selectedPAO = null;
 let currentImageDataURL = null;
 let lastStatus = null;
+let ocrProcessed = false; // Guard flag to prevent duplicate OCR calls
 
 const opened = document.getElementById("opened");
 const paoBox = document.getElementById("paoBtns");
@@ -303,6 +304,9 @@ document.getElementById("fileInput").onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
+  // Reset OCR guard flag for new image
+  ocrProcessed = false;
+
   fileName.textContent = file.name;
   
   const reader = new FileReader();
@@ -313,6 +317,14 @@ document.getElementById("fileInput").onchange = async (e) => {
     
     preview.src = base64;
     preview.style.display = "block";
+
+    // Guard: prevent duplicate OCR calls
+    if (ocrProcessed) {
+      console.log("OCR already processed for this image. Skipping...");
+      return;
+    }
+
+    ocrProcessed = true; // Mark OCR as in progress
 
     status.style.display = "block";
     status.style.background = "#4d4d1b";
@@ -377,7 +389,7 @@ opened.onchange = updateResult;
 </script>
 
 <!-- 숨겨진 API 키 -->
-<input type="text" id="apiKey" value="AIzaSyDbKZv9_YFbECUlIQhK1lcI_G0KcX3eMGc" style="display:none;" />
+<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
 
 </body>
 </html>
