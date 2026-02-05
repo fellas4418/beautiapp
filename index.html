@@ -64,7 +64,6 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 .shelf-section { margin-top: 24px; }
 
-/* NEW: Compact shelf item styling */
 .shelf-item { 
   background: #111318; 
   border-radius: 12px; 
@@ -506,7 +505,6 @@ saveBtn.onclick = () => {
   const expiryDate = addMonths(opened.value, selectedPAO).toISOString().slice(0, 10);
   const itemStatus = computeStatusFromExpiry(expiryDate);
 
-  // NEW: Get product name or default to "noname"
   const name = productName.value.trim() || "noname";
 
   const item = {
@@ -525,7 +523,7 @@ saveBtn.onclick = () => {
   
   if (saveSuccess) {
     alert("✓ Saved to My Shelf!");
-    productName.value = ""; // Clear input after save
+    productName.value = "";
     renderShelf();
   }
 };
@@ -561,7 +559,6 @@ function renderShelf() {
       item.createdAt = Date.now() + Math.random();
     }
     
-    // NEW: Ensure name field exists, default to "noname"
     if (!item.name) {
       item.name = "noname";
     }
@@ -588,7 +585,6 @@ function renderShelf() {
       statusColor = "#1b4d3e";
     }
     
-    // NEW: Compact card layout
     return `
       <div class="shelf-item">
         <button class="delete-btn" onclick="deleteItem(${item.createdAt})">×</button>
@@ -620,6 +616,57 @@ opened.onchange = updateResult;
     }
   } catch (err) {
     console.error("Data cleanup error:", err);
+  }
+})();
+
+// NEW: Browser notification system
+(async function initNotifications() {
+  // Check if browser supports notifications
+  if (!("Notification" in window)) {
+    console.log("Browser does not support notifications");
+    return;
+  }
+
+  // Request permission only if not already granted or denied
+  if (Notification.permission === "default") {
+    try {
+      await Notification.requestPermission();
+    } catch (err) {
+      console.error("Notification permission error:", err);
+    }
+  }
+
+  // Only proceed if permission granted
+  if (Notification.permission !== "granted") {
+    console.log("Notification permission not granted");
+    return;
+  }
+
+  // Check shelf for expiring items
+  const shelf = refreshAllStatuses();
+  
+  if (shelf.length === 0) {
+    return;
+  }
+
+  const hasToss = shelf.some(item => item.status === "TOSS");
+  const hasUseSoon = shelf.some(item => item.status === "USE SOON");
+
+  // Notify based on priority: TOSS > USE SOON
+  if (hasToss) {
+    new Notification("PAO Calculator", {
+      body: "Some products are expired. Toss them.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🗑️</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: TOSS");
+  } else if (hasUseSoon) {
+    new Notification("PAO Calculator", {
+      body: "Some products are expiring soon.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>⚠️</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: USE SOON");
   }
 })();
 
