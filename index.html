@@ -47,6 +47,26 @@ input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius
 .status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
 label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
 
+.photo-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.photo-buttons button {
+  padding: 12px;
+  background: #667eea;
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.photo-buttons button:hover {
+  background: #5568d3;
+}
+
 @keyframes statusFadeUp {
   from {
     opacity: 0;
@@ -147,10 +167,12 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <div class="pao" id="paoBtns"></div>
 
 <label>Upload Product Photo</label>
-<div class="file-upload-wrapper">
-  <input type="file" id="fileInput" accept="image/*" capture="environment">
-  <div class="file-upload-label">📸 Take or select photo</div>
+<div class="photo-buttons">
+  <button onclick="document.getElementById('cameraInput').click()">📸 Take a photo</button>
+  <button onclick="document.getElementById('galleryInput').click()">🖼 Select from gallery</button>
 </div>
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+<input type="file" id="galleryInput" accept="image/*" style="display:none;">
 <div class="file-name" id="fileName"></div>
 
 <img id="preview" style="display:none">
@@ -368,7 +390,7 @@ async function detectWithGoogle(base64Image) {
   return extractPAO(fullText);
 }
 
-document.getElementById("fileInput").onchange = async (e) => {
+async function handleFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
 
@@ -425,7 +447,10 @@ document.getElementById("fileInput").onchange = async (e) => {
   };
   
   reader.readAsDataURL(file);
-};
+}
+
+document.getElementById("cameraInput").onchange = handleFileSelect;
+document.getElementById("galleryInput").onchange = handleFileSelect;
 
 function loadShelfFromStorage() {
   try {
