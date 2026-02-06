@@ -11,9 +11,8 @@ body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-syste
 .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
 .card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
 h2 { margin: 0 0 8px 0; font-size: 28px; }
-.subtitle { font-size: 14px; color: #888; margin-bottom: 12px; }
-.tagline { font-size: 15px; color: #e8e8ea; margin-bottom: 8px; font-weight: 500; line-height: 1.4; }
-.helper-line { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.5; }
+.subtitle { font-size: 14px; color: #888; margin-bottom: 6px; }
+.tagline { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.4; }
 img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; }
 .pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
 button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
@@ -306,7 +305,6 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <h2>KEESS</h2>
 <div class="subtitle">Keep or Toss</div>
 <div class="tagline">Know when to keep it. Know when to toss it.</div>
-<div class="helper-line">Snap a photo. We'll tell you if it's still safe.</div>
 
 <div class="card">
 <label>Product Name (optional)</label>
@@ -385,6 +383,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
 const SHELF_STORAGE_KEY = "myShelf";
+const PACIFIC_TZ = "America/Los_Angeles";
 
 let selectedPAO = null;
 let currentImageDataURL = null;
@@ -416,11 +415,27 @@ const daySelect = document.getElementById("daySelect");
 const yearSelectEst = document.getElementById("yearSelectEst");
 const monthSelectEst = document.getElementById("monthSelectEst");
 
+function getPacificMidnight(dateStr) {
+  const dateObj = new Date(dateStr + "T00:00:00");
+  const pacificDateStr = dateObj.toLocaleString("en-US", { timeZone: PACIFIC_TZ });
+  const pacificDate = new Date(pacificDateStr);
+  pacificDate.setHours(0, 0, 0, 0);
+  return pacificDate;
+}
+
+function getTodayPacific() {
+  const now = new Date();
+  const pacificNowStr = now.toLocaleString("en-US", { timeZone: PACIFIC_TZ });
+  const pacificNow = new Date(pacificNowStr);
+  pacificNow.setHours(0, 0, 0, 0);
+  return pacificNow;
+}
+
 function initDateSelectors() {
-  const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-  const currentDay = currentDate.getDate();
+  const todayPacific = getTodayPacific();
+  const currentYear = todayPacific.getFullYear();
+  const currentMonth = todayPacific.getMonth() + 1;
+  const currentDay = todayPacific.getDate();
   
   for (let y = currentYear; y >= currentYear - 5; y--) {
     yearSelect.add(new Option(y, y));
@@ -527,7 +542,11 @@ function addMonths(d, m) {
   const dt = new Date(y, mo - 1, da);
   dt.setMonth(dt.getMonth() + m);
   dt.setHours(0, 0, 0, 0);
-  return dt;
+  
+  const year = dt.getFullYear();
+  const month = String(dt.getMonth() + 1).padStart(2, '0');
+  const day = String(dt.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function getWarningColor(daysLeft) {
@@ -542,6 +561,15 @@ function getWarningColor(daysLeft) {
   }
 }
 
+function calculateDaysLeft(expiryDateStr) {
+  const todayPacific = getTodayPacific();
+  const expiryPacific = getPacificMidnight(expiryDateStr);
+  
+  const daysLeft = Math.ceil((expiryPacific - todayPacific) / (1000 * 60 * 60 * 24));
+  
+  return daysLeft;
+}
+
 function updateResult() {
   if (!selectedPAO) { 
     result.innerHTML = "Select a PAO period";
@@ -551,13 +579,9 @@ function updateResult() {
   }
   
   const openingDate = getOpeningDate();
-  const toss = addMonths(openingDate, selectedPAO);
+  const expiryDateStr = addMonths(openingDate, selectedPAO);
   
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  toss.setHours(0, 0, 0, 0);
-  
-  const daysLeft = Math.ceil((toss - today) / (1000 * 60 * 60 * 24));
+  const daysLeft = calculateDaysLeft(expiryDateStr);
   
   let statusText = "";
   let statusColor = "";
@@ -788,13 +812,7 @@ function saveShelfToStorage(shelf) {
 }
 
 function computeStatusFromExpiry(expiryDate) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const expiry = new Date(expiryDate);
-  expiry.setHours(0, 0, 0, 0);
-  
-  const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+  const daysLeft = calculateDaysLeft(expiryDate);
   
   if (daysLeft < 0) {
     return "TOSS";
@@ -832,7 +850,7 @@ saveBtn.onclick = () => {
   }
 
   const openingDate = getOpeningDate();
-  const expiryDate = addMonths(openingDate, selectedPAO).toISOString().slice(0, 10);
+  const expiryDate = addMonths(openingDate, selectedPAO);
   const itemStatus = computeStatusFromExpiry(expiryDate);
 
   const name = productName.value.trim() || "noname";
