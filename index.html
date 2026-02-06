@@ -148,8 +148,8 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 <label>Upload Product Photo</label>
 <div class="file-upload-wrapper">
-  <input type="file" id="fileInput" accept="image/*">
-  <div class="file-upload-label">📷 Select Photo</div>
+  <input type="file" id="fileInput" accept="image/*" capture="environment">
+  <div class="file-upload-label">📸 Take or select photo</div>
 </div>
 <div class="file-name" id="fileName"></div>
 
@@ -163,6 +163,9 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 </div>
 
 <div class="card">
+<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa; margin-bottom: 14px;">
+Most people use expired cosmetics without knowing it.
+</div>
 <h3 style="margin:0 0 12px 0">ℹ️ What is PAO?</h3>
 <div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa;">
 <strong style="color:#667eea">Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening.<br><br>
@@ -231,31 +234,25 @@ function updateResult() {
   const toss = addMonths(opened.value, selectedPAO);
   const daysLeft = Math.ceil((toss - new Date()) / (1000 * 60 * 60 * 24));
   
-  let emoji = "✅";
-  if (daysLeft < 0) emoji = "❌";
-  else if (daysLeft <= 30) emoji = "⚠️";
-  
-  result.textContent = `${emoji} ${selectedPAO}M · Expires on ${toss.toISOString().slice(0, 10)}`;
-  
-  if (daysLeft < 0) {
-    result.textContent += ` (expired ${Math.abs(daysLeft)} days ago)`;
-  } else {
-    result.textContent += ` (${daysLeft} days left)`;
-  }
-
   let statusText = "";
   let statusColor = "";
+  let resultMessage = "";
   
   if (daysLeft < 0) {
     statusText = "TOSS";
     statusColor = "#4d1b1b";
+    resultMessage = "🗑️ This product should be thrown away";
   } else if (daysLeft <= 60) {
     statusText = "USE SOON";
     statusColor = "#4d4d1b";
+    resultMessage = "⚠ Expiring soon — use within 30 days";
   } else {
     statusText = "KEEP";
     statusColor = "#1b4d3e";
+    resultMessage = "✅ Safe (for now)";
   }
+  
+  result.textContent = resultMessage;
   
   if (statusText !== lastStatus) {
     statusLabel.classList.remove("animate");
@@ -619,15 +616,12 @@ opened.onchange = updateResult;
   }
 })();
 
-// NEW: Browser notification system
 (async function initNotifications() {
-  // Check if browser supports notifications
   if (!("Notification" in window)) {
     console.log("Browser does not support notifications");
     return;
   }
 
-  // Request permission only if not already granted or denied
   if (Notification.permission === "default") {
     try {
       await Notification.requestPermission();
@@ -636,13 +630,11 @@ opened.onchange = updateResult;
     }
   }
 
-  // Only proceed if permission granted
   if (Notification.permission !== "granted") {
     console.log("Notification permission not granted");
     return;
   }
 
-  // Check shelf for expiring items
   const shelf = refreshAllStatuses();
   
   if (shelf.length === 0) {
@@ -652,7 +644,6 @@ opened.onchange = updateResult;
   const hasToss = shelf.some(item => item.status === "TOSS");
   const hasUseSoon = shelf.some(item => item.status === "USE SOON");
 
-  // Notify based on priority: TOSS > USE SOON
   if (hasToss) {
     new Notification("PAO Calculator", {
       body: "Some products are expired. Toss them.",
