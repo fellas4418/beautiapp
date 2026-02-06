@@ -198,7 +198,6 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   background: #667eea;
 }
 
-/* ENHANCED: Wheel-like rolling selector visual */
 .date-selectors-wrapper {
   position: relative;
   margin-top: 16px;
@@ -243,7 +242,6 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   grid-template-columns: 1fr 1fr;
 }
 
-/* ENHANCED: Larger, wheel-like select elements */
 .date-selectors select {
   padding: 16px 10px;
   border-radius: 12px;
@@ -267,7 +265,6 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
-/* ENHANCED: Visual differentiation for estimated mode */
 .date-selectors.estimated select {
   border-style: dashed;
   border-color: #4d4d1b;
@@ -279,7 +276,6 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.2);
 }
 
-/* ENHANCED: Estimated mode badge */
 .estimated-badge {
   display: inline-block;
   margin-top: 12px;
@@ -333,7 +329,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 </div>
 
 <div id="estimatedBadge" class="estimated-badge" style="display:none;">
-  Estimated opening date
+  Opening date is estimated
 </div>
 
 <div id="helperText" class="helper-text" style="display:none;">
@@ -527,6 +523,8 @@ function addMonths(d, m) {
   const [y, mo, da] = d.split("-").map(Number);
   const dt = new Date(y, mo - 1, da);
   dt.setMonth(dt.getMonth() + m);
+  // FIXED: Normalize to midnight to prevent timezone fluctuations
+  dt.setHours(0, 0, 0, 0);
   return dt;
 }
 
@@ -540,7 +538,13 @@ function updateResult() {
   
   const openingDate = getOpeningDate();
   const toss = addMonths(openingDate, selectedPAO);
-  const daysLeft = Math.ceil((toss - new Date()) / (1000 * 60 * 60 * 24));
+  
+  // FIXED: Normalize both dates to midnight before calculating
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  toss.setHours(0, 0, 0, 0);
+  
+  const daysLeft = Math.ceil((toss - today) / (1000 * 60 * 60 * 24));
   
   let statusText = "";
   let statusColor = "";
@@ -560,9 +564,9 @@ function updateResult() {
     resultMessage = "✅ Safe (for now)";
   }
   
-  // ENHANCED: Add estimated date note to result
+  // UNIFIED: Single consistent wording for estimated dates
   if (dateMode === 'estimated') {
-    result.innerHTML = resultMessage + '<div class="result-estimated-note">Opening date is approximate</div>';
+    result.innerHTML = resultMessage + '<div class="result-estimated-note">Opening date is estimated</div>';
   } else {
     result.innerHTML = resultMessage;
   }
@@ -882,14 +886,21 @@ function renderShelf() {
   
   const tossCount = shelf.filter(item => item.status === "TOSS").length;
   const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
+  const keepCount = shelf.filter(item => item.status === "KEEP").length;
   
   let summaryText = "";
-  if (tossCount > 0 && useSoonCount > 0) {
-    summaryText = `🗑️ ${tossCount} expired · ⚠ ${useSoonCount} expiring soon`;
-  } else if (tossCount > 0) {
-    summaryText = `🗑️ ${tossCount} expired`;
-  } else if (useSoonCount > 0) {
-    summaryText = `⚠ ${useSoonCount} expiring soon`;
+  
+  // MZ-FRIENDLY: Positive feedback when everything is safe
+  if (tossCount === 0 && useSoonCount === 0 && keepCount > 0) {
+    summaryText = "✨ Safe vibes only";
+  } else {
+    if (tossCount > 0 && useSoonCount > 0) {
+      summaryText = `🗑️ ${tossCount} expired · ⚠ ${useSoonCount} expiring soon`;
+    } else if (tossCount > 0) {
+      summaryText = `🗑️ ${tossCount} expired`;
+    } else if (useSoonCount > 0) {
+      summaryText = `⚠ ${useSoonCount} expiring soon`;
+    }
   }
   
   if (summaryText) {
@@ -991,14 +1002,21 @@ function renderShelf() {
 
   const tossItems = shelf.filter(item => item.status === "TOSS");
   const useSoonItems = shelf.filter(item => item.status === "USE SOON");
+  const keepCount = shelf.filter(item => item.status === "KEEP").length;
 
-  // ENHANCED: Stronger notification copy for estimated dates
+  // NO NOTIFICATIONS FOR KEEP-ONLY: Don't notify when everything is safe
+  if (tossItems.length === 0 && useSoonItems.length === 0 && keepCount > 0) {
+    console.log("All items are safe. No notification needed.");
+    return;
+  }
+
+  // UNIFIED: Consistent wording for estimated dates in notifications
   if (tossItems.length > 0) {
     const hasEstimated = tossItems.some(item => item.isEstimated);
     let body = "";
     
     if (hasEstimated) {
-      body = "This product is likely expired. Opening date was estimated.";
+      body = "This product is likely expired. Opening date is estimated.";
     } else {
       body = "Some products are expired. Toss them.";
     }
