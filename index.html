@@ -267,7 +267,7 @@ function updateResult() {
   } else if (daysLeft <= 60) {
     statusText = "USE SOON";
     statusColor = "#4d4d1b";
-    resultMessage = "⚠ Expiring soon — use within 30 days";
+    resultMessage = "⚠ Expiring soon — " + daysLeft + " days left";
   } else {
     statusText = "KEEP";
     statusColor = "#1b4d3e";
