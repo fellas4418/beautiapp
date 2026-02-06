@@ -18,7 +18,6 @@ button:hover { background: #2a3142; transform: translateY(-2px); }
 button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
 .result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
 .status-label { margin-top: 8px; font-weight: 800; font-size: 15px; text-align: center; padding: 10px; border-radius: 8px; }
-input[type="date"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; }
 input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d2e; color: #fff; font-size: 14px; }
 
 .file-upload-wrapper { position: relative; margin-top: 10px; }
@@ -160,6 +159,54 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   text-align: center;
   font-weight: 600;
 }
+
+.date-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.date-mode-toggle button {
+  padding: 10px;
+  background: #1f2430;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.date-mode-toggle button.active {
+  background: #667eea;
+}
+
+.date-selectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.date-selectors.two-col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.date-selectors select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #1a1d2e;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.helper-text {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #888;
+  font-style: italic;
+}
 </style>
 </head>
 
@@ -175,7 +222,25 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
 
 <label>Opening Date</label>
-<input type="date" id="opened">
+<div class="date-mode-toggle">
+  <button id="exactBtn" class="active" onclick="setDateMode('exact')">I remember the exact date</button>
+  <button id="estimatedBtn" onclick="setDateMode('estimated')">I'm not sure</button>
+</div>
+
+<div id="exactDateSelectors" class="date-selectors">
+  <select id="yearSelect"></select>
+  <select id="monthSelect"></select>
+  <select id="daySelect"></select>
+</div>
+
+<div id="estimatedDateSelectors" class="date-selectors two-col" style="display:none;">
+  <select id="yearSelectEst"></select>
+  <select id="monthSelectEst"></select>
+</div>
+
+<div id="helperText" class="helper-text" style="display:none;">
+  It's okay if you don't remember the exact date. Just pick the closest month.
+</div>
 
 <label>Period After Opening (PAO)</label>
 <div class="pao" id="paoBtns"></div>
@@ -226,9 +291,9 @@ let selectedPAO = null;
 let currentImageDataURL = null;
 let lastStatus = null;
 let ocrProcessed = false;
+let dateMode = 'exact';
 
 const productName = document.getElementById("productName");
-const opened = document.getElementById("opened");
 const paoBox = document.getElementById("paoBtns");
 const result = document.getElementById("result");
 const statusLabel = document.getElementById("statusLabel");
@@ -239,7 +304,107 @@ const saveBtn = document.getElementById("saveBtn");
 const shelfSummary = document.getElementById("shelfSummary");
 const shelfItems = document.getElementById("shelfItems");
 
-opened.value = new Date().toISOString().slice(0, 10);
+const exactBtn = document.getElementById("exactBtn");
+const estimatedBtn = document.getElementById("estimatedBtn");
+const exactDateSelectors = document.getElementById("exactDateSelectors");
+const estimatedDateSelectors = document.getElementById("estimatedDateSelectors");
+const helperText = document.getElementById("helperText");
+
+const yearSelect = document.getElementById("yearSelect");
+const monthSelect = document.getElementById("monthSelect");
+const daySelect = document.getElementById("daySelect");
+const yearSelectEst = document.getElementById("yearSelectEst");
+const monthSelectEst = document.getElementById("monthSelectEst");
+
+function initDateSelectors() {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentDay = currentDate.getDate();
+  
+  for (let y = currentYear; y >= currentYear - 5; y--) {
+    yearSelect.add(new Option(y, y));
+    yearSelectEst.add(new Option(y, y));
+  }
+  
+  for (let m = 1; m <= 12; m++) {
+    const monthName = new Date(2000, m - 1, 1).toLocaleString('en', { month: 'long' });
+    monthSelect.add(new Option(monthName, m));
+    monthSelectEst.add(new Option(monthName, m));
+  }
+  
+  yearSelect.value = currentYear;
+  monthSelect.value = currentMonth;
+  yearSelectEst.value = currentYear;
+  monthSelectEst.value = currentMonth;
+  
+  updateDayOptions();
+  daySelect.value = currentDay;
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function updateDayOptions() {
+  const year = parseInt(yearSelect.value);
+  const month = parseInt(monthSelect.value);
+  const daysInMonth = getDaysInMonth(year, month);
+  const currentDay = daySelect.value || 1;
+  
+  daySelect.innerHTML = '';
+  for (let d = 1; d <= daysInMonth; d++) {
+    daySelect.add(new Option(d, d));
+  }
+  
+  if (currentDay <= daysInMonth) {
+    daySelect.value = currentDay;
+  } else {
+    daySelect.value = daysInMonth;
+  }
+}
+
+yearSelect.onchange = updateDayOptions;
+monthSelect.onchange = updateDayOptions;
+
+yearSelect.onchange = () => { updateDayOptions(); updateResult(); };
+monthSelect.onchange = () => { updateDayOptions(); updateResult(); };
+daySelect.onchange = updateResult;
+yearSelectEst.onchange = updateResult;
+monthSelectEst.onchange = updateResult;
+
+function setDateMode(mode) {
+  dateMode = mode;
+  
+  if (mode === 'exact') {
+    exactBtn.classList.add('active');
+    estimatedBtn.classList.remove('active');
+    exactDateSelectors.style.display = 'grid';
+    estimatedDateSelectors.style.display = 'none';
+    helperText.style.display = 'none';
+  } else {
+    exactBtn.classList.remove('active');
+    estimatedBtn.classList.add('active');
+    exactDateSelectors.style.display = 'none';
+    estimatedDateSelectors.style.display = 'grid';
+    helperText.style.display = 'block';
+  }
+  
+  updateResult();
+}
+
+function getOpeningDate() {
+  if (dateMode === 'exact') {
+    const year = yearSelect.value;
+    const month = String(monthSelect.value).padStart(2, '0');
+    const day = String(daySelect.value).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } else {
+    const year = yearSelectEst.value;
+    const month = String(monthSelectEst.value).padStart(2, '0');
+    return `${year}-${month}-01`;
+  }
+}
 
 SUPPORTED_PAOS.forEach(m => {
   const b = document.createElement("button");
@@ -269,7 +434,9 @@ function updateResult() {
     lastStatus = null;
     return; 
   }
-  const toss = addMonths(opened.value, selectedPAO);
+  
+  const openingDate = getOpeningDate();
+  const toss = addMonths(openingDate, selectedPAO);
   const daysLeft = Math.ceil((toss - new Date()) / (1000 * 60 * 60 * 24));
   
   let statusText = "";
@@ -540,7 +707,8 @@ saveBtn.onclick = () => {
     return;
   }
 
-  const expiryDate = addMonths(opened.value, selectedPAO).toISOString().slice(0, 10);
+  const openingDate = getOpeningDate();
+  const expiryDate = addMonths(openingDate, selectedPAO).toISOString().slice(0, 10);
   const itemStatus = computeStatusFromExpiry(expiryDate);
 
   const name = productName.value.trim() || "noname";
@@ -548,9 +716,10 @@ saveBtn.onclick = () => {
   const item = {
     name: name,
     pao: selectedPAO + "M",
-    openingDate: opened.value,
+    openingDate: openingDate,
     expiryDate: expiryDate,
     status: itemStatus,
+    isEstimated: dateMode === 'estimated',
     createdAt: Date.now()
   };
 
@@ -582,6 +751,16 @@ function deleteItem(createdAt) {
   const updatedShelf = shelf.filter(item => item.createdAt !== createdAt);
   saveShelfToStorage(updatedShelf);
   renderShelf();
+}
+
+function formatOpeningDate(dateStr, isEstimated) {
+  if (isEstimated) {
+    const [year, month] = dateStr.split('-');
+    const monthName = new Date(year, parseInt(month) - 1, 1).toLocaleString('en', { month: 'short' });
+    return `${monthName} ${year} (estimated)`;
+  } else {
+    return dateStr;
+  }
 }
 
 function renderShelf() {
@@ -642,13 +821,15 @@ function renderShelf() {
       statusColor = "#1b4d3e";
     }
     
+    const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
+    
     return `
       <div class="shelf-item">
         <button class="delete-btn" onclick="deleteItem(${item.createdAt})">×</button>
         <div class="shelf-item-content">
           <div class="shelf-item-name">${item.name}</div>
           <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
-          <div class="shelf-item-dates">Opened: ${item.openingDate}</div>
+          <div class="shelf-item-dates">Opened: ${openingDateDisplay}</div>
         </div>
         <div class="shelf-item-status" style="background: ${statusColor};">
           ${itemStatus}
@@ -657,8 +838,6 @@ function renderShelf() {
     `;
   }).join('');
 }
-
-opened.onchange = updateResult;
 
 (function cleanupOldData() {
   try {
@@ -721,6 +900,7 @@ opened.onchange = updateResult;
   }
 })();
 
+initDateSelectors();
 renderShelf();
 </script>
 
