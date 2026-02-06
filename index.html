@@ -10,7 +10,10 @@
 body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 .wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
 .card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-h2 { margin: 0 0 20px 0; font-size: 28px; }
+h2 { margin: 0 0 8px 0; font-size: 28px; }
+.subtitle { font-size: 14px; color: #888; margin-bottom: 12px; }
+.tagline { font-size: 15px; color: #e8e8ea; margin-bottom: 8px; font-weight: 500; line-height: 1.4; }
+.helper-line { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.5; }
 img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; }
 .pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
 button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
@@ -301,9 +304,9 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <body>
 <div class="wrap">
 <h2>KEESS</h2>
-<div style="margin-top:-8px; font-size:14px; color:#888; margin-bottom:20px;">
-  Keep or Toss
-</div>
+<div class="subtitle">Keep or Toss</div>
+<div class="tagline">Know when to keep it. Know when to toss it.</div>
+<div class="helper-line">Snap a photo. We'll tell you if it's still safe.</div>
 
 <div class="card">
 <label>Product Name (optional)</label>
@@ -329,11 +332,11 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 </div>
 
 <div id="estimatedBadge" class="estimated-badge" style="display:none;">
-  Opening date is estimated
+  ESTIMATED
 </div>
 
 <div id="helperText" class="helper-text" style="display:none;">
-  It's okay if you don't remember the exact date. Just pick the closest month.
+  Opening date is estimated
 </div>
 
 <label>Period After Opening (PAO)</label>
@@ -523,9 +526,20 @@ function addMonths(d, m) {
   const [y, mo, da] = d.split("-").map(Number);
   const dt = new Date(y, mo - 1, da);
   dt.setMonth(dt.getMonth() + m);
-  // FIXED: Normalize to midnight to prevent timezone fluctuations
   dt.setHours(0, 0, 0, 0);
   return dt;
+}
+
+function getWarningColor(daysLeft) {
+  if (daysLeft <= 7) {
+    return "#5d5d1b";
+  } else if (daysLeft <= 14) {
+    return "#4d4d1b";
+  } else if (daysLeft <= 30) {
+    return "#3d3d1b";
+  } else {
+    return "#4d4d1b";
+  }
 }
 
 function updateResult() {
@@ -539,7 +553,6 @@ function updateResult() {
   const openingDate = getOpeningDate();
   const toss = addMonths(openingDate, selectedPAO);
   
-  // FIXED: Normalize both dates to midnight before calculating
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   toss.setHours(0, 0, 0, 0);
@@ -556,7 +569,7 @@ function updateResult() {
     resultMessage = "🗑️ This product should be thrown away";
   } else if (daysLeft <= 60) {
     statusText = "USE SOON";
-    statusColor = "#4d4d1b";
+    statusColor = getWarningColor(daysLeft);
     resultMessage = "⚠ Expiring soon — " + daysLeft + " days left";
   } else {
     statusText = "KEEP";
@@ -564,7 +577,6 @@ function updateResult() {
     resultMessage = "✅ Safe (for now)";
   }
   
-  // UNIFIED: Single consistent wording for estimated dates
   if (dateMode === 'estimated') {
     result.innerHTML = resultMessage + '<div class="result-estimated-note">Opening date is estimated</div>';
   } else {
@@ -890,7 +902,6 @@ function renderShelf() {
   
   let summaryText = "";
   
-  // MZ-FRIENDLY: Positive feedback when everything is safe
   if (tossCount === 0 && useSoonCount === 0 && keepCount > 0) {
     summaryText = "✨ Safe vibes only";
   } else {
@@ -1004,13 +1015,16 @@ function renderShelf() {
   const useSoonItems = shelf.filter(item => item.status === "USE SOON");
   const keepCount = shelf.filter(item => item.status === "KEEP").length;
 
-  // NO NOTIFICATIONS FOR KEEP-ONLY: Don't notify when everything is safe
   if (tossItems.length === 0 && useSoonItems.length === 0 && keepCount > 0) {
-    console.log("All items are safe. No notification needed.");
+    new Notification("KEESS · Keep or Toss", {
+      body: "✨ Safe vibes only. Everything on your shelf is good to use.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>✨</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: SAFE");
     return;
   }
 
-  // UNIFIED: Consistent wording for estimated dates in notifications
   if (tossItems.length > 0) {
     const hasEstimated = tossItems.some(item => item.isEstimated);
     let body = "";
