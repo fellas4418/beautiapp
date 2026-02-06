@@ -17,6 +17,12 @@ button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; 
 button:hover { background: #2a3142; transform: translateY(-2px); }
 button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
 .result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
+.result-estimated-note {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #f0ad4e;
+  font-weight: 600;
+}
 .status-label { margin-top: 8px; font-weight: 800; font-size: 15px; text-align: center; padding: 10px; border-radius: 8px; }
 input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d2e; color: #fff; font-size: 14px; }
 
@@ -120,6 +126,18 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   color: #666;
 }
 
+.shelf-item-estimated-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #4d4d1b;
+  color: #f0ad4e;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 4px;
+  text-transform: uppercase;
+}
+
 .shelf-item-status { 
   padding: 6px 12px; 
   border-radius: 6px; 
@@ -180,25 +198,99 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   background: #667eea;
 }
 
+/* ENHANCED: Wheel-like rolling selector visual */
+.date-selectors-wrapper {
+  position: relative;
+  margin-top: 16px;
+  padding: 8px 0;
+}
+
+.date-selectors-wrapper::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3) 20%, rgba(102, 126, 234, 0.3) 80%, transparent);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.date-selectors-wrapper::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3) 20%, rgba(102, 126, 234, 0.3) 80%, transparent);
+  transform: translateY(calc(-50% + 48px));
+  pointer-events: none;
+  z-index: 1;
+}
+
 .date-selectors {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
-  margin-top: 10px;
+  position: relative;
+  z-index: 2;
 }
 
 .date-selectors.two-col {
   grid-template-columns: 1fr 1fr;
 }
 
+/* ENHANCED: Larger, wheel-like select elements */
 .date-selectors select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #333;
+  padding: 16px 10px;
+  border-radius: 12px;
+  border: 2px solid #333;
   background: #1a1d2e;
   color: #fff;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  height: 64px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.date-selectors select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* ENHANCED: Visual differentiation for estimated mode */
+.date-selectors.estimated select {
+  border-style: dashed;
+  border-color: #4d4d1b;
+  background: rgba(77, 77, 27, 0.1);
+}
+
+.date-selectors.estimated select:focus {
+  border-color: #f0ad4e;
+  box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.2);
+}
+
+/* ENHANCED: Estimated mode badge */
+.estimated-badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: #4d4d1b;
+  color: #f0ad4e;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  border: 2px dashed #f0ad4e;
 }
 
 .helper-text {
@@ -227,15 +319,21 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   <button id="estimatedBtn" onclick="setDateMode('estimated')">I'm not sure</button>
 </div>
 
-<div id="exactDateSelectors" class="date-selectors">
-  <select id="yearSelect"></select>
-  <select id="monthSelect"></select>
-  <select id="daySelect"></select>
+<div class="date-selectors-wrapper">
+  <div id="exactDateSelectors" class="date-selectors">
+    <select id="yearSelect"></select>
+    <select id="monthSelect"></select>
+    <select id="daySelect"></select>
+  </div>
+
+  <div id="estimatedDateSelectors" class="date-selectors two-col estimated" style="display:none;">
+    <select id="yearSelectEst"></select>
+    <select id="monthSelectEst"></select>
+  </div>
 </div>
 
-<div id="estimatedDateSelectors" class="date-selectors two-col" style="display:none;">
-  <select id="yearSelectEst"></select>
-  <select id="monthSelectEst"></select>
+<div id="estimatedBadge" class="estimated-badge" style="display:none;">
+  Estimated opening date
 </div>
 
 <div id="helperText" class="helper-text" style="display:none;">
@@ -256,7 +354,9 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 <img id="preview" style="display:none">
 
-<div id="result" class="result">Select a PAO period</div>
+<div id="result" class="result">
+  Select a PAO period
+</div>
 <div id="statusLabel" class="status-label" style="display:none"></div>
 <div id="status" class="status" style="display:none"></div>
 
@@ -309,6 +409,7 @@ const estimatedBtn = document.getElementById("estimatedBtn");
 const exactDateSelectors = document.getElementById("exactDateSelectors");
 const estimatedDateSelectors = document.getElementById("estimatedDateSelectors");
 const helperText = document.getElementById("helperText");
+const estimatedBadge = document.getElementById("estimatedBadge");
 
 const yearSelect = document.getElementById("yearSelect");
 const monthSelect = document.getElementById("monthSelect");
@@ -382,12 +483,14 @@ function setDateMode(mode) {
     exactDateSelectors.style.display = 'grid';
     estimatedDateSelectors.style.display = 'none';
     helperText.style.display = 'none';
+    estimatedBadge.style.display = 'none';
   } else {
     exactBtn.classList.remove('active');
     estimatedBtn.classList.add('active');
     exactDateSelectors.style.display = 'none';
     estimatedDateSelectors.style.display = 'grid';
     helperText.style.display = 'block';
+    estimatedBadge.style.display = 'inline-block';
   }
   
   updateResult();
@@ -429,7 +532,7 @@ function addMonths(d, m) {
 
 function updateResult() {
   if (!selectedPAO) { 
-    result.textContent = "Select a PAO period";
+    result.innerHTML = "Select a PAO period";
     statusLabel.style.display = "none";
     lastStatus = null;
     return; 
@@ -457,7 +560,12 @@ function updateResult() {
     resultMessage = "✅ Safe (for now)";
   }
   
-  result.textContent = resultMessage;
+  // ENHANCED: Add estimated date note to result
+  if (dateMode === 'estimated') {
+    result.innerHTML = resultMessage + '<div class="result-estimated-note">Opening date is approximate</div>';
+  } else {
+    result.innerHTML = resultMessage;
+  }
   
   if (statusText !== lastStatus) {
     statusLabel.classList.remove("animate");
@@ -757,7 +865,7 @@ function formatOpeningDate(dateStr, isEstimated) {
   if (isEstimated) {
     const [year, month] = dateStr.split('-');
     const monthName = new Date(year, parseInt(month) - 1, 1).toLocaleString('en', { month: 'short' });
-    return `${monthName} ${year} (estimated)`;
+    return `${monthName} ${year}`;
   } else {
     return dateStr;
   }
@@ -822,6 +930,7 @@ function renderShelf() {
     }
     
     const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
+    const estimatedBadge = (item.isEstimated || false) ? '<span class="shelf-item-estimated-badge">Estimated</span>' : '';
     
     return `
       <div class="shelf-item">
@@ -829,7 +938,7 @@ function renderShelf() {
         <div class="shelf-item-content">
           <div class="shelf-item-name">${item.name}</div>
           <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
-          <div class="shelf-item-dates">Opened: ${openingDateDisplay}</div>
+          <div class="shelf-item-dates">Opened: ${openingDateDisplay}${estimatedBadge}</div>
         </div>
         <div class="shelf-item-status" style="background: ${statusColor};">
           ${itemStatus}
@@ -880,19 +989,38 @@ function renderShelf() {
     return;
   }
 
-  const hasToss = shelf.some(item => item.status === "TOSS");
-  const hasUseSoon = shelf.some(item => item.status === "USE SOON");
+  const tossItems = shelf.filter(item => item.status === "TOSS");
+  const useSoonItems = shelf.filter(item => item.status === "USE SOON");
 
-  if (hasToss) {
-    new Notification("PAO Calculator", {
-      body: "Some products are expired. Toss them.",
+  // ENHANCED: Stronger notification copy for estimated dates
+  if (tossItems.length > 0) {
+    const hasEstimated = tossItems.some(item => item.isEstimated);
+    let body = "";
+    
+    if (hasEstimated) {
+      body = "This product is likely expired. Opening date was estimated.";
+    } else {
+      body = "Some products are expired. Toss them.";
+    }
+    
+    new Notification("KEESS · Keep or Toss", {
+      body: body,
       icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🗑️</text></svg>",
       silent: true
     });
     console.log("✓ Notification sent: TOSS");
-  } else if (hasUseSoon) {
-    new Notification("PAO Calculator", {
-      body: "Some products are expiring soon.",
+  } else if (useSoonItems.length > 0) {
+    const hasEstimated = useSoonItems.some(item => item.isEstimated);
+    let body = "";
+    
+    if (hasEstimated) {
+      body = "This product may expire soon. Opening date is estimated.";
+    } else {
+      body = "Some products are expiring soon.";
+    }
+    
+    new Notification("KEESS · Keep or Toss", {
+      body: body,
       icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>⚠️</text></svg>",
       silent: true
     });
