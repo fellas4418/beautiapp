@@ -920,16 +920,12 @@ function renderShelf() {
   
   let summaryText = "";
   
-  if (tossCount === 0 && useSoonCount === 0 && keepCount > 0) {
+  if (tossCount > 0) {
+    summaryText = `🗑️ ${tossCount} expired`;
+  } else if (useSoonCount > 0) {
+    summaryText = `⚠ ${useSoonCount} expiring soon`;
+  } else if (keepCount > 0) {
     summaryText = "✨ Safe vibes only";
-  } else {
-    if (tossCount > 0 && useSoonCount > 0) {
-      summaryText = `🗑️ ${tossCount} expired · ⚠ ${useSoonCount} expiring soon`;
-    } else if (tossCount > 0) {
-      summaryText = `🗑️ ${tossCount} expired`;
-    } else if (useSoonCount > 0) {
-      summaryText = `⚠ ${useSoonCount} expiring soon`;
-    }
   }
   
   if (summaryText) {
@@ -1029,48 +1025,20 @@ function renderShelf() {
     return;
   }
 
-  const tossItems = shelf.filter(item => item.status === "TOSS");
-  const useSoonItems = shelf.filter(item => item.status === "USE SOON");
+  const tossCount = shelf.filter(item => item.status === "TOSS").length;
+  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
   const keepCount = shelf.filter(item => item.status === "KEEP").length;
 
-  if (tossItems.length === 0 && useSoonItems.length === 0 && keepCount > 0) {
+  if (tossCount > 0) {
     new Notification("KEESS · Keep or Toss", {
-      body: "✨ Safe vibes only. Everything on your shelf is good to use.",
-      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>✨</text></svg>",
-      silent: true
-    });
-    console.log("✓ Notification sent: SAFE");
-    return;
-  }
-
-  if (tossItems.length > 0) {
-    const hasEstimated = tossItems.some(item => item.isEstimated);
-    let body = "";
-    
-    if (hasEstimated) {
-      body = "This product is likely expired. Opening date is estimated.";
-    } else {
-      body = "Some products are expired. Toss them.";
-    }
-    
-    new Notification("KEESS · Keep or Toss", {
-      body: body,
+      body: "🗑️ You have expired products. Time to toss them.",
       icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🗑️</text></svg>",
       silent: true
     });
     console.log("✓ Notification sent: TOSS");
-  } else if (useSoonItems.length > 0) {
-    const hasEstimated = useSoonItems.some(item => item.isEstimated);
-    let body = "";
-    
-    if (hasEstimated) {
-      body = "This product may expire soon. Opening date is estimated.";
-    } else {
-      body = "Some products are expiring soon.";
-    }
-    
+  } else if (useSoonCount > 0) {
     new Notification("KEESS · Keep or Toss", {
-      body: body,
+      body: "⚠️ Some products are expiring soon.",
       icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>⚠️</text></svg>",
       silent: true
     });
