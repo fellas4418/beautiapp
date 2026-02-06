@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>PAO Calculator</title>
+<title>KEESS</title>
 
 <style>
 * { box-sizing: border-box; }
@@ -149,12 +149,26 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   z-index: 10; 
 }
 .delete-btn:hover { background: #6b2020; transform: scale(1.1); }
+
+.shelf-summary {
+  background: #1a1d2e;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #e8e8ea;
+  margin-bottom: 12px;
+  text-align: center;
+  font-weight: 600;
+}
 </style>
 </head>
 
 <body>
 <div class="wrap">
-<h2>💄 PAO Calculator</h2>
+<h2>KEESS</h2>
+<div style="margin-top:-8px; font-size:14px; color:#888; margin-bottom:20px;">
+  Keep or Toss
+</div>
 
 <div class="card">
 <label>Product Name (optional)</label>
@@ -197,6 +211,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 
 <div id="shelfSection" class="shelf-section">
 <h2>📦 My Shelf</h2>
+<div id="shelfSummary"></div>
 <div id="shelfItems"></div>
 </div>
 
@@ -221,6 +236,7 @@ const preview = document.getElementById("preview");
 const status = document.getElementById("status");
 const fileName = document.getElementById("fileName");
 const saveBtn = document.getElementById("saveBtn");
+const shelfSummary = document.getElementById("shelfSummary");
 const shelfItems = document.getElementById("shelfItems");
 
 opened.value = new Date().toISOString().slice(0, 10);
@@ -572,8 +588,27 @@ function renderShelf() {
   const shelf = refreshAllStatuses();
   
   if (shelf.length === 0) {
+    shelfSummary.innerHTML = '';
     shelfItems.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">No items in your shelf yet. Add your first product!</div>';
     return;
+  }
+  
+  const tossCount = shelf.filter(item => item.status === "TOSS").length;
+  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
+  
+  let summaryText = "";
+  if (tossCount > 0 && useSoonCount > 0) {
+    summaryText = `🗑️ ${tossCount} expired · ⚠ ${useSoonCount} expiring soon`;
+  } else if (tossCount > 0) {
+    summaryText = `🗑️ ${tossCount} expired`;
+  } else if (useSoonCount > 0) {
+    summaryText = `⚠ ${useSoonCount} expiring soon`;
+  }
+  
+  if (summaryText) {
+    shelfSummary.innerHTML = `<div class="shelf-summary">${summaryText}</div>`;
+  } else {
+    shelfSummary.innerHTML = '';
   }
   
   const itemsWithStatus = shelf.map(item => {
