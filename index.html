@@ -6,366 +6,100 @@
 <title>KEESS</title>
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body { 
-  background: #fff7f7; 
-  color: #1a1a1a; 
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* ========== SCREEN CONTAINER ========== */
-.screen {
-  display: none;
-  min-height: 100vh;
-  transition: opacity 300ms ease, transform 300ms ease;
-}
-
-.screen.visible {
-  display: flex;
-  animation: fadeIn 300ms ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ========== HOME SCREEN ========== */
-.home-screen {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: linear-gradient(135deg, #fff7f7 0%, #ffe8e8 100%);
-}
-
-.app-logo {
-  font-size: 11px;
-  letter-spacing: 3px;
-  font-weight: 700;
-  color: #d4a5a5;
-  margin-bottom: 60px;
-  text-transform: uppercase;
-}
-
-.primary-scan-btn {
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ffffff 0%, #fff2f2 100%);
-  border: 3px solid #ffd4d4;
-  color: #ff4d4f;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 180ms ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(255, 77, 79, 0.15);
-  z-index: 100;
-  position: relative;
-  pointer-events: auto;
-}
-
-.primary-scan-btn:hover {
-  transform: scale(1.05);
-  border-color: #ffb8b8;
-  box-shadow: 0 12px 48px rgba(255, 77, 79, 0.25);
-  background: linear-gradient(135deg, #fff2f2 0%, #ffe8e8 100%);
-}
-
-.primary-scan-btn:active {
-  transform: scale(0.98);
-}
-
-/* ========== SCAN SCREEN ========== */
-.scan-screen {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: linear-gradient(135deg, #fff7f7 0%, #ffe8e8 100%);
-}
-
-.scan-screen .app-logo {
-  margin-bottom: 80px;
-}
-
-.scan-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  width: 100%;
-  max-width: 320px;
-  z-index: 100;
-  position: relative;
-}
-
-.scan-option-btn {
-  width: 100%;
-  height: 120px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 3px solid #ffd4d4;
-  color: #ff4d4f;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 180ms ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  box-shadow: 0 4px 16px rgba(255, 77, 79, 0.12);
-  z-index: 100;
-  position: relative;
-  pointer-events: auto;
-}
-
-.scan-option-btn:hover {
-  transform: translateY(-2px);
-  border-color: #ffb8b8;
-  box-shadow: 0 8px 24px rgba(255, 77, 79, 0.2);
-  background: #fff7f7;
-}
-
-.scan-option-btn:active {
-  transform: translateY(0);
-}
-
-/* ========== RESULT SCREEN ========== */
-.result-screen {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: linear-gradient(135deg, #fff7f7 0%, #ffe8e8 100%);
-}
-
-.result-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 400px;
-}
-
-.status-text {
-  font-size: 72px;
-  font-weight: 900;
-  letter-spacing: -2px;
-  text-align: center;
-  margin-bottom: 16px;
-  line-height: 1;
-}
-
-.status-text.safe {
-  color: #22c55e;
-}
-
-.status-text.use-soon {
-  color: #f59e0b;
-}
-
-.status-text.toss {
-  color: #ef4444;
-}
-
-.status-subtext {
-  font-size: 14px;
-  color: #6b6b6b;
-  text-align: center;
-  font-weight: 500;
-}
-
-.details-toggle {
-  margin-top: 24px;
-  background: none;
-  border: none;
-  color: #6b6b6b;
-  font-size: 12px;
-  cursor: pointer;
-  text-decoration: underline;
-  transition: color 150ms ease;
-  z-index: 100;
-  position: relative;
-  pointer-events: auto;
-}
-
-.details-toggle:hover {
-  color: #1a1a1a;
-}
-
-.result-details {
-  display: none;
-  margin-top: 16px;
-  padding: 16px;
-  background: #ffffff;
-  border: 2px solid #f0e6e6;
-  border-radius: 12px;
+* { box-sizing: border-box; }
+body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
+.card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+h2 { margin: 0 0 8px 0; font-size: 28px; }
+.subtitle { font-size: 14px; color: #888; margin-bottom: 6px; }
+.tagline { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.4; }
+img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; }
+.pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+button:hover { background: #2a3142; transform: translateY(-2px); }
+button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
+.result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
+.result-estimated-note {
+  margin-top: 6px;
   font-size: 13px;
-  color: #6b6b6b;
-  max-width: 300px;
-  line-height: 1.6;
+  color: #f0ad4e;
+  font-weight: 600;
 }
+.status-label { margin-top: 8px; font-weight: 800; font-size: 15px; text-align: center; padding: 10px; border-radius: 8px; }
+input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d2e; color: #fff; font-size: 14px; }
 
-.result-details.visible {
+.file-upload-wrapper { position: relative; margin-top: 10px; }
+.file-upload-wrapper input[type="file"] { 
+  position: absolute; 
+  opacity: 0; 
+  width: 100%; 
+  height: 100%; 
+  cursor: pointer; 
+  z-index: 2;
+}
+.file-upload-label {
   display: block;
-  animation: fadeIn 200ms ease;
-}
-
-.result-actions {
   width: 100%;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-bottom: 40px;
-}
-
-.scan-again-btn {
-  width: 100%;
-  height: 64px;
-  border-radius: 16px;
-  background: #ff4d4f;
-  border: none;
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 180ms ease;
-  text-transform: uppercase;
-  box-shadow: 0 4px 16px rgba(255, 77, 79, 0.25);
-  z-index: 100;
-  position: relative;
-  pointer-events: auto;
-}
-
-.scan-again-btn:hover {
-  background: #ff3333;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(255, 77, 79, 0.35);
-}
-
-.scan-again-btn:active {
-  transform: translateY(0);
-}
-
-.done-btn {
-  background: none;
-  border: none;
-  color: #6b6b6b;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
   padding: 12px;
-  transition: color 150ms ease;
-  text-decoration: underline;
-  z-index: 100;
-  position: relative;
-  pointer-events: auto;
-}
-
-.done-btn:hover {
-  color: #1a1a1a;
-}
-
-/* ========== MY SHELF ========== */
-.shelf-view {
-  flex-direction: column;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 24px;
-  width: 100%;
-}
-
-.top-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f0e6e6;
-}
-
-.app-logo-small {
-  font-size: 10px;
-  letter-spacing: 2px;
-  font-weight: 700;
-  color: #d4a5a5;
-  text-transform: uppercase;
-}
-
-.nav-toggle {
-  background: #ffffff;
-  border: 2px solid #f0e6e6;
-  color: #6b6b6b;
-  padding: 10px 20px;
-  border-radius: 24px;
-  font-size: 12px;
+  background: #667eea;
+  color: white;
+  text-align: center;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: all 0.2s;
+}
+.file-upload-label:hover { background: #5568d3; }
+.file-name { margin-top: 8px; font-size: 13px; color: #aaa; text-align: center; }
+.status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
+label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
+
+.photo-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.nav-toggle:hover {
-  border-color: #ffd4d4;
-  color: #1a1a1a;
-  background: #fff7f7;
-}
-
-.nav-toggle.active {
-  background: #ff4d4f;
-  color: #ffffff;
-  border-color: #ff4d4f;
-}
-
-.shelf-header {
-  font-size: 24px;
-  font-weight: 900;
-  margin-bottom: 20px;
-  letter-spacing: -0.5px;
-  color: #1a1a1a;
-}
-
-.shelf-summary {
-  background: #ffffff;
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 13px;
-  color: #6b6b6b;
-  margin-bottom: 16px;
-  text-align: center;
+.photo-buttons button {
+  padding: 12px;
+  background: #667eea;
+  color: white;
+  border-radius: 8px;
   font-weight: 600;
-  border: 2px solid #f0e6e6;
+  font-size: 14px;
 }
+
+.photo-buttons button:hover {
+  background: #5568d3;
+}
+
+@keyframes statusFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-label.animate {
+  animation: statusFadeUp 250ms ease-out;
+}
+
+.shelf-section { margin-top: 24px; }
 
 .shelf-item { 
-  background: #ffffff; 
+  background: #111318; 
   border-radius: 12px; 
-  padding: 16px; 
-  margin-bottom: 12px; 
+  padding: 12px; 
+  margin-bottom: 10px; 
   position: relative; 
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 2px solid #f0e6e6;
-  transition: all 150ms ease;
-}
-
-.shelf-item:hover {
-  border-color: #ffd4d4;
-  box-shadow: 0 2px 8px rgba(255, 77, 79, 0.1);
 }
 
 .shelf-item-content {
@@ -374,165 +108,278 @@ body {
 }
 
 .shelf-item-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 6px;
+  color: #e8e8ea;
+  margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .shelf-item-meta {
-  font-size: 11px;
-  color: #6b6b6b;
-  margin-bottom: 3px;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 2px;
 }
 
 .shelf-item-dates {
-  font-size: 10px;
-  color: #b0b0b0;
+  font-size: 11px;
+  color: #666;
 }
 
 .shelf-item-estimated-badge {
   display: inline-block;
   padding: 2px 6px;
-  background: #fff7f7;
-  color: #f59e0b;
+  background: #4d4d1b;
+  color: #f0ad4e;
   border-radius: 4px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   margin-left: 4px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: 1px solid #ffd4d4;
 }
 
 .shelf-item-status { 
-  padding: 8px 14px; 
-  border-radius: 8px; 
-  font-size: 11px; 
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  font-size: 12px; 
   font-weight: 700;
   white-space: nowrap;
   flex-shrink: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #ffffff;
 }
 
 .delete-btn { 
   position: absolute; 
-  top: 10px; 
-  right: 10px; 
-  background: #ffffff; 
-  color: #d4a5a5; 
-  width: 24px; 
-  height: 24px; 
+  top: 8px; 
+  right: 8px; 
+  background: #4d1b1b; 
+  color: #ff6b6b; 
+  width: 28px; 
+  height: 28px; 
   border-radius: 50%; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  font-size: 14px; 
+  font-size: 16px; 
   cursor: pointer; 
-  transition: all 150ms ease; 
+  transition: all 0.2s; 
   padding: 0; 
-  z-index: 10;
-  border: 2px solid #f0e6e6;
+  z-index: 10; 
+}
+.delete-btn:hover { background: #6b2020; transform: scale(1.1); }
+
+.shelf-summary {
+  background: #1a1d2e;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #e8e8ea;
+  margin-bottom: 12px;
+  text-align: center;
+  font-weight: 600;
 }
 
-.delete-btn:hover { 
-  background: #ffd4d4; 
-  color: #ef4444;
-  border-color: #ffd4d4;
+.date-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-/* Hidden processing elements */
-.hidden-processing {
-  display: none !important;
+.date-mode-toggle button {
+  padding: 10px;
+  background: #1f2430;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 400px) {
-  .status-text {
-    font-size: 56px;
-  }
-  
-  .primary-scan-btn {
-    width: 240px;
-    height: 240px;
-    font-size: 16px;
-  }
+.date-mode-toggle button.active {
+  background: #667eea;
+}
+
+.date-selectors-wrapper {
+  position: relative;
+  margin-top: 16px;
+  padding: 8px 0;
+}
+
+.date-selectors-wrapper::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3) 20%, rgba(102, 126, 234, 0.3) 80%, transparent);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.date-selectors-wrapper::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3) 20%, rgba(102, 126, 234, 0.3) 80%, transparent);
+  transform: translateY(calc(-50% + 48px));
+  pointer-events: none;
+  z-index: 1;
+}
+
+.date-selectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.date-selectors.two-col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.date-selectors select {
+  padding: 16px 10px;
+  border-radius: 12px;
+  border: 2px solid #333;
+  background: #1a1d2e;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  height: 64px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.date-selectors select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.date-selectors.estimated select {
+  border-style: dashed;
+  border-color: #4d4d1b;
+  background: rgba(77, 77, 27, 0.1);
+}
+
+.date-selectors.estimated select:focus {
+  border-color: #f0ad4e;
+  box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.2);
+}
+
+.estimated-badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: #4d4d1b;
+  color: #f0ad4e;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  border: 2px dashed #f0ad4e;
+}
+
+.helper-text {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #888;
+  font-style: italic;
 }
 </style>
 </head>
 
 <body>
+<div class="wrap">
+<h2>KEESS</h2>
+<div class="subtitle">Keep or Toss</div>
+<div class="tagline">Know when to keep it. Know when to toss it.</div>
 
-<!-- HOME SCREEN -->
-<div class="screen home-screen" id="homeScreen">
-  <div class="app-logo">KEESS</div>
-  <button class="primary-scan-btn" id="mainScanBtn">
-    Scan cosmetic label
-  </button>
+<div class="card">
+<label>Product Name (optional)</label>
+<input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
+
+<label>Opening Date</label>
+<div class="date-mode-toggle">
+  <button id="exactBtn" class="active" onclick="setDateMode('exact')">I remember the exact date</button>
+  <button id="estimatedBtn" onclick="setDateMode('estimated')">I'm not sure</button>
 </div>
 
-<!-- SCAN SCREEN -->
-<div class="screen scan-screen" id="scanScreen">
-  <div class="app-logo">KEESS</div>
-  <div class="scan-buttons">
-    <button class="scan-option-btn" id="takePhotoBtn">
-      Take photo
-    </button>
-    <button class="scan-option-btn" id="selectImageBtn">
-      Select image
-    </button>
+<div class="date-selectors-wrapper">
+  <div id="exactDateSelectors" class="date-selectors">
+    <select id="yearSelect"></select>
+    <select id="monthSelect"></select>
+    <select id="daySelect"></select>
+  </div>
+
+  <div id="estimatedDateSelectors" class="date-selectors two-col estimated" style="display:none;">
+    <select id="yearSelectEst"></select>
+    <select id="monthSelectEst"></select>
   </div>
 </div>
 
-<!-- RESULT SCREEN -->
-<div class="screen result-screen" id="resultScreen">
-  <div class="result-content">
-    <div class="status-text" id="statusText"></div>
-    <div class="status-subtext" id="statusSubtext"></div>
-    <button class="details-toggle" id="detailsToggle">More details</button>
-    <div class="result-details" id="resultDetails"></div>
-  </div>
-  
-  <div class="result-actions">
-    <button class="scan-again-btn" id="scanAgainBtn">Scan again</button>
-    <button class="done-btn" id="doneBtn">Done for now</button>
-  </div>
+<div id="estimatedBadge" class="estimated-badge" style="display:none;">
+  ESTIMATED
 </div>
 
-<!-- MY SHELF -->
-<div class="screen shelf-view" id="shelfView">
-  <div class="top-nav">
-    <div class="app-logo-small">KEESS</div>
-    <button class="nav-toggle active" id="backFromShelfBtn">Back</button>
-  </div>
-  
-  <div class="shelf-header">My Shelf</div>
-  <div id="shelfSummary"></div>
-  <div id="shelfItems"></div>
+<div id="helperText" class="helper-text" style="display:none;">
+  Opening date is estimated
 </div>
 
-<!-- Hidden file inputs -->
-<input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden-processing">
-<input type="file" id="galleryInput" accept="image/*" class="hidden-processing">
+<label>Period After Opening (PAO)</label>
+<div class="pao" id="paoBtns"></div>
 
-<!-- Hidden processing elements -->
-<div class="hidden-processing">
-  <img id="preview">
-  <div id="status"></div>
-  <div id="fileName"></div>
+<label>Upload Product Photo</label>
+<div class="photo-buttons">
+  <button onclick="document.getElementById('cameraInput').click()">📸 Take a photo</button>
+  <button onclick="document.getElementById('galleryInput').click()">🖼 Select from gallery</button>
+</div>
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+<input type="file" id="galleryInput" accept="image/*" style="display:none;">
+<div class="file-name" id="fileName"></div>
+
+<img id="preview" style="display:none">
+
+<div id="result" class="result">
+  Select a PAO period
+</div>
+<div id="statusLabel" class="status-label" style="display:none"></div>
+<div id="status" class="status" style="display:none"></div>
+
+<button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
+</div>
+
+<div class="card">
+<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa; margin-bottom: 14px;">
+Most people use expired cosmetics without knowing it.
+</div>
+<h3 style="margin:0 0 12px 0">ℹ️ What is PAO?</h3>
+<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa;">
+<strong style="color:#667eea">Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening.<br><br>
+Check the jar icon on your product for the number (e.g., 12M = 12 months).
+</div>
+</div>
+
+<div id="shelfSection" class="shelf-section">
+<h2>📦 My Shelf</h2>
+<div id="shelfSummary"></div>
+<div id="shelfItems"></div>
+</div>
+
 </div>
 
 <script>
-// ========== STATE SYSTEM ==========
-
-let appState = "home";
-let lastStateBeforeShelf = "home";
-
 const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
 const SHELF_STORAGE_KEY = "myShelf";
@@ -540,181 +387,33 @@ const PACIFIC_TZ = "America/Los_Angeles";
 
 let selectedPAO = null;
 let currentImageDataURL = null;
+let lastStatus = null;
 let ocrProcessed = false;
-let detailsExpanded = false;
+let dateMode = 'exact';
 
-// Current result data
-let currentOpeningDate = null;
-let currentExpiryDate = null;
-let currentDaysLeft = null;
-let currentStatusText = null;
-let currentStatusClass = null;
+const productName = document.getElementById("productName");
+const paoBox = document.getElementById("paoBtns");
+const result = document.getElementById("result");
+const statusLabel = document.getElementById("statusLabel");
+const preview = document.getElementById("preview");
+const status = document.getElementById("status");
+const fileName = document.getElementById("fileName");
+const saveBtn = document.getElementById("saveBtn");
+const shelfSummary = document.getElementById("shelfSummary");
+const shelfItems = document.getElementById("shelfItems");
 
-function setState(newState) {
-  console.log(`State transition: ${appState} → ${newState}`);
-  appState = newState;
-  renderCurrentState();
-}
+const exactBtn = document.getElementById("exactBtn");
+const estimatedBtn = document.getElementById("estimatedBtn");
+const exactDateSelectors = document.getElementById("exactDateSelectors");
+const estimatedDateSelectors = document.getElementById("estimatedDateSelectors");
+const helperText = document.getElementById("helperText");
+const estimatedBadge = document.getElementById("estimatedBadge");
 
-function renderCurrentState() {
-  // Hide all screens
-  document.getElementById('homeScreen').classList.remove('visible');
-  document.getElementById('scanScreen').classList.remove('visible');
-  document.getElementById('resultScreen').classList.remove('visible');
-  document.getElementById('shelfView').classList.remove('visible');
-  
-  // Show current screen
-  if (appState === "home") {
-    document.getElementById('homeScreen').classList.add('visible');
-  } else if (appState === "scan") {
-    document.getElementById('scanScreen').classList.add('visible');
-  } else if (appState === "result") {
-    document.getElementById('resultScreen').classList.add('visible');
-    renderResultScreen();
-  } else if (appState === "shelf") {
-    document.getElementById('shelfView').classList.add('visible');
-    renderShelf();
-  }
-}
-
-// ========== BUTTON WIRING ==========
-
-document.getElementById('mainScanBtn').addEventListener('click', function() {
-  console.log('Main scan button clicked: home → scan');
-  setState('scan');
-});
-
-document.getElementById('takePhotoBtn').addEventListener('click', function() {
-  console.log('Take photo button clicked');
-  document.getElementById('cameraInput').click();
-});
-
-document.getElementById('selectImageBtn').addEventListener('click', function() {
-  console.log('Select image button clicked');
-  document.getElementById('galleryInput').click();
-});
-
-document.getElementById('scanAgainBtn').addEventListener('click', function() {
-  console.log('Scan again button clicked: result → scan');
-  resetForNewScan();
-  setState('scan');
-});
-
-document.getElementById('doneBtn').addEventListener('click', function() {
-  console.log('Done button clicked: result → shelf');
-  saveCurrentResultToShelf();
-  lastStateBeforeShelf = 'result';
-  setState('shelf');
-});
-
-document.getElementById('detailsToggle').addEventListener('click', function() {
-  detailsExpanded = !detailsExpanded;
-  const details = document.getElementById('resultDetails');
-  const toggle = document.getElementById('detailsToggle');
-  
-  if (detailsExpanded) {
-    details.classList.add('visible');
-    toggle.textContent = 'Hide details';
-  } else {
-    details.classList.remove('visible');
-    toggle.textContent = 'More details';
-  }
-});
-
-document.getElementById('backFromShelfBtn').addEventListener('click', function() {
-  console.log('Back from shelf clicked');
-  if (lastStateBeforeShelf === 'result') {
-    setState('result');
-  } else {
-    setState('home');
-  }
-});
-
-function resetForNewScan() {
-  selectedPAO = null;
-  currentImageDataURL = null;
-  ocrProcessed = false;
-  detailsExpanded = false;
-  
-  currentOpeningDate = null;
-  currentExpiryDate = null;
-  currentDaysLeft = null;
-  currentStatusText = null;
-  currentStatusClass = null;
-  
-  document.getElementById('preview').src = "";
-  document.getElementById('fileName').textContent = "";
-  document.getElementById('status').textContent = "";
-}
-
-// ========== FILE HANDLING ==========
-
-document.getElementById('cameraInput').addEventListener('change', handleFileSelect);
-document.getElementById('galleryInput').addEventListener('change', handleFileSelect);
-
-async function handleFileSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  console.log('File selected:', file.name);
-  ocrProcessed = false;
-
-  document.getElementById('fileName').textContent = file.name;
-  
-  const reader = new FileReader();
-  
-  reader.onload = async (event) => {
-    const base64 = event.target.result;
-    currentImageDataURL = base64;
-    
-    document.getElementById('preview').src = base64;
-
-    if (ocrProcessed) {
-      console.log("This image was already OCR processed. Skipping...");
-      return;
-    }
-
-    ocrProcessed = true;
-
-    document.getElementById('status').textContent = "Analyzing...";
-
-    try {
-      const pao = await detectWithGoogle(base64);
-      
-      if (pao && SUPPORTED_PAOS.includes(pao)) {
-        selectedPAO = pao;
-        document.getElementById('status').textContent = `Detected: ${pao}M`;
-        console.log('PAO detected:', pao);
-        
-        // Automatically calculate and show result
-        calculateAndShowResult();
-      } else if (pao) {
-        document.getElementById('status').textContent = `Detected ${pao}M but not supported. Manual input needed.`;
-        console.log('Unsupported PAO detected:', pao);
-        // For now, we'll use a default PAO
-        selectedPAO = 12;
-        calculateAndShowResult();
-      } else {
-        document.getElementById('status').textContent = "Could not detect PAO. Using default.";
-        console.log('No PAO detected, using default');
-        // Use default PAO
-        selectedPAO = 12;
-        calculateAndShowResult();
-      }
-      
-    } catch (err) {
-      console.error('OCR Error:', err);
-      document.getElementById('status').textContent = "Error: " + err.message;
-      // Use default PAO on error
-      selectedPAO = 12;
-      calculateAndShowResult();
-    }
-  };
-  
-  reader.readAsDataURL(file);
-}
-
-// ========== CALCULATION LOGIC (UNCHANGED) ==========
+const yearSelect = document.getElementById("yearSelect");
+const monthSelect = document.getElementById("monthSelect");
+const daySelect = document.getElementById("daySelect");
+const yearSelectEst = document.getElementById("yearSelectEst");
+const monthSelectEst = document.getElementById("monthSelectEst");
 
 function getPacificMidnight(dateStr) {
   const dateObj = new Date(dateStr + "T00:00:00");
@@ -732,6 +431,112 @@ function getTodayPacific() {
   return pacificNow;
 }
 
+function initDateSelectors() {
+  const todayPacific = getTodayPacific();
+  const currentYear = todayPacific.getFullYear();
+  const currentMonth = todayPacific.getMonth() + 1;
+  const currentDay = todayPacific.getDate();
+  
+  for (let y = currentYear; y >= currentYear - 5; y--) {
+    yearSelect.add(new Option(y, y));
+    yearSelectEst.add(new Option(y, y));
+  }
+  
+  for (let m = 1; m <= 12; m++) {
+    const monthName = new Date(2000, m - 1, 1).toLocaleString('en', { month: 'long' });
+    monthSelect.add(new Option(monthName, m));
+    monthSelectEst.add(new Option(monthName, m));
+  }
+  
+  yearSelect.value = currentYear;
+  monthSelect.value = currentMonth;
+  yearSelectEst.value = currentYear;
+  monthSelectEst.value = currentMonth;
+  
+  updateDayOptions();
+  daySelect.value = currentDay;
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function updateDayOptions() {
+  const year = parseInt(yearSelect.value);
+  const month = parseInt(monthSelect.value);
+  const daysInMonth = getDaysInMonth(year, month);
+  const currentDay = daySelect.value || 1;
+  
+  daySelect.innerHTML = '';
+  for (let d = 1; d <= daysInMonth; d++) {
+    daySelect.add(new Option(d, d));
+  }
+  
+  if (currentDay <= daysInMonth) {
+    daySelect.value = currentDay;
+  } else {
+    daySelect.value = daysInMonth;
+  }
+}
+
+yearSelect.onchange = updateDayOptions;
+monthSelect.onchange = updateDayOptions;
+
+yearSelect.onchange = () => { updateDayOptions(); updateResult(); };
+monthSelect.onchange = () => { updateDayOptions(); updateResult(); };
+daySelect.onchange = updateResult;
+yearSelectEst.onchange = updateResult;
+monthSelectEst.onchange = updateResult;
+
+function setDateMode(mode) {
+  dateMode = mode;
+  
+  if (mode === 'exact') {
+    exactBtn.classList.add('active');
+    estimatedBtn.classList.remove('active');
+    exactDateSelectors.style.display = 'grid';
+    estimatedDateSelectors.style.display = 'none';
+    helperText.style.display = 'none';
+    estimatedBadge.style.display = 'none';
+  } else {
+    exactBtn.classList.remove('active');
+    estimatedBtn.classList.add('active');
+    exactDateSelectors.style.display = 'none';
+    estimatedDateSelectors.style.display = 'grid';
+    helperText.style.display = 'block';
+    estimatedBadge.style.display = 'inline-block';
+  }
+  
+  updateResult();
+}
+
+function getOpeningDate() {
+  if (dateMode === 'exact') {
+    const year = yearSelect.value;
+    const month = String(monthSelect.value).padStart(2, '0');
+    const day = String(daySelect.value).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } else {
+    const year = yearSelectEst.value;
+    const month = String(monthSelectEst.value).padStart(2, '0');
+    return `${year}-${month}-01`;
+  }
+}
+
+SUPPORTED_PAOS.forEach(m => {
+  const b = document.createElement("button");
+  b.textContent = m + "M";
+  b.onclick = () => { selectPAO(m); updateResult(); };
+  paoBox.appendChild(b);
+});
+
+function selectPAO(m) {
+  selectedPAO = m;
+  [...paoBox.children].forEach(b => {
+    b.classList.toggle("active", b.textContent === m + "M");
+  });
+}
+
 function addMonths(d, m) {
   const [y, mo, da] = d.split("-").map(Number);
   const dt = new Date(y, mo - 1, da);
@@ -744,6 +549,18 @@ function addMonths(d, m) {
   return `${year}-${month}-${day}`;
 }
 
+function getWarningColor(daysLeft) {
+  if (daysLeft <= 7) {
+    return "#5d5d1b";
+  } else if (daysLeft <= 14) {
+    return "#4d4d1b";
+  } else if (daysLeft <= 30) {
+    return "#3d3d1b";
+  } else {
+    return "#4d4d1b";
+  }
+}
+
 function calculateDaysLeft(expiryDateStr) {
   const todayPacific = getTodayPacific();
   const expiryPacific = getPacificMidnight(expiryDateStr);
@@ -753,76 +570,56 @@ function calculateDaysLeft(expiryDateStr) {
   return daysLeft;
 }
 
-function calculateAndShowResult() {
+function updateResult() {
   if (!selectedPAO) { 
-    console.log('No PAO selected, cannot calculate');
+    result.innerHTML = "Select a PAO period";
+    statusLabel.style.display = "none";
+    lastStatus = null;
     return; 
   }
   
-  const todayPacific = getTodayPacific();
-  const year = todayPacific.getFullYear();
-  const month = String(todayPacific.getMonth() + 1).padStart(2, '0');
-  const day = String(todayPacific.getDate()).padStart(2, '0');
-  const openingDate = `${year}-${month}-${day}`;
-  
+  const openingDate = getOpeningDate();
   const expiryDateStr = addMonths(openingDate, selectedPAO);
   
   const daysLeft = calculateDaysLeft(expiryDateStr);
   
-  currentOpeningDate = openingDate;
-  currentExpiryDate = expiryDateStr;
-  currentDaysLeft = daysLeft;
+  let statusText = "";
+  let statusColor = "";
+  let resultMessage = "";
   
   if (daysLeft < 0) {
-    currentStatusText = "TOSS IT";
-    currentStatusClass = "toss";
+    statusText = "TOSS";
+    statusColor = "#4d1b1b";
+    resultMessage = "🗑️ This product should be thrown away";
   } else if (daysLeft <= 60) {
-    currentStatusText = "USE SOON";
-    currentStatusClass = "use-soon";
+    statusText = "USE SOON";
+    statusColor = getWarningColor(daysLeft);
+    resultMessage = "⚠ Expiring soon — " + daysLeft + " days left";
   } else {
-    currentStatusText = "SAFE";
-    currentStatusClass = "safe";
+    statusText = "KEEP";
+    statusColor = "#1b4d3e";
+    resultMessage = "✅ Safe (for now)";
   }
   
-  console.log('Calculation complete, moving to result screen');
-  console.log('scan → result');
-  setState('result');
-}
+  if (dateMode === 'estimated') {
+    result.innerHTML = resultMessage + '<div class="result-estimated-note">Opening date is estimated</div>';
+  } else {
+    result.innerHTML = resultMessage;
+  }
+  
+  if (statusText !== lastStatus) {
+    statusLabel.classList.remove("animate");
+    void statusLabel.offsetWidth;
+    statusLabel.classList.add("animate");
+    lastStatus = statusText;
+  }
+  
+  statusLabel.textContent = statusText;
+  statusLabel.style.background = statusColor;
+  statusLabel.style.display = "block";
 
-function renderResultScreen() {
-  const statusText = document.getElementById('statusText');
-  const statusSubtext = document.getElementById('statusSubtext');
-  const resultDetails = document.getElementById('resultDetails');
-  
-  statusText.textContent = currentStatusText;
-  statusText.className = 'status-text ' + currentStatusClass;
-  
-  if (currentStatusClass === 'use-soon') {
-    statusSubtext.textContent = `${currentDaysLeft} days left`;
-  } else {
-    statusSubtext.textContent = '';
-  }
-  
-  let detailsContent = '';
-  if (currentDaysLeft < 0) {
-    detailsContent = `Expired ${Math.abs(currentDaysLeft)} days ago<br>Expiry date: ${currentExpiryDate}<br>Opening date: ${currentOpeningDate}`;
-  } else {
-    detailsContent = `${currentDaysLeft} days left<br>Expiry date: ${currentExpiryDate}<br>Opening date: ${currentOpeningDate}`;
-  }
-  
-  resultDetails.innerHTML = detailsContent;
-  
-  // Reset details toggle
-  if (detailsExpanded) {
-    resultDetails.classList.add('visible');
-    document.getElementById('detailsToggle').textContent = 'Hide details';
-  } else {
-    resultDetails.classList.remove('visible');
-    document.getElementById('detailsToggle').textContent = 'More details';
-  }
+  saveBtn.style.display = "block";
 }
-
-// ========== OCR LOGIC (UNCHANGED) ==========
 
 function extractPAO(text) {
   console.log("Detected text:", text);
@@ -873,11 +670,16 @@ function extractPAO(text) {
 }
 
 async function detectWithGoogle(base64Image) {
-  const apiKey = GOOGLE_VISION_API_KEY;
+  const apiKey = document.getElementById("apiKey");
+  const key = apiKey.value.trim();
+  
+  if (!key) {
+    throw new Error("API key not found");
+  }
   
   const base64Content = base64Image.split(',')[1];
   
-  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -919,7 +721,67 @@ async function detectWithGoogle(base64Image) {
   return extractPAO(fullText);
 }
 
-// ========== SHELF LOGIC (UNCHANGED) ==========
+async function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  ocrProcessed = false;
+
+  fileName.textContent = file.name;
+  
+  const reader = new FileReader();
+  
+  reader.onload = async (event) => {
+    const base64 = event.target.result;
+    currentImageDataURL = base64;
+    
+    preview.src = base64;
+    preview.style.display = "block";
+
+    if (ocrProcessed) {
+      console.log("This image was already OCR processed. Skipping...");
+      return;
+    }
+
+    ocrProcessed = true;
+
+    status.style.display = "block";
+    status.style.background = "#4d4d1b";
+    status.style.color = "#f0ad4e";
+    status.textContent = "🔍 Analyzing with Google Vision...";
+
+    try {
+      const pao = await detectWithGoogle(base64);
+      
+      if (pao && SUPPORTED_PAOS.includes(pao)) {
+        selectPAO(pao);
+        updateResult();
+        status.style.background = "#1b4d3e";
+        status.style.color = "#20c997";
+        status.textContent = `✓ Detected: ${pao}M`;
+      } else if (pao) {
+        status.style.background = "#4d4d1b";
+        status.style.color = "#f0ad4e";
+        status.textContent = `⚠ Detected ${pao}M but not supported. Select manually ↓`;
+      } else {
+        status.style.background = "#4d1b1b";
+        status.style.color = "#ff6b6b";
+        status.textContent = "❌ Could not detect PAO. Select manually ↓";
+      }
+      
+    } catch (err) {
+      console.error(err);
+      status.style.background = "#4d1b1b";
+      status.style.color = "#ff6b6b";
+      status.textContent = "⚠ Error: " + err.message;
+    }
+  };
+  
+  reader.readAsDataURL(file);
+}
+
+document.getElementById("cameraInput").onchange = handleFileSelect;
+document.getElementById("galleryInput").onchange = handleFileSelect;
 
 function loadShelfFromStorage() {
   try {
@@ -944,6 +806,7 @@ function saveShelfToStorage(shelf) {
     return true;
   } catch (err) {
     console.error("Shelf save error:", err);
+    alert("⚠ Save failed: " + err.message);
     return false;
   }
 }
@@ -980,31 +843,39 @@ function refreshAllStatuses() {
   return shelf;
 }
 
-function saveCurrentResultToShelf() {
-  if (!currentOpeningDate || !currentExpiryDate || !selectedPAO) {
-    console.log('No result to save');
+saveBtn.onclick = () => {
+  if (!selectedPAO) {
+    alert("⚠ First select a PAO period");
     return;
   }
 
-  const itemStatus = computeStatusFromExpiry(currentExpiryDate);
-  const name = "Product";
+  const openingDate = getOpeningDate();
+  const expiryDate = addMonths(openingDate, selectedPAO);
+  const itemStatus = computeStatusFromExpiry(expiryDate);
+
+  const name = productName.value.trim() || "noname";
 
   const item = {
     name: name,
     pao: selectedPAO + "M",
-    openingDate: currentOpeningDate,
-    expiryDate: currentExpiryDate,
+    openingDate: openingDate,
+    expiryDate: expiryDate,
     status: itemStatus,
-    isEstimated: false,
+    isEstimated: dateMode === 'estimated',
     createdAt: Date.now()
   };
 
   const shelf = loadShelfFromStorage();
   shelf.push(item);
   
-  saveShelfToStorage(shelf);
-  console.log('Item saved to shelf');
-}
+  const saveSuccess = saveShelfToStorage(shelf);
+  
+  if (saveSuccess) {
+    alert("✓ Saved to My Shelf!");
+    productName.value = "";
+    renderShelf();
+  }
+};
 
 function getStatusPriority(status) {
   const priorities = {
@@ -1016,7 +887,7 @@ function getStatusPriority(status) {
 }
 
 function deleteItem(createdAt) {
-  if (!confirm("Delete this item?")) return;
+  if (!confirm("Really delete?")) return;
   
   const shelf = loadShelfFromStorage();
   const updatedShelf = shelf.filter(item => item.createdAt !== createdAt);
@@ -1024,15 +895,22 @@ function deleteItem(createdAt) {
   renderShelf();
 }
 
+function formatOpeningDate(dateStr, isEstimated) {
+  if (isEstimated) {
+    const [year, month] = dateStr.split('-');
+    const monthName = new Date(year, parseInt(month) - 1, 1).toLocaleString('en', { month: 'short' });
+    return `${monthName} ${year}`;
+  } else {
+    return dateStr;
+  }
+}
+
 function renderShelf() {
   const shelf = refreshAllStatuses();
   
-  const shelfSummary = document.getElementById('shelfSummary');
-  const shelfItems = document.getElementById('shelfItems');
-  
   if (shelf.length === 0) {
     shelfSummary.innerHTML = '';
-    shelfItems.innerHTML = '<div style="text-align:center;color:#b0b0b0;padding:40px;">No items yet</div>';
+    shelfItems.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">No items in your shelf yet. Add your first product!</div>';
     return;
   }
   
@@ -1043,9 +921,9 @@ function renderShelf() {
   let summaryText = "";
   
   if (tossCount > 0) {
-    summaryText = `🗑️ You have expired products. Time to toss them.`;
+    summaryText = `🗑️ ${tossCount} expired`;
   } else if (useSoonCount > 0) {
-    summaryText = `⚠️ Some products are expiring soon.`;
+    summaryText = `⚠ ${useSoonCount} expiring soon`;
   } else if (keepCount > 0) {
     summaryText = "✨ Safe vibes only";
   }
@@ -1062,37 +940,33 @@ function renderShelf() {
     }
     
     if (!item.name) {
-      item.name = "Product";
-    }
-    
-    let displayStatus = item.status;
-    if (item.status === "TOSS") {
-      displayStatus = "TOSS IT";
-    } else if (item.status === "KEEP") {
-      displayStatus = "SAFE";
+      item.name = "noname";
     }
     
     return {
       ...item,
-      displayStatus: displayStatus
+      displayStatus: item.status
     };
   });
   
   itemsWithStatus.sort((a, b) => {
-    return getStatusPriority(a.status) - getStatusPriority(b.status);
+    return getStatusPriority(a.displayStatus) - getStatusPriority(b.displayStatus);
   });
   
   shelfItems.innerHTML = itemsWithStatus.map(item => {
     const itemStatus = item.displayStatus;
     
     let statusColor = "";
-    if (item.status === "TOSS") {
-      statusColor = "#ef4444";
-    } else if (item.status === "USE SOON") {
-      statusColor = "#f59e0b";
+    if (itemStatus === "TOSS") {
+      statusColor = "#4d1b1b";
+    } else if (itemStatus === "USE SOON") {
+      statusColor = "#4d4d1b";
     } else {
-      statusColor = "#22c55e";
+      statusColor = "#1b4d3e";
     }
+    
+    const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
+    const estimatedBadge = (item.isEstimated || false) ? '<span class="shelf-item-estimated-badge">Estimated</span>' : '';
     
     return `
       <div class="shelf-item">
@@ -1100,7 +974,7 @@ function renderShelf() {
         <div class="shelf-item-content">
           <div class="shelf-item-name">${item.name}</div>
           <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
-          <div class="shelf-item-dates">Opened: ${item.openingDate}</div>
+          <div class="shelf-item-dates">Opened: ${openingDateDisplay}${estimatedBadge}</div>
         </div>
         <div class="shelf-item-status" style="background: ${statusColor};">
           ${itemStatus}
@@ -1110,16 +984,73 @@ function renderShelf() {
   }).join('');
 }
 
-// ========== INITIALIZATION ==========
+(function cleanupOldData() {
+  try {
+    const stored = localStorage.getItem(SHELF_STORAGE_KEY);
+    if (stored) {
+      const shelf = JSON.parse(stored);
+      if (shelf.length > 0 && shelf[0].image) {
+        console.warn("⚠ Old format data detected. Cleaning up...");
+        localStorage.removeItem(SHELF_STORAGE_KEY);
+        console.log("✓ Shelf data reset. Ready to use without storage issues.");
+      }
+    }
+  } catch (err) {
+    console.error("Data cleanup error:", err);
+  }
+})();
 
-// Initialize app
-setState('home');
+(async function initNotifications() {
+  if (!("Notification" in window)) {
+    console.log("Browser does not support notifications");
+    return;
+  }
 
-console.log('KEESS initialized - state:', appState);
+  if (Notification.permission === "default") {
+    try {
+      await Notification.requestPermission();
+    } catch (err) {
+      console.error("Notification permission error:", err);
+    }
+  }
 
-// ===== API CONFIG (DO NOT MOVE) =====
-const GOOGLE_VISION_API_KEY = "AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw";
+  if (Notification.permission !== "granted") {
+    console.log("Notification permission not granted");
+    return;
+  }
+
+  const shelf = refreshAllStatuses();
+  
+  if (shelf.length === 0) {
+    return;
+  }
+
+  const tossCount = shelf.filter(item => item.status === "TOSS").length;
+  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
+  const keepCount = shelf.filter(item => item.status === "KEEP").length;
+
+  if (tossCount > 0) {
+    new Notification("KEESS · Keep or Toss", {
+      body: "🗑️ You have expired products. Time to toss them.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🗑️</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: TOSS");
+  } else if (useSoonCount > 0) {
+    new Notification("KEESS · Keep or Toss", {
+      body: "⚠️ Some products are expiring soon.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>⚠️</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: USE SOON");
+  }
+})();
+
+initDateSelectors();
+renderShelf();
 </script>
+
+<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
 
 </body>
 </html>
