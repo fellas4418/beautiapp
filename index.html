@@ -54,8 +54,8 @@ body {
   display: block;
 }
 
-/* ========== FIRST SCREEN ========== */
-#firstScreen {
+/* ========== HOME SCREEN ========== */
+#homeScreen {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -104,7 +104,7 @@ body {
   font-size: 48px;
 }
 
-/* ========== MAIN SCREEN ========== */
+/* ========== ADD PRODUCT SCREEN ========== */
 .wrap { 
   max-width: 420px; 
   margin: 0 auto; 
@@ -117,7 +117,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.header-title {
+  flex: 1;
 }
 
 .back-button {
@@ -181,7 +185,7 @@ img {
   display: grid; 
   grid-template-columns: repeat(4, 1fr); 
   gap: 10px; 
-  margin-top: 12px; 
+  margin-top: 8px; 
 }
 
 button { 
@@ -240,7 +244,7 @@ button.active {
 
 input[type="text"] { 
   width: 100%; 
-  margin-top: 10px; 
+  margin-top: 6px; 
   padding: 10px; 
   border-radius: 8px; 
   border: 2px solid var(--border-light);
@@ -248,6 +252,7 @@ input[type="text"] {
   color: var(--text-primary);
   font-size: 14px;
   transition: all 0.2s;
+  margin-left: 4px;
 }
 
 input[type="text"]:focus {
@@ -309,9 +314,9 @@ input[type="text"]:focus {
 
 label { 
   display: block; 
-  margin-top: 12px; 
-  margin-bottom: 4px; 
-  font-size: 14px; 
+  margin-top: 0; 
+  margin-bottom: 6px; 
+  font-size: 13px; 
   color: var(--text-secondary);
   font-weight: 600;
 }
@@ -319,24 +324,35 @@ label {
 .photo-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 0;
+  margin-bottom: 12px;
 }
 
 .photo-buttons button {
-  padding: 12px;
-  background: var(--bg-card);
-  color: var(--accent-primary);
-  border: 2px solid var(--accent-tertiary);
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
+  padding: 20px 12px;
+  background: var(--accent-primary);
+  color: var(--bg-card);
+  border: 2px solid var(--accent-primary);
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
 }
 
 .photo-buttons button:hover {
-  background: var(--bg-secondary);
-  border-color: var(--accent-secondary);
+  background: #ff5555;
+  border-color: #ff5555;
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
+}
+
+.photo-section-label {
+  font-size: 13px;
+  color: #4a4a4a;
+  margin-bottom: 6px;
+  text-align: center;
+  font-weight: 700;
 }
 
 @keyframes statusFadeUp {
@@ -468,7 +484,7 @@ label {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .date-mode-toggle button {
@@ -494,34 +510,8 @@ label {
 
 .date-selectors-wrapper {
   position: relative;
-  margin-top: 16px;
+  margin-top: 12px;
   padding: 8px 0;
-}
-
-.date-selectors-wrapper::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--border-accent) 20%, var(--border-accent) 80%, transparent);
-  transform: translateY(-50%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.date-selectors-wrapper::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--border-accent) 20%, var(--border-accent) 80%, transparent);
-  transform: translateY(calc(-50% + 48px));
-  pointer-events: none;
-  z-index: 1;
 }
 
 .date-selectors {
@@ -551,6 +541,7 @@ label {
   -moz-appearance: none;
   cursor: pointer;
   transition: all 0.2s;
+  margin-left: 4px;
 }
 
 .date-selectors select:focus {
@@ -643,67 +634,64 @@ label {
   border-color: var(--accent-secondary);
   transform: translateY(-2px);
 }
+
+.pao-section-label {
+  font-size: 13px;
+  color: #4a4a4a;
+  margin-bottom: 8px;
+  margin-top: 0;
+  font-weight: 700;
+  text-align: left;
+}
+
+/* ========== FORM SECTION GROUPING ========== */
+.form-section {
+  margin-bottom: 14px;
+  padding: 6px;
+  background: rgba(255, 247, 247, 0.3);
+  border-radius: 10px;
+}
+
+.form-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.form-section-label {
+  font-size: 13px;
+  color: #4a4a4a;
+  margin-bottom: 8px;
+  margin-top: 0;
+  font-weight: 700;
+  text-align: left;
+}
 </style>
 </head>
 
 <body>
 
-<!-- ========== FIRST SCREEN ========== -->
-<div id="firstScreen" class="screen active">
+<!-- ========== HOME SCREEN ========== -->
+<div id="homeScreen" class="screen active">
   <div class="logo">KEESS</div>
-  <button class="check-button" onclick="navigateToMain()">
+  <button class="check-button" onclick="showScreen('add')">
     <div class="check-icon">📸</div>
-    <div>Check cosmetic label</div>
+    <div>Add cosmetic</div>
   </button>
 </div>
 
-<!-- ========== MAIN SCREEN ========== -->
-<div id="mainScreen" class="screen">
+<!-- ========== ADD PRODUCT SCREEN ========== -->
+<div id="addScreen" class="screen">
 <div class="wrap">
 <div class="header">
-  <div>
+  <div class="header-title">
     <h2>KEESS</h2>
     <div class="subtitle">Keep or Toss</div>
     <div class="tagline">Know when to keep it. Know when to toss it.</div>
   </div>
-  <button class="back-button" onclick="navigateToFirst()">← Home</button>
 </div>
 
 <div class="card">
-<label>Product Name (optional)</label>
-<input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
-
-<label>Opening Date</label>
-<div class="date-mode-toggle">
-  <button id="exactBtn" class="active" onclick="setDateMode('exact')">I remember the exact date</button>
-  <button id="estimatedBtn" onclick="setDateMode('estimated')">I'm not sure</button>
-</div>
-
-<div class="date-selectors-wrapper">
-  <div id="exactDateSelectors" class="date-selectors">
-    <select id="yearSelect"></select>
-    <select id="monthSelect"></select>
-    <select id="daySelect"></select>
-  </div>
-
-  <div id="estimatedDateSelectors" class="date-selectors two-col estimated" style="display:none;">
-    <select id="yearSelectEst"></select>
-    <select id="monthSelectEst"></select>
-  </div>
-</div>
-
-<div id="estimatedBadge" class="estimated-badge" style="display:none;">
-  ESTIMATED
-</div>
-
-<div id="helperText" class="helper-text" style="display:none;">
-  Opening date is estimated
-</div>
-
-<label>Period After Opening (PAO)</label>
-<div class="pao" id="paoBtns"></div>
-
-<label>Upload Product Photo</label>
+<!-- PHOTO ACTIONS (HIGHEST PRIORITY) -->
+<div class="photo-section-label">Upload a photo to auto-detect PAO</div>
 <div class="photo-buttons">
   <button onclick="document.getElementById('cameraInput').click()">📸 Take a photo</button>
   <button onclick="document.getElementById('galleryInput').click()">🖼 Select from gallery</button>
@@ -713,14 +701,55 @@ label {
 <div class="file-name" id="fileName"></div>
 
 <img id="preview" style="display:none">
-
-<div id="result" class="result">
-  Select a PAO period
-</div>
-<div id="statusLabel" class="status-label" style="display:none"></div>
 <div id="status" class="status" style="display:none"></div>
 
-<button id="saveBtn">Save to My Shelf</button>
+<!-- PAO SELECTION -->
+<div class="form-section">
+  <div class="pao-section-label">Select a PAO period</div>
+  <div class="pao" id="paoBtns"></div>
+</div>
+
+<!-- OPENING DATE -->
+<div class="form-section">
+  <label>Opening Date</label>
+  <div class="date-mode-toggle">
+    <button id="exactBtn" class="active" onclick="setDateMode('exact')">I remember the exact date</button>
+    <button id="estimatedBtn" onclick="setDateMode('estimated')">I'm not sure</button>
+  </div>
+
+  <div class="date-selectors-wrapper">
+    <div id="exactDateSelectors" class="date-selectors">
+      <select id="yearSelect"></select>
+      <select id="monthSelect"></select>
+      <select id="daySelect"></select>
+    </div>
+
+    <div id="estimatedDateSelectors" class="date-selectors two-col estimated" style="display:none;">
+      <select id="yearSelectEst"></select>
+      <select id="monthSelectEst"></select>
+    </div>
+  </div>
+
+  <div id="estimatedBadge" class="estimated-badge" style="display:none;">
+    ESTIMATED
+  </div>
+
+  <div id="helperText" class="helper-text" style="display:none;">
+    Opening date is estimated
+  </div>
+</div>
+
+<!-- PRODUCT NAME (LOW PRIORITY) -->
+<div class="form-section">
+  <label>Product Name (optional)</label>
+  <input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
+</div>
+
+<!-- RESULT -->
+<div id="result" class="result"></div>
+<div id="statusLabel" class="status-label" style="display:none"></div>
+
+<button id="saveBtn" style="display:none">Save to My Shelf</button>
 </div>
 
 <div class="card">
@@ -734,7 +763,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 </div>
 </div>
 
-<button class="shelf-nav-button" onclick="navigateToShelf()">📦 View My Shelf</button>
+<button class="shelf-nav-button" onclick="showScreen('shelf')">📦 View My Shelf</button>
 
 </div>
 </div>
@@ -744,7 +773,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 <div class="wrap">
 <div class="header">
   <h2>📦 My Shelf</h2>
-  <button class="back-button" onclick="navigateToFirst()">← Home</button>
+  <button class="back-button" onclick="showScreen('add')">← Home</button>
 </div>
 <div id="shelfSummary"></div>
 <div id="shelfItems"></div>
@@ -762,6 +791,7 @@ let currentImageDataURL = null;
 let lastStatus = null;
 let ocrProcessed = false;
 let dateMode = 'exact';
+let currentScreen = 'home';
 
 const productName = document.getElementById("productName");
 const paoBox = document.getElementById("paoBtns");
@@ -788,20 +818,20 @@ const yearSelectEst = document.getElementById("yearSelectEst");
 const monthSelectEst = document.getElementById("monthSelectEst");
 
 // ========== NAVIGATION ==========
-function navigateToFirst() {
+function showScreen(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('firstScreen').classList.add('active');
-}
-
-function navigateToMain() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('mainScreen').classList.add('active');
-}
-
-function navigateToShelf() {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('shelfScreen').classList.add('active');
-  renderShelf();
+  
+  if (screen === 'home') {
+    document.getElementById('homeScreen').classList.add('active');
+    currentScreen = 'home';
+  } else if (screen === 'add') {
+    document.getElementById('addScreen').classList.add('active');
+    currentScreen = 'add';
+  } else if (screen === 'shelf') {
+    document.getElementById('shelfScreen').classList.add('active');
+    currentScreen = 'shelf';
+    renderShelf();
+  }
 }
 
 function getPacificMidnight(dateStr) {
@@ -949,11 +979,15 @@ function calculateDaysLeft(expiryDateStr) {
 
 function updateResult() {
   if (!selectedPAO) { 
-    result.innerHTML = "Select a PAO period";
+    result.innerHTML = "";
+    result.style.display = "none";
     statusLabel.style.display = "none";
+    saveBtn.style.display = "none";
     lastStatus = null;
     return; 
   }
+  
+  result.style.display = "block";
   
   const openingDate = getOpeningDate();
   const expiryDateStr = addMonths(openingDate, selectedPAO);
@@ -1250,7 +1284,7 @@ saveBtn.onclick = () => {
   if (saveSuccess) {
     alert("✓ Saved to My Shelf!");
     productName.value = "";
-    navigateToShelf();
+    showScreen('shelf');
   }
 };
 
