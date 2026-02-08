@@ -834,6 +834,29 @@ label {
   background: var(--bg-secondary);
   border-color: var(--border-accent);
 }
+
+.select-all-btn {
+  width: 100%;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  border: 2px solid var(--accent-tertiary);
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  display: none;
+}
+
+.select-all-btn.show {
+  display: block;
+}
+
+.select-all-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-secondary);
+}
 </style>
 </head>
 
@@ -945,6 +968,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
   <button class="back-button" onclick="showScreen('add')">← Home</button>
 </div>
 <div id="shelfSummary"></div>
+<button id="selectAllBtn" class="select-all-btn" onclick="toggleSelectAll()">Select all</button>
 <div id="shelfItems"></div>
 <button id="deleteSelectedBtn" class="delete-selected-btn" onclick="deleteSelected()">Delete selected (0)</button>
 <button id="cancelSelectionBtn" class="cancel-selection-btn" onclick="exitSelectionMode()">Cancel</button>
@@ -980,6 +1004,7 @@ const viewShelfBtn = document.getElementById("viewShelfBtn");
 const viewShelfBtnText = document.getElementById("viewShelfBtnText");
 const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const cancelSelectionBtn = document.getElementById("cancelSelectionBtn");
+const selectAllBtn = document.getElementById("selectAllBtn");
 
 const exactBtn = document.getElementById("exactBtn");
 const estimatedBtn = document.getElementById("estimatedBtn");
@@ -1390,7 +1415,7 @@ function loadShelfFromStorage() {
   try {
     const stored = localStorage.getItem(SHELF_STORAGE_KEY);
     if (!stored) {
-      console.log("No shelf data");
+      console.log("No shelf data - initializing empty shelf");
       return [];
     }
     const parsed = JSON.parse(stored);
@@ -1494,6 +1519,26 @@ function updateDeleteButtonText() {
   const checkedBoxes = document.querySelectorAll('.shelf-item-checkbox:checked');
   const count = checkedBoxes.length;
   deleteSelectedBtn.textContent = `Delete selected (${count})`;
+  
+  const totalCheckboxes = document.querySelectorAll('.shelf-item-checkbox');
+  if (count === totalCheckboxes.length && totalCheckboxes.length > 0) {
+    selectAllBtn.textContent = "Deselect all";
+  } else {
+    selectAllBtn.textContent = "Select all";
+  }
+}
+
+function toggleSelectAll() {
+  const allCheckboxes = document.querySelectorAll('.shelf-item-checkbox');
+  const checkedBoxes = document.querySelectorAll('.shelf-item-checkbox:checked');
+  
+  const shouldSelectAll = checkedBoxes.length < allCheckboxes.length;
+  
+  allCheckboxes.forEach(checkbox => {
+    checkbox.checked = shouldSelectAll;
+  });
+  
+  updateDeleteButtonText();
 }
 
 function enterSelectionMode() {
@@ -1503,6 +1548,7 @@ function enterSelectionMode() {
   });
   deleteSelectedBtn.classList.add('show');
   cancelSelectionBtn.classList.add('show');
+  selectAllBtn.classList.add('show');
   updateDeleteButtonText();
 }
 
@@ -1517,6 +1563,7 @@ function exitSelectionMode() {
   });
   deleteSelectedBtn.classList.remove('show');
   cancelSelectionBtn.classList.remove('show');
+  selectAllBtn.classList.remove('show');
 }
 
 function deleteSelected() {
@@ -1566,7 +1613,7 @@ function renderShelf() {
   
   let summaryHTML = '<div class="shelf-summary">';
   summaryHTML += `<div class="shelf-summary-line">Total ${shelf.length} items</div>`;
-  summaryHTML += `<div class="shelf-summary-line">🗑️ ${tossCount} toss · ⚠️ ${useSoonCount} use soon · ✅ ${keepCount} safe</div>`;
+  summaryHTML += `<div class="shelf-summary-line"><span style="color:#ef4444">🗑️ ${tossCount} toss</span> · <span style="color:#f59e0b">⚠️ ${useSoonCount} use soon</span> · <span style="color:#22c55e">✅ ${keepCount} safe</span></div>`;
   summaryHTML += '</div>';
   
   shelfSummary.innerHTML = summaryHTML;
