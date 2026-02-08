@@ -117,7 +117,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 12px; /* Reduced from 24px to 12px */
 }
 
 .header-title {
@@ -145,7 +145,7 @@ body {
   background: var(--bg-card);
   border-radius: 16px; 
   padding: 20px; 
-  margin-bottom: 16px;
+  margin-bottom: 8px; /* Reduced from 16px to 8px */
   border: 2px solid var(--border-light);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
@@ -167,7 +167,7 @@ h2 {
 .tagline { 
   font-size: 13px; 
   color: var(--text-secondary);
-  margin-bottom: 20px; 
+  margin-bottom: 10px; /* Reduced from 20px to 10px (50%) */
   line-height: 1.4;
 }
 
@@ -244,7 +244,7 @@ button.active {
 
 input[type="text"] { 
   width: 100%; 
-  margin-top: 6px; 
+  margin-top: 4px; /* Reduced from 6px to 4px */
   padding: 10px; 
   border-radius: 8px; 
   border: 2px solid var(--border-light);
@@ -315,10 +315,10 @@ input[type="text"]:focus {
 label { 
   display: block; 
   margin-top: 0; 
-  margin-bottom: 6px; 
+  margin-bottom: 4px; /* Reduced from 6px to 4px */
   font-size: 13px; 
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 700; /* Increased from 600 to 700 for stronger hierarchy */
 }
 
 .photo-buttons {
@@ -474,9 +474,21 @@ label {
   border-radius: 8px;
   font-size: 14px;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  margin-bottom: 6px; /* Reduced from 12px to 6px */
   text-align: center;
   font-weight: 600;
+  border: 2px solid var(--border-light);
+}
+
+.shelf-total-count {
+  background: var(--bg-card);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  text-align: center;
+  font-weight: 700;
   border: 2px solid var(--border-light);
 }
 
@@ -484,7 +496,7 @@ label {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 6px; /* Reduced from 8px to 6px */
 }
 
 .date-mode-toggle button {
@@ -510,7 +522,7 @@ label {
 
 .date-selectors-wrapper {
   position: relative;
-  margin-top: 12px;
+  margin-top: 8px; /* Reduced from 12px to 8px */
   padding: 8px 0;
 }
 
@@ -588,7 +600,7 @@ label {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-secondary);
-  margin-bottom: 14px;
+  margin-bottom: 7px; /* Reduced from 14px to 7px */
   border: 2px solid var(--border-light);
 }
 
@@ -615,24 +627,6 @@ label {
   border-color: #ff5555;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
-}
-
-.shelf-nav-button {
-  width: 100%;
-  margin-top: 16px;
-  background: var(--bg-card);
-  color: var(--accent-primary);
-  border: 2px solid var(--accent-tertiary);
-  padding: 14px;
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: 10px;
-}
-
-.shelf-nav-button:hover {
-  background: var(--bg-secondary);
-  border-color: var(--accent-secondary);
-  transform: translateY(-2px);
 }
 
 .pao-section-label {
@@ -852,7 +846,7 @@ label {
 
 <!-- PAO SELECTION -->
 <div id="paoSection" class="form-section">
-  <div class="pao-section-label">Select a PAO period</div>
+  <label>Select a PAO period</label>
   <div class="pao" id="paoBtns"></div>
 </div>
 
@@ -905,7 +899,7 @@ label {
 
 <!-- VIEW SHELF BUTTON (ONLY AFTER SAVE) -->
 <button id="viewShelfBtn" class="view-shelf-button" onclick="showScreen('shelf')">
-  📦 View My Shelf
+  <span id="viewShelfBtnText">📦 View My Shelf</span>
 </button>
 </div>
 
@@ -920,8 +914,6 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 </div>
 </div>
 
-<button class="shelf-nav-button" onclick="showScreen('shelf')">📦 View My Shelf</button>
-
 </div>
 </div>
 
@@ -932,6 +924,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
   <h2>📦 My Shelf</h2>
   <button class="back-button" onclick="showScreen('add')">← Home</button>
 </div>
+<div id="shelfTotalCount"></div>
 <div id="shelfSummary"></div>
 <div id="shelfItems"></div>
 </div>
@@ -962,6 +955,8 @@ const shelfSummary = document.getElementById("shelfSummary");
 const shelfItems = document.getElementById("shelfItems");
 const saveConfirmation = document.getElementById("saveConfirmation");
 const viewShelfBtn = document.getElementById("viewShelfBtn");
+const viewShelfBtnText = document.getElementById("viewShelfBtnText");
+const shelfTotalCount = document.getElementById("shelfTotalCount");
 
 const exactBtn = document.getElementById("exactBtn");
 const estimatedBtn = document.getElementById("estimatedBtn");
@@ -986,10 +981,25 @@ function showScreen(screen) {
   } else if (screen === 'add') {
     document.getElementById('addScreen').classList.add('active');
     currentScreen = 'add';
+    updateViewShelfButtonText();
   } else if (screen === 'shelf') {
     document.getElementById('shelfScreen').classList.add('active');
     currentScreen = 'shelf';
     renderShelf();
+  }
+}
+
+function updateViewShelfButtonText() {
+  const shelf = loadShelfFromStorage();
+  const totalCount = shelf.length;
+  const tossCount = shelf.filter(item => item.status === "TOSS").length;
+  
+  if (totalCount === 0) {
+    viewShelfBtnText.textContent = "📦 View My Shelf";
+  } else if (tossCount > 0) {
+    viewShelfBtnText.textContent = `📦 View My Shelf (${totalCount} · ${tossCount} expired)`;
+  } else {
+    viewShelfBtnText.textContent = `📦 View My Shelf (${totalCount})`;
   }
 }
 
@@ -1447,6 +1457,9 @@ saveBtn.onclick = () => {
     // Show "View My Shelf" button
     viewShelfBtn.classList.add('show');
     
+    // Update button text with count
+    updateViewShelfButtonText();
+    
     // Clear product name for next entry
     productName.value = "";
     
@@ -1487,147 +1500,5 @@ function renderShelf() {
   const shelf = refreshAllStatuses();
   
   if (shelf.length === 0) {
-    shelfSummary.innerHTML = '';
-    shelfItems.innerHTML = '<div style="text-align:center;color:#b0b0b0;padding:20px;">No items in your shelf yet. Add your first product!</div>';
-    return;
-  }
-  
-  const tossCount = shelf.filter(item => item.status === "TOSS").length;
-  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
-  const keepCount = shelf.filter(item => item.status === "KEEP").length;
-  
-  let summaryText = "";
-  
-  if (tossCount > 0) {
-    summaryText = `🗑️ ${tossCount} expired`;
-  } else if (useSoonCount > 0) {
-    summaryText = `⚠ ${useSoonCount} expiring soon`;
-  } else if (keepCount > 0) {
-    summaryText = "✨ Safe vibes only";
-  }
-  
-  if (summaryText) {
-    shelfSummary.innerHTML = `<div class="shelf-summary">${summaryText}</div>`;
-  } else {
-    shelfSummary.innerHTML = '';
-  }
-  
-  const itemsWithStatus = shelf.map(item => {
-    if (!item.createdAt) {
-      item.createdAt = Date.now() + Math.random();
-    }
-    
-    if (!item.name) {
-      item.name = "noname";
-    }
-    
-    return {
-      ...item,
-      displayStatus: item.status
-    };
-  });
-  
-  itemsWithStatus.sort((a, b) => {
-    return getStatusPriority(a.displayStatus) - getStatusPriority(b.displayStatus);
-  });
-  
-  shelfItems.innerHTML = itemsWithStatus.map(item => {
-    const itemStatus = item.displayStatus;
-    
-    let statusColor = "";
-    if (itemStatus === "TOSS") {
-      statusColor = "#ef4444";
-    } else if (itemStatus === "USE SOON") {
-      statusColor = "#f59e0b";
-    } else {
-      statusColor = "#22c55e";
-    }
-    
-    const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
-    const estimatedBadge = (item.isEstimated || false) ? '<span class="shelf-item-estimated-badge">Estimated</span>' : '';
-    
-    return `
-      <div class="shelf-item">
-        <button class="delete-btn" onclick="deleteItem(${item.createdAt})">×</button>
-        <div class="shelf-item-content">
-          <div class="shelf-item-name">${item.name}</div>
-          <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
-          <div class="shelf-item-dates">Opened: ${openingDateDisplay}${estimatedBadge}</div>
-        </div>
-        <div class="shelf-item-status" style="background: ${statusColor};">
-          ${itemStatus}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-(function cleanupOldData() {
-  try {
-    const stored = localStorage.getItem(SHELF_STORAGE_KEY);
-    if (stored) {
-      const shelf = JSON.parse(stored);
-      if (shelf.length > 0 && shelf[0].image) {
-        console.warn("⚠ Old format data detected. Cleaning up...");
-        localStorage.removeItem(SHELF_STORAGE_KEY);
-        console.log("✓ Shelf data reset. Ready to use without storage issues.");
-      }
-    }
-  } catch (err) {
-    console.error("Data cleanup error:", err);
-  }
-})();
-
-(async function initNotifications() {
-  if (!("Notification" in window)) {
-    console.log("Browser does not support notifications");
-    return;
-  }
-
-  if (Notification.permission === "default") {
-    try {
-      await Notification.requestPermission();
-    } catch (err) {
-      console.error("Notification permission error:", err);
-    }
-  }
-
-  if (Notification.permission !== "granted") {
-    console.log("Notification permission not granted");
-    return;
-  }
-
-  const shelf = refreshAllStatuses();
-  
-  if (shelf.length === 0) {
-    return;
-  }
-
-  const tossCount = shelf.filter(item => item.status === "TOSS").length;
-  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
-  const keepCount = shelf.filter(item => item.status === "KEEP").length;
-
-  if (tossCount > 0) {
-    new Notification("KEESS · Keep or Toss", {
-      body: "🗑️ You have expired products. Time to toss them.",
-      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🗑️</text></svg>",
-      silent: true
-    });
-    console.log("✓ Notification sent: TOSS");
-  } else if (useSoonCount > 0) {
-    new Notification("KEESS · Keep or Toss", {
-      body: "⚠️ Some products are expiring soon.",
-      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>⚠️</text></svg>",
-      silent: true
-    });
-    console.log("✓ Notification sent: USE SOON");
-  }
-})();
-
-initDateSelectors();
-</script>
-
-<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
-
-</body>
-</html>
+    shelfTotalCount.innerHTML = '';
+    shelfS
