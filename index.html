@@ -16,6 +16,23 @@ body {
   overflow-x: hidden;
 }
 
+/* ========== SCREEN CONTAINER ========== */
+.screen {
+  display: none;
+  min-height: 100vh;
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+
+.screen.visible {
+  display: block;
+  animation: fadeIn 300ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ========== INITIAL SCREEN ========== */
 .initial-screen {
   display: flex;
@@ -24,15 +41,7 @@ body {
   justify-content: center;
   min-height: 100vh;
   padding: 24px;
-  transition: opacity 300ms ease, transform 300ms ease;
   background: linear-gradient(135deg, #fff7f7 0%, #ffe8e8 100%);
-}
-
-.initial-screen.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-20px);
-  position: absolute;
 }
 
 .app-logo {
@@ -74,26 +83,67 @@ body {
   transform: scale(0.98);
 }
 
-/* ========== MAIN APP CONTAINER ========== */
-.app-container {
-  display: none;
+/* ========== SCAN SELECTION SCREEN ========== */
+.scan-selection-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(135deg, #fff7f7 0%, #ffe8e8 100%);
+}
+
+.scan-selection-screen .app-logo {
+  margin-bottom: 80px;
+}
+
+.scan-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.scan-option-btn {
+  width: 100%;
+  height: 120px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 3px solid #ffd4d4;
+  color: #ff4d4f;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 180ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(255, 77, 79, 0.12);
+}
+
+.scan-option-btn:hover {
+  transform: translateY(-2px);
+  border-color: #ffb8b8;
+  box-shadow: 0 8px 24px rgba(255, 77, 79, 0.2);
+  background: #fff7f7;
+}
+
+.scan-option-btn:active {
+  transform: translateY(0);
+}
+
+/* ========== FORM SCREEN ========== */
+.form-screen {
   max-width: 480px;
   margin: 0 auto;
   padding: 24px;
   min-height: 100vh;
 }
 
-.app-container.visible {
-  display: block;
-  animation: fadeIn 300ms ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ========== TOP NAV ========== */
 .top-nav {
   display: flex;
   justify-content: space-between;
@@ -135,97 +185,7 @@ body {
   border-color: #ff4d4f;
 }
 
-/* ========== RESULT DISPLAY (DOMINATES SCREEN) ========== */
-.result-display {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  margin: 40px 0;
-}
-
-.result-display.visible {
-  display: flex;
-  animation: resultAppear 400ms ease;
-}
-
-@keyframes resultAppear {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.status-text {
-  font-size: 72px;
-  font-weight: 900;
-  letter-spacing: -2px;
-  text-align: center;
-  margin-bottom: 16px;
-  line-height: 1;
-}
-
-.status-text.safe {
-  color: #22c55e;
-}
-
-.status-text.use-soon {
-  color: #f59e0b;
-}
-
-.status-text.toss {
-  color: #ef4444;
-}
-
-.status-subtext {
-  font-size: 14px;
-  color: #6b6b6b;
-  text-align: center;
-  font-weight: 500;
-}
-
-.details-toggle {
-  margin-top: 24px;
-  background: none;
-  border: none;
-  color: #6b6b6b;
-  font-size: 12px;
-  cursor: pointer;
-  text-decoration: underline;
-  transition: color 150ms ease;
-}
-
-.details-toggle:hover {
-  color: #1a1a1a;
-}
-
-.result-details {
-  display: none;
-  margin-top: 16px;
-  padding: 16px;
-  background: #ffffff;
-  border: 2px solid #f0e6e6;
-  border-radius: 12px;
-  font-size: 13px;
-  color: #6b6b6b;
-  max-width: 300px;
-  line-height: 1.6;
-}
-
-.result-details.visible {
-  display: block;
-  animation: fadeIn 200ms ease;
-}
-
-/* ========== FORM (DIMMED WHEN RESULT SHOWN) ========== */
-.form-container {
-  transition: opacity 300ms ease;
-}
-
-.form-container.dimmed {
-  opacity: 0.3;
-  pointer-events: none;
-}
-
+/* Form sections */
 .form-section {
   background: #ffffff;
   border-radius: 16px;
@@ -243,7 +203,6 @@ body {
   margin-bottom: 16px;
 }
 
-/* Product name (collapsed by default) */
 .product-name-section {
   margin-bottom: 16px;
 }
@@ -309,7 +268,6 @@ input[type="text"]::placeholder {
   color: #b0b0b0;
 }
 
-/* Date selectors (minimized) */
 .date-section {
   margin-bottom: 16px;
 }
@@ -409,7 +367,6 @@ input[type="text"]::placeholder {
   font-style: italic;
 }
 
-/* PAO buttons */
 .pao { 
   display: grid; 
   grid-template-columns: repeat(4, 1fr); 
@@ -441,33 +398,8 @@ input[type="text"]::placeholder {
   color: #ffffff;
 }
 
-/* Photo upload */
 .photo-section {
   margin-top: 16px;
-}
-
-.photo-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.photo-buttons button {
-  padding: 12px;
-  background: #ffffff;
-  color: #6b6b6b;
-  border: 2px solid #f0e6e6;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.photo-buttons button:hover {
-  background: #fff7f7;
-  border-color: #ffd4d4;
-  color: #1a1a1a;
 }
 
 .file-name { 
@@ -496,7 +428,6 @@ img {
   font-size: 12px; 
 }
 
-/* Save button */
 .save-btn {
   width: 100%;
   padding: 16px;
@@ -524,14 +455,172 @@ img {
   transform: translateY(0);
 }
 
-/* ========== MY SHELF (HIDDEN BY DEFAULT) ========== */
-.shelf-view {
-  display: none;
-  animation: fadeIn 300ms ease;
+.info-section {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 24px;
+  border: 2px solid #f0e6e6;
 }
 
-.shelf-view.visible {
+.info-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6b6b6b;
+  margin-bottom: 12px;
+}
+
+.info-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6b6b6b;
+}
+
+.info-content strong {
+  color: #1a1a1a;
+}
+
+/* ========== RESULT SCREEN ========== */
+.result-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  background: linear-gradient(135deg, #fff7f7 0%, #ffe8e8 100%);
+}
+
+.result-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+.status-text {
+  font-size: 72px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  text-align: center;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.status-text.safe {
+  color: #22c55e;
+}
+
+.status-text.use-soon {
+  color: #f59e0b;
+}
+
+.status-text.toss {
+  color: #ef4444;
+}
+
+.status-subtext {
+  font-size: 14px;
+  color: #6b6b6b;
+  text-align: center;
+  font-weight: 500;
+}
+
+.details-toggle {
+  margin-top: 24px;
+  background: none;
+  border: none;
+  color: #6b6b6b;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 150ms ease;
+}
+
+.details-toggle:hover {
+  color: #1a1a1a;
+}
+
+.result-details {
+  display: none;
+  margin-top: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border: 2px solid #f0e6e6;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #6b6b6b;
+  max-width: 300px;
+  line-height: 1.6;
+}
+
+.result-details.visible {
   display: block;
+  animation: fadeIn 200ms ease;
+}
+
+.result-actions {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 40px;
+}
+
+.scan-again-btn {
+  width: 100%;
+  height: 64px;
+  border-radius: 16px;
+  background: #ff4d4f;
+  border: none;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 180ms ease;
+  text-transform: uppercase;
+  box-shadow: 0 4px 16px rgba(255, 77, 79, 0.25);
+}
+
+.scan-again-btn:hover {
+  background: #ff3333;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(255, 77, 79, 0.35);
+}
+
+.scan-again-btn:active {
+  transform: translateY(0);
+}
+
+.done-btn {
+  background: none;
+  border: none;
+  color: #6b6b6b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 12px;
+  transition: color 150ms ease;
+  text-decoration: underline;
+}
+
+.done-btn:hover {
+  color: #1a1a1a;
+}
+
+/* ========== MY SHELF ========== */
+.shelf-view {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 100vh;
 }
 
 .shelf-header {
@@ -650,34 +739,6 @@ img {
   border-color: #ffd4d4;
 }
 
-/* Info section */
-.info-section {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px;
-  margin-top: 24px;
-  border: 2px solid #f0e6e6;
-}
-
-.info-title {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #6b6b6b;
-  margin-bottom: 12px;
-}
-
-.info-content {
-  font-size: 13px;
-  line-height: 1.6;
-  color: #6b6b6b;
-}
-
-.info-content strong {
-  color: #1a1a1a;
-}
-
 /* Responsive adjustments */
 @media (max-width: 400px) {
   .status-text {
@@ -696,126 +757,197 @@ img {
 <body>
 
 <!-- INITIAL SCREEN -->
-<div class="initial-screen" id="initialScreen">
+<div class="screen visible initial-screen" id="initialScreen">
   <div class="app-logo">KEESS</div>
-  <button class="primary-scan-btn" onclick="startApp()">
+  <button class="primary-scan-btn" onclick="showScanSelection()">
     Scan cosmetic label
   </button>
 </div>
 
-<!-- MAIN APP -->
-<div class="app-container" id="appContainer">
+<!-- SCAN SELECTION SCREEN -->
+<div class="screen scan-selection-screen" id="scanSelectionScreen">
+  <div class="app-logo">KEESS</div>
+  <div class="scan-buttons">
+    <button class="scan-option-btn" onclick="document.getElementById('cameraInput').click()">
+      Take photo
+    </button>
+    <button class="scan-option-btn" onclick="document.getElementById('galleryInput').click()">
+      Select image
+    </button>
+  </div>
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+  <input type="file" id="galleryInput" accept="image/*" style="display:none;">
+</div>
+
+<!-- FORM SCREEN -->
+<div class="screen form-screen" id="formScreen">
   
-  <!-- TOP NAV -->
   <div class="top-nav">
     <div class="app-logo-small">KEESS</div>
-    <button class="nav-toggle" id="shelfToggle" onclick="toggleShelf()">My Shelf</button>
+    <button class="nav-toggle" id="shelfToggle" onclick="showShelf()">My Shelf</button>
   </div>
 
-  <!-- MAIN FORM VIEW -->
-  <div id="formView">
+  <!-- Product Name (collapsed) -->
+  <div class="product-name-section">
+    <button class="expand-toggle" id="nameToggle" onclick="toggleProductName()">
+      + Product name (optional)
+    </button>
+    <div class="expandable-content" id="nameContent">
+      <input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
+    </div>
+  </div>
+
+  <!-- Opening Date -->
+  <div class="form-section date-section">
+    <div class="form-section-title">Opening Date</div>
     
-    <!-- RESULT DISPLAY (DOMINATES SCREEN WHEN VISIBLE) -->
-    <div class="result-display" id="resultDisplay">
-      <div class="status-text" id="statusText"></div>
-      <div class="status-subtext" id="statusSubtext"></div>
-      <button class="details-toggle" id="detailsToggle" onclick="toggleDetails()">More details</button>
-      <div class="result-details" id="resultDetails"></div>
+    <div class="date-mode-toggle">
+      <button id="exactBtn" class="active" onclick="setDateMode('exact')">Exact date</button>
+      <button id="estimatedBtn" onclick="setDateMode('estimated')">Estimate</button>
     </div>
 
-    <!-- FORM (DIMMED WHEN RESULT IS SHOWN) -->
-    <div class="form-container" id="formContainer">
-      
-      <!-- Product Name (collapsed) -->
-      <div class="product-name-section">
-        <button class="expand-toggle" id="nameToggle" onclick="toggleProductName()">
-          + Product name (optional)
-        </button>
-        <div class="expandable-content" id="nameContent">
-          <input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
-        </div>
+    <div class="date-selectors-wrapper">
+      <div id="exactDateSelectors" class="date-selectors">
+        <select id="yearSelect"></select>
+        <select id="monthSelect"></select>
+        <select id="daySelect"></select>
       </div>
 
-      <!-- Opening Date -->
-      <div class="form-section date-section">
-        <div class="form-section-title">Opening Date</div>
-        
-        <div class="date-mode-toggle">
-          <button id="exactBtn" class="active" onclick="setDateMode('exact')">Exact date</button>
-          <button id="estimatedBtn" onclick="setDateMode('estimated')">Estimate</button>
-        </div>
-
-        <div class="date-selectors-wrapper">
-          <div id="exactDateSelectors" class="date-selectors">
-            <select id="yearSelect"></select>
-            <select id="monthSelect"></select>
-            <select id="daySelect"></select>
-          </div>
-
-          <div id="estimatedDateSelectors" class="date-selectors two-col estimated" style="display:none;">
-            <select id="yearSelectEst"></select>
-            <select id="monthSelectEst"></select>
-          </div>
-        </div>
-
-        <div id="estimatedBadge" class="estimated-badge" style="display:none;">
-          Estimated
-        </div>
-
-        <div id="helperText" class="helper-text" style="display:none;">
-          Opening date is estimated
-        </div>
+      <div id="estimatedDateSelectors" class="date-selectors two-col estimated" style="display:none;">
+        <select id="yearSelectEst"></select>
+        <select id="monthSelectEst"></select>
       </div>
+    </div>
 
-      <!-- PAO -->
-      <div class="form-section">
-        <div class="form-section-title">Period After Opening (PAO)</div>
-        <div class="pao" id="paoBtns"></div>
-      </div>
+    <div id="estimatedBadge" class="estimated-badge" style="display:none;">
+      Estimated
+    </div>
 
-      <!-- Photo Upload -->
-      <div class="form-section photo-section">
-        <div class="form-section-title">Product Photo</div>
-        <div class="photo-buttons">
-          <button onclick="document.getElementById('cameraInput').click()">Take photo</button>
-          <button onclick="document.getElementById('galleryInput').click()">Select image</button>
-        </div>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
-        <input type="file" id="galleryInput" accept="image/*" style="display:none;">
-        <div class="file-name" id="fileName"></div>
-        <img id="preview" style="display:none">
-        <div id="status" class="status" style="display:none"></div>
-      </div>
-
-      <button class="save-btn" id="saveBtn">Save to My Shelf</button>
-
-      <!-- Info Section -->
-      <div class="info-section">
-        <div class="info-title">What is PAO?</div>
-        <div class="info-content">
-          <strong>Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening. Check the jar icon on your product for the number (e.g., 12M = 12 months).
-        </div>
-      </div>
-
+    <div id="helperText" class="helper-text" style="display:none;">
+      Opening date is estimated
     </div>
   </div>
 
-  <!-- MY SHELF VIEW (HIDDEN BY DEFAULT) -->
-  <div class="shelf-view" id="shelfView">
-    <div class="shelf-header">My Shelf</div>
-    <div id="shelfSummary"></div>
-    <div id="shelfItems"></div>
+  <!-- PAO -->
+  <div class="form-section">
+    <div class="form-section-title">Period After Opening (PAO)</div>
+    <div class="pao" id="paoBtns"></div>
+  </div>
+
+  <!-- Photo Preview -->
+  <div class="form-section photo-section" id="photoPreviewSection" style="display:none;">
+    <div class="form-section-title">Product Photo</div>
+    <img id="preview" style="display:none">
+    <div class="file-name" id="fileName"></div>
+    <div id="status" class="status" style="display:none"></div>
+  </div>
+
+  <button class="save-btn" id="saveBtn">Save to My Shelf</button>
+
+  <!-- Info Section -->
+  <div class="info-section">
+    <div class="info-title">What is PAO?</div>
+    <div class="info-content">
+      <strong>Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening. Check the jar icon on your product for the number (e.g., 12M = 12 months).
+    </div>
   </div>
 
 </div>
 
-<script>
-// ========== UI-ONLY CODE (NO LOGIC CHANGES) ==========
+<!-- RESULT SCREEN -->
+<div class="screen result-screen" id="resultScreen">
+  <div class="result-content">
+    <div class="status-text" id="statusText"></div>
+    <div class="status-subtext" id="statusSubtext"></div>
+    <button class="details-toggle" id="detailsToggle" onclick="toggleDetails()">More details</button>
+    <div class="result-details" id="resultDetails"></div>
+  </div>
+  
+  <div class="result-actions">
+    <button class="scan-again-btn" onclick="showScanSelection()">Scan again</button>
+    <button class="done-btn" onclick="showShelf()">Done for now</button>
+  </div>
+</div>
 
-function startApp() {
-  document.getElementById('initialScreen').classList.add('hidden');
-  document.getElementById('appContainer').classList.add('visible');
+<!-- MY SHELF -->
+<div class="screen shelf-view" id="shelfView">
+  <div class="top-nav">
+    <div class="app-logo-small">KEESS</div>
+    <button class="nav-toggle active" onclick="backFromShelf()">Back</button>
+  </div>
+  
+  <div class="shelf-header">My Shelf</div>
+  <div id="shelfSummary"></div>
+  <div id="shelfItems"></div>
+</div>
+
+<script>
+// ========== SCREEN NAVIGATION ==========
+
+function hideAllScreens() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('visible'));
 }
+
+function showScreen(screenId) {
+  hideAllScreens();
+  document.getElementById(screenId).classList.add('visible');
+}
+
+function showScanSelection() {
+  showScreen('scanSelectionScreen');
+  resetForm();
+}
+
+function showFormScreen() {
+  showScreen('formScreen');
+}
+
+function showResultScreen() {
+  showScreen('resultScreen');
+}
+
+function showShelf() {
+  showScreen('shelfView');
+  renderShelf();
+}
+
+let lastScreen = 'initialScreen';
+
+function backFromShelf() {
+  if (lastScreen === 'resultScreen') {
+    showScreen('resultScreen');
+  } else if (lastScreen === 'formScreen') {
+    showScreen('formScreen');
+  } else {
+    showScreen('initialScreen');
+  }
+}
+
+function resetForm() {
+  productName.value = "";
+  selectedPAO = null;
+  currentImageDataURL = null;
+  lastStatus = null;
+  ocrProcessed = false;
+  
+  [...paoBox.children].forEach(b => b.classList.remove("active"));
+  
+  preview.style.display = "none";
+  preview.src = "";
+  fileName.textContent = "";
+  status.style.display = "none";
+  photoPreviewSection.style.display = "none";
+  
+  if (productNameExpanded) {
+    toggleProductName();
+  }
+  
+  if (detailsExpanded) {
+    toggleDetails();
+  }
+}
+
+// ========== UI TOGGLES ==========
 
 let productNameExpanded = false;
 function toggleProductName() {
@@ -849,26 +981,6 @@ function toggleDetails() {
   }
 }
 
-let shelfVisible = false;
-function toggleShelf() {
-  shelfVisible = !shelfVisible;
-  const formView = document.getElementById('formView');
-  const shelfView = document.getElementById('shelfView');
-  const toggle = document.getElementById('shelfToggle');
-  
-  if (shelfVisible) {
-    formView.style.display = 'none';
-    shelfView.classList.add('visible');
-    toggle.classList.add('active');
-    toggle.textContent = 'Back';
-  } else {
-    formView.style.display = 'block';
-    shelfView.classList.remove('visible');
-    toggle.classList.remove('active');
-    toggle.textContent = 'My Shelf';
-  }
-}
-
 // ========== ORIGINAL LOGIC (UNCHANGED) ==========
 
 const SUPPORTED_PAOS = [3, 6, 12, 24];
@@ -890,6 +1002,7 @@ const fileName = document.getElementById("fileName");
 const saveBtn = document.getElementById("saveBtn");
 const shelfSummary = document.getElementById("shelfSummary");
 const shelfItems = document.getElementById("shelfItems");
+const photoPreviewSection = document.getElementById("photoPreviewSection");
 
 const exactBtn = document.getElementById("exactBtn");
 const estimatedBtn = document.getElementById("estimatedBtn");
@@ -904,9 +1017,6 @@ const daySelect = document.getElementById("daySelect");
 const yearSelectEst = document.getElementById("yearSelectEst");
 const monthSelectEst = document.getElementById("monthSelectEst");
 
-// UI elements for result display
-const resultDisplay = document.getElementById("resultDisplay");
-const formContainer = document.getElementById("formContainer");
 const statusText = document.getElementById("statusText");
 const statusSubtext = document.getElementById("statusSubtext");
 const resultDetails = document.getElementById("resultDetails");
@@ -975,11 +1085,11 @@ function updateDayOptions() {
   }
 }
 
-yearSelect.onchange = () => { updateDayOptions(); updateResult(); };
-monthSelect.onchange = () => { updateDayOptions(); updateResult(); };
-daySelect.onchange = updateResult;
-yearSelectEst.onchange = updateResult;
-monthSelectEst.onchange = updateResult;
+yearSelect.onchange = updateDayOptions;
+monthSelect.onchange = updateDayOptions;
+daySelect.onchange = () => {};
+yearSelectEst.onchange = () => {};
+monthSelectEst.onchange = () => {};
 
 function setDateMode(mode) {
   dateMode = mode;
@@ -999,8 +1109,6 @@ function setDateMode(mode) {
     helperText.style.display = 'block';
     estimatedBadge.style.display = 'inline-block';
   }
-  
-  updateResult();
 }
 
 function getOpeningDate() {
@@ -1019,7 +1127,7 @@ function getOpeningDate() {
 SUPPORTED_PAOS.forEach(m => {
   const b = document.createElement("button");
   b.textContent = m + "M";
-  b.onclick = () => { selectPAO(m); updateResult(); };
+  b.onclick = () => { selectPAO(m); calculateAndShowResult(); };
   paoBox.appendChild(b);
 });
 
@@ -1051,11 +1159,8 @@ function calculateDaysLeft(expiryDateStr) {
   return daysLeft;
 }
 
-function updateResult() {
+function calculateAndShowResult() {
   if (!selectedPAO) { 
-    resultDisplay.classList.remove('visible');
-    formContainer.classList.remove('dimmed');
-    lastStatus = null;
     return; 
   }
   
@@ -1095,14 +1200,8 @@ function updateResult() {
   statusSubtext.textContent = subtextContent;
   resultDetails.innerHTML = detailsContent;
   
-  resultDisplay.classList.add('visible');
-  formContainer.classList.add('dimmed');
-  
-  if (statusTextContent !== lastStatus) {
-    lastStatus = statusTextContent;
-  }
-
-  saveBtn.style.display = "block";
+  lastScreen = 'formScreen';
+  showResultScreen();
 }
 
 function extractPAO(text) {
@@ -1221,6 +1320,9 @@ async function handleFileSelect(e) {
     
     preview.src = base64;
     preview.style.display = "block";
+    photoPreviewSection.style.display = "block";
+    
+    showFormScreen();
 
     if (ocrProcessed) {
       console.log("This image was already OCR processed. Skipping...");
@@ -1240,7 +1342,6 @@ async function handleFileSelect(e) {
       
       if (pao && SUPPORTED_PAOS.includes(pao)) {
         selectPAO(pao);
-        updateResult();
         status.style.background = "#f0fdf4";
         status.style.color = "#22c55e";
         status.style.border = "2px solid #bbf7d0";
@@ -1361,8 +1462,8 @@ saveBtn.onclick = () => {
   
   if (saveSuccess) {
     alert("Saved to My Shelf");
-    productName.value = "";
-    renderShelf();
+    lastScreen = 'formScreen';
+    calculateAndShowResult();
   }
 };
 
@@ -1523,7 +1624,6 @@ function renderShelf() {
 
   const tossCount = shelf.filter(item => item.status === "TOSS").length;
   const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
-  const keepCount = shelf.filter(item => item.status === "KEEP").length;
 
   if (tossCount > 0) {
     new Notification("KEESS · Keep or Toss", {
