@@ -1501,4 +1501,158 @@ function renderShelf() {
   
   if (shelf.length === 0) {
     shelfTotalCount.innerHTML = '';
-    shelfS
+    shelfSummary.innerHTML = '';
+    shelfItems.innerHTML = '<div style="text-align:center;color:#b0b0b0;padding:20px;">No items in your shelf yet. Add your first product!</div>';
+    return;
+  }
+  
+  const tossCount = shelf.filter(item => item.status === "TOSS").length;
+  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
+  const keepCount = shelf.filter(item => item.status === "KEEP").length;
+  
+  // Total count display
+  let totalCountText = "";
+  if (tossCount > 0) {
+    totalCountText = `Total ${shelf.length} items · ${tossCount} expired`;
+  } else {
+    totalCountText = `Total ${shelf.length} items`;
+  }
+  
+  shelfTotalCount.innerHTML = `<div class="shelf-total-count">${totalCountText}</div>`;
+  
+  // Summary display
+  let summaryText = "";
+  
+  if (tossCount > 0) {
+    summaryText = `🗑️ ${tossCount} expired`;
+  } else if (useSoonCount > 0) {
+    summaryText = `⚠ ${useSoonCount} expiring soon`;
+  } else if (keepCount > 0) {
+    summaryText = "✨ Safe vibes only";
+  }
+  
+  if (summaryText) {
+    shelfSummary.innerHTML = `<div class="shelf-summary">${summaryText}</div>`;
+  } else {
+    shelfSummary.innerHTML = '';
+  }
+  
+  const itemsWithStatus = shelf.map(item => {
+    if (!item.createdAt) {
+      item.createdAt = Date.now() + Math.random();
+    }
+    
+    if (!item.name) {
+      item.name = "noname";
+    }
+    
+    return {
+      ...item,
+      displayStatus: item.status
+    };
+  });
+  
+  itemsWithStatus.sort((a, b) => {
+    return getStatusPriority(a.displayStatus) - getStatusPriority(b.displayStatus);
+  });
+  
+  shelfItems.innerHTML = itemsWithStatus.map(item => {
+    const itemStatus = item.displayStatus;
+    
+    let statusColor = "";
+    if (itemStatus === "TOSS") {
+      statusColor = "#ef4444";
+    } else if (itemStatus === "USE SOON") {
+      statusColor = "#f59e0b";
+    } else {
+      statusColor = "#22c55e";
+    }
+    
+    const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
+    const estimatedBadge = (item.isEstimated || false) ? '<span class="shelf-item-estimated-badge">Estimated</span>' : '';
+    
+    return `
+      <div class="shelf-item">
+        <button class="delete-btn" onclick="deleteItem(${item.createdAt})">×</button>
+        <div class="shelf-item-content">
+          <div class="shelf-item-name">${item.name}</div>
+          <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
+          <div class="shelf-item-dates">Opened: ${openingDateDisplay}${estimatedBadge}</div>
+        </div>
+        <div class="shelf-item-status" style="background: ${statusColor};">
+          ${itemStatus}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+(function cleanupOldData() {
+  try {
+    const stored = localStorage.getItem(SHELF_STORAGE_KEY);
+    if (stored) {
+      const shelf = JSON.parse(stored);
+      if (shelf.length > 0 && shelf[0].image) {
+        console.warn("⚠ Old format data detected. Cleaning up...");
+        localStorage.removeItem(SHELF_STORAGE_KEY);
+        console.log("✓ Shelf data reset. Ready to use without storage issues.");
+      }
+    }
+  } catch (err) {
+    console.error("Data cleanup error:", err);
+  }
+})();
+
+(async function initNotifications() {
+  if (!("Notification" in window)) {
+    console.log("Browser does not support notifications");
+    return;
+  }
+
+  if (Notification.permission === "default") {
+    try {
+      await Notification.requestPermission();
+    } catch (err) {
+      console.error("Notification permission error:", err);
+    }
+  }
+
+  if (Notification.permission !== "granted") {
+    console.log("Notification permission not granted");
+    return;
+  }
+
+  const shelf = refreshAllStatuses();
+  
+  if (shelf.length === 0) {
+    return;
+  }
+
+  const tossCount = shelf.filter(item => item.status === "TOSS").length;
+  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
+  const keepCount = shelf.filter(item => item.status === "KEEP").length;
+
+  if (tossCount > 0) {
+    new Notification("KEESS · Keep or Toss", {
+      body: "🗑️ You have expired products. Time to toss them.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🗑️</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: TOSS");
+  } else if (useSoonCount > 0) {
+    new Notification("KEESS · Keep or Toss", {
+      body: "⚠️ Some products are expiring soon.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>⚠️</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: USE SOON");
+  }
+})();
+
+initDateSelectors();
+</script>
+
+<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
+
+</body>
+</html>
