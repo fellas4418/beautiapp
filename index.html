@@ -151,7 +151,7 @@ body {
 }
 
 h2 { 
-  margin: 0 0 8px 0; 
+  margin: 0 0 0 0; 
   font-size: 28px;
   color: var(--text-primary);
   font-weight: 800;
@@ -162,6 +162,7 @@ h2 {
   color: var(--accent-primary);
   margin-bottom: 6px;
   font-weight: 600;
+  display: none;
 }
 
 .tagline { 
@@ -169,6 +170,7 @@ h2 {
   color: var(--text-secondary);
   margin-bottom: 10px;
   line-height: 1.4;
+  display: none;
 }
 
 img { 
@@ -882,8 +884,8 @@ h3 {
 <div id="homeScreen" class="screen active">
   <div class="logo">KEESS</div>
   <button class="check-button" onclick="showScreen('add')">
-    <div class="check-icon">📸</div>
-    <div>Add cosmetic</div>
+    <div class="check-icon">✓</div>
+    <div>Check Freshness</div>
   </button>
 </div>
 
@@ -892,9 +894,7 @@ h3 {
 <div class="wrap">
 <div class="header">
   <div class="header-title">
-    <h2>KEESS</h2>
-    <div class="subtitle">Keep or Toss</div>
-    <div class="tagline">Know when to keep it. Know when to toss it.</div>
+    <h2>Keep or Toss</h2>
   </div>
 </div>
 
@@ -924,8 +924,8 @@ h3 {
 <div id="openingDateSection" class="form-section">
   <label>Opening Date</label>
   <div class="date-mode-toggle">
-    <button id="exactBtn" class="active" onclick="setDateMode('exact')">I remember the exact date</button>
-    <button id="estimatedBtn" onclick="setDateMode('estimated')">I'm not sure</button>
+    <button id="exactBtn" class="active" onclick="setDateMode('exact')">Exact date</button>
+    <button id="estimatedBtn" onclick="setDateMode('estimated')">Not sure</button>
   </div>
 
   <div class="date-selectors-wrapper">
