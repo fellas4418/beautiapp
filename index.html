@@ -117,7 +117,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px; /* Reduced from 24px to 12px */
+  margin-bottom: 12px;
 }
 
 .header-title {
@@ -145,7 +145,7 @@ body {
   background: var(--bg-card);
   border-radius: 16px; 
   padding: 20px; 
-  margin-bottom: 8px; /* Reduced from 16px to 8px */
+  margin-bottom: 8px;
   border: 2px solid var(--border-light);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
@@ -167,7 +167,7 @@ h2 {
 .tagline { 
   font-size: 13px; 
   color: var(--text-secondary);
-  margin-bottom: 10px; /* Reduced from 20px to 10px (50%) */
+  margin-bottom: 10px;
   line-height: 1.4;
 }
 
@@ -244,7 +244,7 @@ button.active {
 
 input[type="text"] { 
   width: 100%; 
-  margin-top: 4px; /* Reduced from 6px to 4px */
+  margin-top: 4px;
   padding: 10px; 
   border-radius: 8px; 
   border: 2px solid var(--border-light);
@@ -315,10 +315,10 @@ input[type="text"]:focus {
 label { 
   display: block; 
   margin-top: 0; 
-  margin-bottom: 4px; /* Reduced from 6px to 4px */
+  margin-bottom: 4px;
   font-size: 13px; 
   color: var(--text-secondary);
-  font-weight: 700; /* Increased from 600 to 700 for stronger hierarchy */
+  font-weight: 700;
 }
 
 .photo-buttons {
@@ -390,6 +390,26 @@ label {
 .shelf-item:hover {
   border-color: var(--border-accent);
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
+}
+
+.shelf-item.selection-mode {
+  padding-left: 48px;
+}
+
+.shelf-item-checkbox {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+  display: none;
+}
+
+.shelf-item.selection-mode .shelf-item-checkbox {
+  display: block;
 }
 
 .shelf-item-content {
@@ -468,35 +488,35 @@ label {
   transform: scale(1.1);
 }
 
-.shelf-summary {
-  background: var(--bg-secondary);
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  color: var(--text-primary);
-  margin-bottom: 6px; /* Reduced from 12px to 6px */
-  text-align: center;
-  font-weight: 600;
-  border: 2px solid var(--border-light);
+.shelf-item.selection-mode .delete-btn {
+  display: none;
 }
 
-.shelf-total-count {
+.shelf-summary {
   background: var(--bg-card);
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 15px;
-  color: var(--text-primary);
+  padding: 14px;
+  border-radius: 10px;
   margin-bottom: 12px;
-  text-align: center;
-  font-weight: 700;
   border: 2px solid var(--border-light);
+  line-height: 1.8;
+}
+
+.shelf-summary-line {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.shelf-summary-line:last-child {
+  margin-bottom: 0;
 }
 
 .date-mode-toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 6px; /* Reduced from 8px to 6px */
+  margin-top: 6px;
 }
 
 .date-mode-toggle button {
@@ -522,7 +542,7 @@ label {
 
 .date-selectors-wrapper {
   position: relative;
-  margin-top: 8px; /* Reduced from 12px to 8px */
+  margin-top: 8px;
   padding: 8px 0;
 }
 
@@ -600,7 +620,7 @@ label {
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-secondary);
-  margin-bottom: 7px; /* Reduced from 14px to 7px */
+  margin-bottom: 7px;
   border: 2px solid var(--border-light);
 }
 
@@ -638,9 +658,8 @@ label {
   text-align: left;
 }
 
-/* ========== FORM SECTION GROUPING (SPACING REDUCED 50%) ========== */
 .form-section {
-  margin-bottom: 7px; /* Reduced from 14px */
+  margin-bottom: 7px;
   padding: 6px;
   background: rgba(255, 247, 247, 0.3);
   border-radius: 10px;
@@ -659,7 +678,6 @@ label {
   text-align: left;
 }
 
-/* ========== SAVE CONFIRMATION TOAST ========== */
 .save-confirmation {
   margin-top: 14px;
   padding: 14px;
@@ -714,94 +732,125 @@ label {
   box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
 }
 
-/* ========== SPACING REDUCTION: TARGET SECTIONS ========== */
-/* Reduce spacing between photo section and PAO section */
 #photoToOCRSection {
-  margin-bottom: 7px; /* Reduced from 14px */
+  margin-bottom: 7px;
 }
 
-/* Reduce spacing between PAO section and opening date section */
 #paoSection {
-  margin-bottom: 7px; /* Reduced from 14px */
+  margin-bottom: 7px;
 }
 
-/* Reduce spacing between opening date and product name */
 #openingDateSection {
-  margin-bottom: 7px; /* Reduced from 14px */
+  margin-bottom: 7px;
 }
 
-/* Reduce spacing between product name and next card */
 #productNameSection {
-  margin-bottom: 7px; /* Reduced from 14px */
+  margin-bottom: 7px;
 }
 
-/* Reduce spacing between main form card and info card */
 .card + .card {
-  margin-top: 8px; /* Reduced from 16px */
+  margin-top: 8px;
 }
 
-/* ========== EMPTY STATE FIX: HIDE WHEN NO CONTENT ========== */
-/* Result block - hide when empty */
 .result:empty {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Status label - hide when empty */
 .status-label:empty {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Status block - hide when empty */
 .status:empty {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Helper text - hide when empty */
 .helper-text:empty {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Estimated badge - hide when empty */
 .estimated-badge:empty {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* File name - hide when empty */
 .file-name:empty {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Save confirmation - use show class only */
 .save-confirmation:not(.show) {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* View shelf button - use show class only */
 .view-shelf-button:not(.show) {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Preview image - hide when display:none */
 #preview[style*="display: none"],
 #preview[style*="display:none"] {
   margin: 0 !important;
   padding: 0 !important;
+}
+
+.delete-selected-btn {
+  width: 100%;
+  margin-top: 12px;
+  background: var(--status-toss);
+  color: var(--bg-card);
+  border: 2px solid var(--status-toss);
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  display: none;
+}
+
+.delete-selected-btn.show {
+  display: block;
+}
+
+.delete-selected-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+}
+
+.cancel-selection-btn {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 2px solid var(--border-light);
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  display: none;
+}
+
+.cancel-selection-btn.show {
+  display: block;
+}
+
+.cancel-selection-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-accent);
 }
 </style>
 </head>
@@ -829,7 +878,6 @@ label {
 </div>
 
 <div class="card">
-<!-- PHOTO ACTIONS (HIGHEST PRIORITY) -->
 <div id="photoToOCRSection" class="form-section">
   <div class="photo-section-label">Upload a photo to auto-detect PAO</div>
   <div class="photo-buttons">
@@ -844,13 +892,11 @@ label {
   <div id="status" class="status" style="display:none"></div>
 </div>
 
-<!-- PAO SELECTION -->
 <div id="paoSection" class="form-section">
   <label>Select a PAO period</label>
   <div class="pao" id="paoBtns"></div>
 </div>
 
-<!-- OPENING DATE -->
 <div id="openingDateSection" class="form-section">
   <label>Opening Date</label>
   <div class="date-mode-toggle">
@@ -880,33 +926,26 @@ label {
   </div>
 </div>
 
-<!-- PRODUCT NAME (LOW PRIORITY) -->
 <div id="productNameSection" class="form-section">
   <label>Product Name (optional)</label>
   <input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
 </div>
 
-<!-- RESULT -->
 <div id="result" class="result" style="display:none"></div>
 <div id="statusLabel" class="status-label" style="display:none"></div>
 
 <button id="saveBtn" style="display:none">Save to My Shelf</button>
 
-<!-- SAVE CONFIRMATION -->
 <div id="saveConfirmation" class="save-confirmation">
   ✓ Saved to My Shelf
 </div>
 
-<!-- VIEW SHELF BUTTON (ONLY AFTER SAVE) -->
 <button id="viewShelfBtn" class="view-shelf-button" onclick="showScreen('shelf')">
   <span id="viewShelfBtnText">📦 View My Shelf</span>
 </button>
 </div>
 
 <div class="card">
-<div class="info-block">
-Most people use expired cosmetics without knowing it.
-</div>
 <h3 style="margin:0 0 12px 0">ℹ️ What is PAO?</h3>
 <div class="info-block">
 <strong>Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening.<br><br>
@@ -924,9 +963,10 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
   <h2>📦 My Shelf</h2>
   <button class="back-button" onclick="showScreen('add')">← Home</button>
 </div>
-<div id="shelfTotalCount"></div>
 <div id="shelfSummary"></div>
 <div id="shelfItems"></div>
+<button id="deleteSelectedBtn" class="delete-selected-btn" onclick="deleteSelected()">Delete selected</button>
+<button id="cancelSelectionBtn" class="cancel-selection-btn" onclick="exitSelectionMode()">Cancel</button>
 </div>
 </div>
 
@@ -942,6 +982,7 @@ let lastStatus = null;
 let ocrProcessed = false;
 let dateMode = 'exact';
 let currentScreen = 'home';
+let selectionMode = false;
 
 const productName = document.getElementById("productName");
 const paoBox = document.getElementById("paoBtns");
@@ -956,7 +997,8 @@ const shelfItems = document.getElementById("shelfItems");
 const saveConfirmation = document.getElementById("saveConfirmation");
 const viewShelfBtn = document.getElementById("viewShelfBtn");
 const viewShelfBtnText = document.getElementById("viewShelfBtnText");
-const shelfTotalCount = document.getElementById("shelfTotalCount");
+const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
+const cancelSelectionBtn = document.getElementById("cancelSelectionBtn");
 
 const exactBtn = document.getElementById("exactBtn");
 const estimatedBtn = document.getElementById("estimatedBtn");
@@ -971,7 +1013,6 @@ const daySelect = document.getElementById("daySelect");
 const yearSelectEst = document.getElementById("yearSelectEst");
 const monthSelectEst = document.getElementById("monthSelectEst");
 
-// ========== NAVIGATION ==========
 function showScreen(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   
@@ -985,6 +1026,7 @@ function showScreen(screen) {
   } else if (screen === 'shelf') {
     document.getElementById('shelfScreen').classList.add('active');
     currentScreen = 'shelf';
+    exitSelectionMode();
     renderShelf();
   }
 }
@@ -992,12 +1034,9 @@ function showScreen(screen) {
 function updateViewShelfButtonText() {
   const shelf = loadShelfFromStorage();
   const totalCount = shelf.length;
-  const tossCount = shelf.filter(item => item.status === "TOSS").length;
   
   if (totalCount === 0) {
     viewShelfBtnText.textContent = "📦 View My Shelf";
-  } else if (tossCount > 0) {
-    viewShelfBtnText.textContent = `📦 View My Shelf (${totalCount} · ${tossCount} expired)`;
   } else {
     viewShelfBtnText.textContent = `📦 View My Shelf (${totalCount})`;
   }
@@ -1066,9 +1105,6 @@ function updateDayOptions() {
     daySelect.value = daysInMonth;
   }
 }
-
-yearSelect.onchange = updateDayOptions;
-monthSelect.onchange = updateDayOptions;
 
 yearSelect.onchange = () => { updateDayOptions(); updateResult(); };
 monthSelect.onchange = () => { updateDayOptions(); updateResult(); };
@@ -1451,19 +1487,10 @@ saveBtn.onclick = () => {
   const saveSuccess = saveShelfToStorage(shelf);
   
   if (saveSuccess) {
-    // Show confirmation toast
     saveConfirmation.classList.add('show');
-    
-    // Show "View My Shelf" button
     viewShelfBtn.classList.add('show');
-    
-    // Update button text with count
     updateViewShelfButtonText();
-    
-    // Clear product name for next entry
     productName.value = "";
-    
-    // STAY on Add Product screen - do NOT navigate
     console.log("✓ Item saved. User can continue adding or choose to view shelf.");
   }
 };
@@ -1477,12 +1504,47 @@ function getStatusPriority(status) {
   return priorities[status] || 999;
 }
 
-function deleteItem(createdAt) {
-  if (!confirm("Really delete?")) return;
+function enterSelectionMode() {
+  selectionMode = true;
+  document.querySelectorAll('.shelf-item').forEach(item => {
+    item.classList.add('selection-mode');
+  });
+  deleteSelectedBtn.classList.add('show');
+  cancelSelectionBtn.classList.add('show');
+}
+
+function exitSelectionMode() {
+  selectionMode = false;
+  document.querySelectorAll('.shelf-item').forEach(item => {
+    item.classList.remove('selection-mode');
+    const checkbox = item.querySelector('.shelf-item-checkbox');
+    if (checkbox) {
+      checkbox.checked = false;
+    }
+  });
+  deleteSelectedBtn.classList.remove('show');
+  cancelSelectionBtn.classList.remove('show');
+}
+
+function deleteSelected() {
+  const checkedBoxes = document.querySelectorAll('.shelf-item-checkbox:checked');
+  
+  if (checkedBoxes.length === 0) {
+    alert("⚠ Please select at least one item to delete");
+    return;
+  }
+  
+  if (!confirm(`Delete ${checkedBoxes.length} item(s)?`)) {
+    return;
+  }
+  
+  const idsToDelete = Array.from(checkedBoxes).map(cb => parseInt(cb.dataset.id));
   
   const shelf = loadShelfFromStorage();
-  const updatedShelf = shelf.filter(item => item.createdAt !== createdAt);
+  const updatedShelf = shelf.filter(item => !idsToDelete.includes(item.createdAt));
   saveShelfToStorage(updatedShelf);
+  
+  exitSelectionMode();
   renderShelf();
 }
 
@@ -1500,7 +1562,6 @@ function renderShelf() {
   const shelf = refreshAllStatuses();
   
   if (shelf.length === 0) {
-    shelfTotalCount.innerHTML = '';
     shelfSummary.innerHTML = '';
     shelfItems.innerHTML = '<div style="text-align:center;color:#b0b0b0;padding:20px;">No items in your shelf yet. Add your first product!</div>';
     return;
@@ -1510,32 +1571,12 @@ function renderShelf() {
   const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
   const keepCount = shelf.filter(item => item.status === "KEEP").length;
   
-  // Total count display
-  let totalCountText = "";
-  if (tossCount > 0) {
-    totalCountText = `Total ${shelf.length} items · ${tossCount} expired`;
-  } else {
-    totalCountText = `Total ${shelf.length} items`;
-  }
+  let summaryHTML = '<div class="shelf-summary">';
+  summaryHTML += `<div class="shelf-summary-line">Total ${shelf.length} items</div>`;
+  summaryHTML += `<div class="shelf-summary-line">🗑️ ${tossCount} expired · ⚠️ ${useSoonCount} use soon · ✅ ${keepCount} safe</div>`;
+  summaryHTML += '</div>';
   
-  shelfTotalCount.innerHTML = `<div class="shelf-total-count">${totalCountText}</div>`;
-  
-  // Summary display
-  let summaryText = "";
-  
-  if (tossCount > 0) {
-    summaryText = `🗑️ ${tossCount} expired`;
-  } else if (useSoonCount > 0) {
-    summaryText = `⚠ ${useSoonCount} expiring soon`;
-  } else if (keepCount > 0) {
-    summaryText = "✨ Safe vibes only";
-  }
-  
-  if (summaryText) {
-    shelfSummary.innerHTML = `<div class="shelf-summary">${summaryText}</div>`;
-  } else {
-    shelfSummary.innerHTML = '';
-  }
+  shelfSummary.innerHTML = summaryHTML;
   
   const itemsWithStatus = shelf.map(item => {
     if (!item.createdAt) {
@@ -1572,8 +1613,9 @@ function renderShelf() {
     const estimatedBadge = (item.isEstimated || false) ? '<span class="shelf-item-estimated-badge">Estimated</span>' : '';
     
     return `
-      <div class="shelf-item">
-        <button class="delete-btn" onclick="deleteItem(${item.createdAt})">×</button>
+      <div class="shelf-item ${selectionMode ? 'selection-mode' : ''}">
+        <input type="checkbox" class="shelf-item-checkbox" data-id="${item.createdAt}">
+        <button class="delete-btn" onclick="enterSelectionMode(); setTimeout(() => { document.querySelector('[data-id=\\'${item.createdAt}\\']').checked = true; }, 10);">×</button>
         <div class="shelf-item-content">
           <div class="shelf-item-name">${item.name}</div>
           <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
@@ -1630,7 +1672,6 @@ function renderShelf() {
 
   const tossCount = shelf.filter(item => item.status === "TOSS").length;
   const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
-  const keepCount = shelf.filter(item => item.status === "KEEP").length;
 
   if (tossCount > 0) {
     new Notification("KEESS · Keep or Toss", {
