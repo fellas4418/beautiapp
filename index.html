@@ -6,100 +6,556 @@
 <title>KEESS</title>
 
 <style>
-* { box-sizing: border-box; }
-body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
-.card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-h2 { margin: 0 0 8px 0; font-size: 28px; }
-.subtitle { font-size: 14px; color: #888; margin-bottom: 6px; }
-.tagline { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.4; }
-img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; }
-.pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
-button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
-button:hover { background: #2a3142; transform: translateY(-2px); }
-button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
-.result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
-.result-estimated-note {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #f0ad4e;
-  font-weight: 600;
-}
-.status-label { margin-top: 8px; font-weight: 800; font-size: 15px; text-align: center; padding: 10px; border-radius: 8px; }
-input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d2e; color: #fff; font-size: 14px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-.file-upload-wrapper { position: relative; margin-top: 10px; }
-.file-upload-wrapper input[type="file"] { 
-  position: absolute; 
-  opacity: 0; 
-  width: 100%; 
-  height: 100%; 
-  cursor: pointer; 
-  z-index: 2;
+body { 
+  background: #0a0a0a; 
+  color: #e8e8ea; 
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
-.file-upload-label {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  background: #667eea;
-  color: white;
+
+/* ========== INITIAL SCREEN ========== */
+.initial-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+
+.initial-screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-20px);
+  position: absolute;
+}
+
+.app-logo {
+  font-size: 11px;
+  letter-spacing: 3px;
+  font-weight: 700;
+  color: #444;
+  margin-bottom: 60px;
+  text-transform: uppercase;
+}
+
+.primary-scan-btn {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border: 2px solid #333;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 180ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.primary-scan-btn:hover {
+  transform: scale(1.05);
+  border-color: #555;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+}
+
+.primary-scan-btn:active {
+  transform: scale(0.98);
+}
+
+/* ========== MAIN APP CONTAINER ========== */
+.app-container {
+  display: none;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.app-container.visible {
+  display: block;
+  animation: fadeIn 300ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== TOP NAV ========== */
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.app-logo-small {
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: #444;
+  text-transform: uppercase;
+}
+
+.nav-toggle {
+  background: none;
+  border: 1px solid #333;
+  color: #888;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 150ms ease;
 }
-.file-upload-label:hover { background: #5568d3; }
-.file-name { margin-top: 8px; font-size: 13px; color: #aaa; text-align: center; }
-.status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
-label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
+
+.nav-toggle:hover {
+  border-color: #555;
+  color: #aaa;
+}
+
+.nav-toggle.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #555;
+}
+
+/* ========== RESULT DISPLAY (DOMINATES SCREEN) ========== */
+.result-display {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  margin: 40px 0;
+}
+
+.result-display.visible {
+  display: flex;
+  animation: resultAppear 400ms ease;
+}
+
+@keyframes resultAppear {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.status-text {
+  font-size: 72px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  text-align: center;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.status-text.safe {
+  color: #4a7c59;
+}
+
+.status-text.use-soon {
+  color: #d4a259;
+}
+
+.status-text.toss {
+  color: #c85a54;
+}
+
+.status-subtext {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  font-weight: 500;
+}
+
+.details-toggle {
+  margin-top: 24px;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 150ms ease;
+}
+
+.details-toggle:hover {
+  color: #888;
+}
+
+.result-details {
+  display: none;
+  margin-top: 16px;
+  padding: 16px;
+  background: #111;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #888;
+  max-width: 300px;
+  line-height: 1.6;
+}
+
+.result-details.visible {
+  display: block;
+  animation: fadeIn 200ms ease;
+}
+
+/* ========== FORM (DIMMED WHEN RESULT SHOWN) ========== */
+.form-container {
+  transition: opacity 300ms ease;
+}
+
+.form-container.dimmed {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.form-section {
+  background: #0f0f0f;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid #1a1a1a;
+}
+
+.form-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+/* Product name (collapsed by default) */
+.product-name-section {
+  margin-bottom: 16px;
+}
+
+.expand-toggle {
+  background: none;
+  border: 1px solid #222;
+  color: #666;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 150ms ease;
+}
+
+.expand-toggle:hover {
+  border-color: #333;
+  color: #888;
+}
+
+.expand-toggle.expanded {
+  background: #111;
+  border-color: #333;
+  color: #aaa;
+}
+
+.expandable-content {
+  display: none;
+  margin-top: 12px;
+  animation: slideDown 200ms ease;
+}
+
+.expandable-content.visible {
+  display: block;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 200px; }
+}
+
+input[type="text"] { 
+  width: 100%; 
+  padding: 12px; 
+  border-radius: 8px; 
+  border: 1px solid #222; 
+  background: #0a0a0a; 
+  color: #fff; 
+  font-size: 14px; 
+  transition: border-color 150ms ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #333;
+}
+
+/* Date selectors (minimized) */
+.date-section {
+  margin-bottom: 16px;
+}
+
+.date-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.date-mode-toggle button {
+  padding: 10px;
+  background: #0a0a0a;
+  color: #666;
+  border: 1px solid #222;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.date-mode-toggle button:hover {
+  border-color: #333;
+  color: #888;
+}
+
+.date-mode-toggle button.active {
+  background: #1a1a1a;
+  border-color: #333;
+  color: #fff;
+}
+
+.date-selectors-wrapper {
+  position: relative;
+  margin-top: 12px;
+  padding: 8px 0;
+}
+
+.date-selectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.date-selectors.two-col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.date-selectors select {
+  padding: 12px 8px;
+  border-radius: 8px;
+  border: 1px solid #222;
+  background: #0a0a0a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  height: 48px;
+  appearance: none;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.date-selectors select:focus {
+  outline: none;
+  border-color: #333;
+}
+
+.date-selectors.estimated select {
+  border-style: dashed;
+  border-color: #3a3a1a;
+  background: rgba(58, 58, 26, 0.1);
+}
+
+.estimated-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #2a2a1a;
+  color: #d4a259;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  border: 1px dashed #3a3a1a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.helper-text {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #555;
+  font-style: italic;
+}
+
+/* PAO buttons */
+.pao { 
+  display: grid; 
+  grid-template-columns: repeat(4, 1fr); 
+  gap: 8px; 
+  margin-top: 12px; 
+}
+
+.pao button { 
+  padding: 12px; 
+  border-radius: 8px; 
+  border: 1px solid #222; 
+  background: #0a0a0a; 
+  color: #666; 
+  font-weight: 700; 
+  font-size: 14px; 
+  cursor: pointer; 
+  transition: all 150ms ease; 
+}
+
+.pao button:hover { 
+  border-color: #333; 
+  color: #888; 
+}
+
+.pao button.active { 
+  background: #1a1a1a; 
+  border-color: #444;
+  color: #fff;
+}
+
+/* Photo upload */
+.photo-section {
+  margin-top: 16px;
+}
 
 .photo-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
 }
 
 .photo-buttons button {
   padding: 12px;
-  background: #667eea;
-  color: white;
+  background: #0a0a0a;
+  color: #666;
+  border: 1px solid #222;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 150ms ease;
 }
 
 .photo-buttons button:hover {
-  background: #5568d3;
+  background: #111;
+  border-color: #333;
+  color: #888;
 }
 
-@keyframes statusFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.file-name { 
+  margin-top: 8px; 
+  font-size: 11px; 
+  color: #555; 
+  text-align: center; 
 }
 
-.status-label.animate {
-  animation: statusFadeUp 250ms ease-out;
+img { 
+  width: 100%; 
+  border-radius: 12px; 
+  margin-top: 12px; 
+  display: block; 
+  max-height: 300px; 
+  object-fit: contain; 
+  border: 1px solid #1a1a1a;
 }
 
-.shelf-section { margin-top: 24px; }
+.status { 
+  margin-top: 12px; 
+  padding: 10px; 
+  border-radius: 8px; 
+  text-align: center; 
+  font-weight: 600; 
+  font-size: 12px; 
+}
+
+/* Save button */
+.save-btn {
+  width: 100%;
+  padding: 16px;
+  background: #1a1a1a;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 150ms ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.save-btn:hover {
+  background: #222;
+  border-color: #444;
+  transform: translateY(-1px);
+}
+
+.save-btn:active {
+  transform: translateY(0);
+}
+
+/* ========== MY SHELF (HIDDEN BY DEFAULT) ========== */
+.shelf-view {
+  display: none;
+  animation: fadeIn 300ms ease;
+}
+
+.shelf-view.visible {
+  display: block;
+}
+
+.shelf-header {
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+}
+
+.shelf-summary {
+  background: #0f0f0f;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 16px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #1a1a1a;
+}
 
 .shelf-item { 
-  background: #111318; 
+  background: #0f0f0f; 
   border-radius: 12px; 
-  padding: 12px; 
-  margin-bottom: 10px; 
+  padding: 16px; 
+  margin-bottom: 12px; 
   position: relative; 
   display: flex;
   align-items: center;
   gap: 12px;
+  border: 1px solid #1a1a1a;
+  transition: all 150ms ease;
+}
+
+.shelf-item:hover {
+  border-color: #222;
 }
 
 .shelf-item-content {
@@ -108,278 +564,297 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 }
 
 .shelf-item-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #e8e8ea;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .shelf-item-meta {
-  font-size: 12px;
-  color: #888;
-  margin-bottom: 2px;
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 3px;
 }
 
 .shelf-item-dates {
-  font-size: 11px;
-  color: #666;
+  font-size: 10px;
+  color: #555;
 }
 
 .shelf-item-estimated-badge {
   display: inline-block;
   padding: 2px 6px;
-  background: #4d4d1b;
-  color: #f0ad4e;
+  background: #2a2a1a;
+  color: #d4a259;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   margin-left: 4px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .shelf-item-status { 
-  padding: 6px 12px; 
-  border-radius: 6px; 
-  font-size: 12px; 
+  padding: 8px 14px; 
+  border-radius: 8px; 
+  font-size: 11px; 
   font-weight: 700;
   white-space: nowrap;
   flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .delete-btn { 
   position: absolute; 
-  top: 8px; 
-  right: 8px; 
-  background: #4d1b1b; 
-  color: #ff6b6b; 
-  width: 28px; 
-  height: 28px; 
+  top: 10px; 
+  right: 10px; 
+  background: #1a1a1a; 
+  color: #666; 
+  width: 24px; 
+  height: 24px; 
   border-radius: 50%; 
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  font-size: 16px; 
+  font-size: 14px; 
   cursor: pointer; 
-  transition: all 0.2s; 
+  transition: all 150ms ease; 
   padding: 0; 
-  z-index: 10; 
-}
-.delete-btn:hover { background: #6b2020; transform: scale(1.1); }
-
-.shelf-summary {
-  background: #1a1d2e;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #e8e8ea;
-  margin-bottom: 12px;
-  text-align: center;
-  font-weight: 600;
+  z-index: 10;
+  border: 1px solid #222;
 }
 
-.date-mode-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
+.delete-btn:hover { 
+  background: #4d1b1b; 
+  color: #c85a54;
+  border-color: #4d1b1b;
 }
 
-.date-mode-toggle button {
-  padding: 10px;
-  background: #1f2430;
-  color: #fff;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 13px;
+/* Info section */
+.info-section {
+  background: #0f0f0f;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 24px;
+  border: 1px solid #1a1a1a;
 }
 
-.date-mode-toggle button.active {
-  background: #667eea;
-}
-
-.date-selectors-wrapper {
-  position: relative;
-  margin-top: 16px;
-  padding: 8px 0;
-}
-
-.date-selectors-wrapper::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3) 20%, rgba(102, 126, 234, 0.3) 80%, transparent);
-  transform: translateY(-50%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.date-selectors-wrapper::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3) 20%, rgba(102, 126, 234, 0.3) 80%, transparent);
-  transform: translateY(calc(-50% + 48px));
-  pointer-events: none;
-  z-index: 1;
-}
-
-.date-selectors {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-  position: relative;
-  z-index: 2;
-}
-
-.date-selectors.two-col {
-  grid-template-columns: 1fr 1fr;
-}
-
-.date-selectors select {
-  padding: 16px 10px;
-  border-radius: 12px;
-  border: 2px solid #333;
-  background: #1a1d2e;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  text-align: center;
-  height: 64px;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.date-selectors select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-}
-
-.date-selectors.estimated select {
-  border-style: dashed;
-  border-color: #4d4d1b;
-  background: rgba(77, 77, 27, 0.1);
-}
-
-.date-selectors.estimated select:focus {
-  border-color: #f0ad4e;
-  box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.2);
-}
-
-.estimated-badge {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 8px 16px;
-  background: #4d4d1b;
-  color: #f0ad4e;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
-  border: 2px dashed #f0ad4e;
-}
-
-.helper-text {
-  margin-top: 8px;
+.info-title {
   font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.info-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+}
+
+.info-content strong {
   color: #888;
-  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 400px) {
+  .status-text {
+    font-size: 56px;
+  }
+  
+  .primary-scan-btn {
+    width: 240px;
+    height: 240px;
+    font-size: 16px;
+  }
 }
 </style>
 </head>
 
 <body>
-<div class="wrap">
-<h2>KEESS</h2>
-<div class="subtitle">Keep or Toss</div>
-<div class="tagline">Know when to keep it. Know when to toss it.</div>
 
-<div class="card">
-<label>Product Name (optional)</label>
-<input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
-
-<label>Opening Date</label>
-<div class="date-mode-toggle">
-  <button id="exactBtn" class="active" onclick="setDateMode('exact')">I remember the exact date</button>
-  <button id="estimatedBtn" onclick="setDateMode('estimated')">I'm not sure</button>
+<!-- INITIAL SCREEN -->
+<div class="initial-screen" id="initialScreen">
+  <div class="app-logo">KEESS</div>
+  <button class="primary-scan-btn" onclick="startApp()">
+    Scan cosmetic label
+  </button>
 </div>
 
-<div class="date-selectors-wrapper">
-  <div id="exactDateSelectors" class="date-selectors">
-    <select id="yearSelect"></select>
-    <select id="monthSelect"></select>
-    <select id="daySelect"></select>
+<!-- MAIN APP -->
+<div class="app-container" id="appContainer">
+  
+  <!-- TOP NAV -->
+  <div class="top-nav">
+    <div class="app-logo-small">KEESS</div>
+    <button class="nav-toggle" id="shelfToggle" onclick="toggleShelf()">My Shelf</button>
   </div>
 
-  <div id="estimatedDateSelectors" class="date-selectors two-col estimated" style="display:none;">
-    <select id="yearSelectEst"></select>
-    <select id="monthSelectEst"></select>
+  <!-- MAIN FORM VIEW -->
+  <div id="formView">
+    
+    <!-- RESULT DISPLAY (DOMINATES SCREEN WHEN VISIBLE) -->
+    <div class="result-display" id="resultDisplay">
+      <div class="status-text" id="statusText"></div>
+      <div class="status-subtext" id="statusSubtext"></div>
+      <button class="details-toggle" id="detailsToggle" onclick="toggleDetails()">More details</button>
+      <div class="result-details" id="resultDetails"></div>
+    </div>
+
+    <!-- FORM (DIMMED WHEN RESULT IS SHOWN) -->
+    <div class="form-container" id="formContainer">
+      
+      <!-- Product Name (collapsed) -->
+      <div class="product-name-section">
+        <button class="expand-toggle" id="nameToggle" onclick="toggleProductName()">
+          + Product name (optional)
+        </button>
+        <div class="expandable-content" id="nameContent">
+          <input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
+        </div>
+      </div>
+
+      <!-- Opening Date -->
+      <div class="form-section date-section">
+        <div class="form-section-title">Opening Date</div>
+        
+        <div class="date-mode-toggle">
+          <button id="exactBtn" class="active" onclick="setDateMode('exact')">Exact date</button>
+          <button id="estimatedBtn" onclick="setDateMode('estimated')">Estimate</button>
+        </div>
+
+        <div class="date-selectors-wrapper">
+          <div id="exactDateSelectors" class="date-selectors">
+            <select id="yearSelect"></select>
+            <select id="monthSelect"></select>
+            <select id="daySelect"></select>
+          </div>
+
+          <div id="estimatedDateSelectors" class="date-selectors two-col estimated" style="display:none;">
+            <select id="yearSelectEst"></select>
+            <select id="monthSelectEst"></select>
+          </div>
+        </div>
+
+        <div id="estimatedBadge" class="estimated-badge" style="display:none;">
+          Estimated
+        </div>
+
+        <div id="helperText" class="helper-text" style="display:none;">
+          Opening date is estimated
+        </div>
+      </div>
+
+      <!-- PAO -->
+      <div class="form-section">
+        <div class="form-section-title">Period After Opening (PAO)</div>
+        <div class="pao" id="paoBtns"></div>
+      </div>
+
+      <!-- Photo Upload -->
+      <div class="form-section photo-section">
+        <div class="form-section-title">Product Photo</div>
+        <div class="photo-buttons">
+          <button onclick="document.getElementById('cameraInput').click()">Take photo</button>
+          <button onclick="document.getElementById('galleryInput').click()">Select image</button>
+        </div>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="galleryInput" accept="image/*" style="display:none;">
+        <div class="file-name" id="fileName"></div>
+        <img id="preview" style="display:none">
+        <div id="status" class="status" style="display:none"></div>
+      </div>
+
+      <button class="save-btn" id="saveBtn">Save to My Shelf</button>
+
+      <!-- Info Section -->
+      <div class="info-section">
+        <div class="info-title">What is PAO?</div>
+        <div class="info-content">
+          <strong>Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening. Check the jar icon on your product for the number (e.g., 12M = 12 months).
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<div id="estimatedBadge" class="estimated-badge" style="display:none;">
-  ESTIMATED
-</div>
-
-<div id="helperText" class="helper-text" style="display:none;">
-  Opening date is estimated
-</div>
-
-<label>Period After Opening (PAO)</label>
-<div class="pao" id="paoBtns"></div>
-
-<label>Upload Product Photo</label>
-<div class="photo-buttons">
-  <button onclick="document.getElementById('cameraInput').click()">📸 Take a photo</button>
-  <button onclick="document.getElementById('galleryInput').click()">🖼 Select from gallery</button>
-</div>
-<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
-<input type="file" id="galleryInput" accept="image/*" style="display:none;">
-<div class="file-name" id="fileName"></div>
-
-<img id="preview" style="display:none">
-
-<div id="result" class="result">
-  Select a PAO period
-</div>
-<div id="statusLabel" class="status-label" style="display:none"></div>
-<div id="status" class="status" style="display:none"></div>
-
-<button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
-</div>
-
-<div class="card">
-<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa; margin-bottom: 14px;">
-Most people use expired cosmetics without knowing it.
-</div>
-<h3 style="margin:0 0 12px 0">ℹ️ What is PAO?</h3>
-<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa;">
-<strong style="color:#667eea">Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening.<br><br>
-Check the jar icon on your product for the number (e.g., 12M = 12 months).
-</div>
-</div>
-
-<div id="shelfSection" class="shelf-section">
-<h2>📦 My Shelf</h2>
-<div id="shelfSummary"></div>
-<div id="shelfItems"></div>
-</div>
+  <!-- MY SHELF VIEW (HIDDEN BY DEFAULT) -->
+  <div class="shelf-view" id="shelfView">
+    <div class="shelf-header">My Shelf</div>
+    <div id="shelfSummary"></div>
+    <div id="shelfItems"></div>
+  </div>
 
 </div>
 
 <script>
+// ========== UI-ONLY CODE (NO LOGIC CHANGES) ==========
+
+function startApp() {
+  document.getElementById('initialScreen').classList.add('hidden');
+  document.getElementById('appContainer').classList.add('visible');
+}
+
+let productNameExpanded = false;
+function toggleProductName() {
+  productNameExpanded = !productNameExpanded;
+  const content = document.getElementById('nameContent');
+  const toggle = document.getElementById('nameToggle');
+  
+  if (productNameExpanded) {
+    content.classList.add('visible');
+    toggle.classList.add('expanded');
+    toggle.textContent = '− Product name (optional)';
+  } else {
+    content.classList.remove('visible');
+    toggle.classList.remove('expanded');
+    toggle.textContent = '+ Product name (optional)';
+  }
+}
+
+let detailsExpanded = false;
+function toggleDetails() {
+  detailsExpanded = !detailsExpanded;
+  const details = document.getElementById('resultDetails');
+  const toggle = document.getElementById('detailsToggle');
+  
+  if (detailsExpanded) {
+    details.classList.add('visible');
+    toggle.textContent = 'Hide details';
+  } else {
+    details.classList.remove('visible');
+    toggle.textContent = 'More details';
+  }
+}
+
+let shelfVisible = false;
+function toggleShelf() {
+  shelfVisible = !shelfVisible;
+  const formView = document.getElementById('formView');
+  const shelfView = document.getElementById('shelfView');
+  const toggle = document.getElementById('shelfToggle');
+  
+  if (shelfVisible) {
+    formView.style.display = 'none';
+    shelfView.classList.add('visible');
+    toggle.classList.add('active');
+    toggle.textContent = 'Back';
+  } else {
+    formView.style.display = 'block';
+    shelfView.classList.remove('visible');
+    toggle.classList.remove('active');
+    toggle.textContent = 'My Shelf';
+  }
+}
+
+// ========== ORIGINAL LOGIC (UNCHANGED) ==========
+
 const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
 const SHELF_STORAGE_KEY = "myShelf";
@@ -393,8 +868,6 @@ let dateMode = 'exact';
 
 const productName = document.getElementById("productName");
 const paoBox = document.getElementById("paoBtns");
-const result = document.getElementById("result");
-const statusLabel = document.getElementById("statusLabel");
 const preview = document.getElementById("preview");
 const status = document.getElementById("status");
 const fileName = document.getElementById("fileName");
@@ -414,6 +887,13 @@ const monthSelect = document.getElementById("monthSelect");
 const daySelect = document.getElementById("daySelect");
 const yearSelectEst = document.getElementById("yearSelectEst");
 const monthSelectEst = document.getElementById("monthSelectEst");
+
+// UI elements for result display
+const resultDisplay = document.getElementById("resultDisplay");
+const formContainer = document.getElementById("formContainer");
+const statusText = document.getElementById("statusText");
+const statusSubtext = document.getElementById("statusSubtext");
+const resultDetails = document.getElementById("resultDetails");
 
 function getPacificMidnight(dateStr) {
   const dateObj = new Date(dateStr + "T00:00:00");
@@ -478,9 +958,6 @@ function updateDayOptions() {
     daySelect.value = daysInMonth;
   }
 }
-
-yearSelect.onchange = updateDayOptions;
-monthSelect.onchange = updateDayOptions;
 
 yearSelect.onchange = () => { updateDayOptions(); updateResult(); };
 monthSelect.onchange = () => { updateDayOptions(); updateResult(); };
@@ -549,18 +1026,6 @@ function addMonths(d, m) {
   return `${year}-${month}-${day}`;
 }
 
-function getWarningColor(daysLeft) {
-  if (daysLeft <= 7) {
-    return "#5d5d1b";
-  } else if (daysLeft <= 14) {
-    return "#4d4d1b";
-  } else if (daysLeft <= 30) {
-    return "#3d3d1b";
-  } else {
-    return "#4d4d1b";
-  }
-}
-
 function calculateDaysLeft(expiryDateStr) {
   const todayPacific = getTodayPacific();
   const expiryPacific = getPacificMidnight(expiryDateStr);
@@ -572,8 +1037,8 @@ function calculateDaysLeft(expiryDateStr) {
 
 function updateResult() {
   if (!selectedPAO) { 
-    result.innerHTML = "Select a PAO period";
-    statusLabel.style.display = "none";
+    resultDisplay.classList.remove('visible');
+    formContainer.classList.remove('dimmed');
     lastStatus = null;
     return; 
   }
@@ -583,40 +1048,43 @@ function updateResult() {
   
   const daysLeft = calculateDaysLeft(expiryDateStr);
   
-  let statusText = "";
-  let statusColor = "";
-  let resultMessage = "";
+  let statusTextContent = "";
+  let statusClass = "";
+  let subtextContent = "";
+  let detailsContent = "";
   
   if (daysLeft < 0) {
-    statusText = "TOSS";
-    statusColor = "#4d1b1b";
-    resultMessage = "🗑️ This product should be thrown away";
+    statusTextContent = "TOSS IT";
+    statusClass = "toss";
+    subtextContent = "";
+    detailsContent = `Expired ${Math.abs(daysLeft)} days ago<br>Expiry date: ${expiryDateStr}<br>Opening date: ${openingDate}`;
   } else if (daysLeft <= 60) {
-    statusText = "USE SOON";
-    statusColor = getWarningColor(daysLeft);
-    resultMessage = "⚠ Expiring soon — " + daysLeft + " days left";
+    statusTextContent = "USE SOON";
+    statusClass = "use-soon";
+    subtextContent = `${daysLeft} days left`;
+    detailsContent = `Expires in ${daysLeft} days<br>Expiry date: ${expiryDateStr}<br>Opening date: ${openingDate}`;
   } else {
-    statusText = "KEEP";
-    statusColor = "#1b4d3e";
-    resultMessage = "✅ Safe (for now)";
+    statusTextContent = "SAFE";
+    statusClass = "safe";
+    subtextContent = "";
+    detailsContent = `${daysLeft} days left<br>Expiry date: ${expiryDateStr}<br>Opening date: ${openingDate}`;
   }
   
   if (dateMode === 'estimated') {
-    result.innerHTML = resultMessage + '<div class="result-estimated-note">Opening date is estimated</div>';
-  } else {
-    result.innerHTML = resultMessage;
+    detailsContent += '<br><br><span style="color:#d4a259;">Opening date is estimated</span>';
   }
   
-  if (statusText !== lastStatus) {
-    statusLabel.classList.remove("animate");
-    void statusLabel.offsetWidth;
-    statusLabel.classList.add("animate");
-    lastStatus = statusText;
-  }
+  statusText.textContent = statusTextContent;
+  statusText.className = 'status-text ' + statusClass;
+  statusSubtext.textContent = subtextContent;
+  resultDetails.innerHTML = detailsContent;
   
-  statusLabel.textContent = statusText;
-  statusLabel.style.background = statusColor;
-  statusLabel.style.display = "block";
+  resultDisplay.classList.add('visible');
+  formContainer.classList.add('dimmed');
+  
+  if (statusTextContent !== lastStatus) {
+    lastStatus = statusTextContent;
+  }
 
   saveBtn.style.display = "block";
 }
@@ -746,9 +1214,9 @@ async function handleFileSelect(e) {
     ocrProcessed = true;
 
     status.style.display = "block";
-    status.style.background = "#4d4d1b";
-    status.style.color = "#f0ad4e";
-    status.textContent = "🔍 Analyzing with Google Vision...";
+    status.style.background = "#2a2a1a";
+    status.style.color = "#d4a259";
+    status.textContent = "Analyzing...";
 
     try {
       const pao = await detectWithGoogle(base64);
@@ -756,24 +1224,24 @@ async function handleFileSelect(e) {
       if (pao && SUPPORTED_PAOS.includes(pao)) {
         selectPAO(pao);
         updateResult();
-        status.style.background = "#1b4d3e";
-        status.style.color = "#20c997";
-        status.textContent = `✓ Detected: ${pao}M`;
+        status.style.background = "#1b3a2e";
+        status.style.color = "#4a7c59";
+        status.textContent = `Detected: ${pao}M`;
       } else if (pao) {
-        status.style.background = "#4d4d1b";
-        status.style.color = "#f0ad4e";
-        status.textContent = `⚠ Detected ${pao}M but not supported. Select manually ↓`;
+        status.style.background = "#2a2a1a";
+        status.style.color = "#d4a259";
+        status.textContent = `Detected ${pao}M but not supported. Select manually.`;
       } else {
-        status.style.background = "#4d1b1b";
-        status.style.color = "#ff6b6b";
-        status.textContent = "❌ Could not detect PAO. Select manually ↓";
+        status.style.background = "#3a1a1a";
+        status.style.color = "#c85a54";
+        status.textContent = "Could not detect PAO. Select manually.";
       }
       
     } catch (err) {
       console.error(err);
-      status.style.background = "#4d1b1b";
-      status.style.color = "#ff6b6b";
-      status.textContent = "⚠ Error: " + err.message;
+      status.style.background = "#3a1a1a";
+      status.style.color = "#c85a54";
+      status.textContent = "Error: " + err.message;
     }
   };
   
@@ -806,7 +1274,7 @@ function saveShelfToStorage(shelf) {
     return true;
   } catch (err) {
     console.error("Shelf save error:", err);
-    alert("⚠ Save failed: " + err.message);
+    alert("Save failed: " + err.message);
     return false;
   }
 }
@@ -845,7 +1313,7 @@ function refreshAllStatuses() {
 
 saveBtn.onclick = () => {
   if (!selectedPAO) {
-    alert("⚠ First select a PAO period");
+    alert("First select a PAO period");
     return;
   }
 
@@ -871,7 +1339,7 @@ saveBtn.onclick = () => {
   const saveSuccess = saveShelfToStorage(shelf);
   
   if (saveSuccess) {
-    alert("✓ Saved to My Shelf!");
+    alert("Saved to My Shelf");
     productName.value = "";
     renderShelf();
   }
@@ -887,7 +1355,7 @@ function getStatusPriority(status) {
 }
 
 function deleteItem(createdAt) {
-  if (!confirm("Really delete?")) return;
+  if (!confirm("Delete this item?")) return;
   
   const shelf = loadShelfFromStorage();
   const updatedShelf = shelf.filter(item => item.createdAt !== createdAt);
@@ -910,7 +1378,7 @@ function renderShelf() {
   
   if (shelf.length === 0) {
     shelfSummary.innerHTML = '';
-    shelfItems.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">No items in your shelf yet. Add your first product!</div>';
+    shelfItems.innerHTML = '<div style="text-align:center;color:#555;padding:40px;">No items yet</div>';
     return;
   }
   
@@ -921,9 +1389,9 @@ function renderShelf() {
   let summaryText = "";
   
   if (tossCount > 0) {
-    summaryText = `🗑️ ${tossCount} expired`;
+    summaryText = `🗑️ You have expired products. Time to toss them.`;
   } else if (useSoonCount > 0) {
-    summaryText = `⚠ ${useSoonCount} expiring soon`;
+    summaryText = `⚠️ Some products are expiring soon.`;
   } else if (keepCount > 0) {
     summaryText = "✨ Safe vibes only";
   }
@@ -943,30 +1411,37 @@ function renderShelf() {
       item.name = "noname";
     }
     
+    let displayStatus = item.status;
+    if (item.status === "TOSS") {
+      displayStatus = "TOSS IT";
+    } else if (item.status === "KEEP") {
+      displayStatus = "SAFE";
+    }
+    
     return {
       ...item,
-      displayStatus: item.status
+      displayStatus: displayStatus
     };
   });
   
   itemsWithStatus.sort((a, b) => {
-    return getStatusPriority(a.displayStatus) - getStatusPriority(b.displayStatus);
+    return getStatusPriority(a.status) - getStatusPriority(b.status);
   });
   
   shelfItems.innerHTML = itemsWithStatus.map(item => {
     const itemStatus = item.displayStatus;
     
     let statusColor = "";
-    if (itemStatus === "TOSS") {
-      statusColor = "#4d1b1b";
-    } else if (itemStatus === "USE SOON") {
-      statusColor = "#4d4d1b";
+    if (item.status === "TOSS") {
+      statusColor = "#3a1a1a";
+    } else if (item.status === "USE SOON") {
+      statusColor = "#2a2a1a";
     } else {
-      statusColor = "#1b4d3e";
+      statusColor = "#1b3a2e";
     }
     
     const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
-    const estimatedBadge = (item.isEstimated || false) ? '<span class="shelf-item-estimated-badge">Estimated</span>' : '';
+    const estimatedBadge = (item.isEstimated || false) ? '<span class="shelf-item-estimated-badge">Est.</span>' : '';
     
     return `
       <div class="shelf-item">
@@ -990,9 +1465,9 @@ function renderShelf() {
     if (stored) {
       const shelf = JSON.parse(stored);
       if (shelf.length > 0 && shelf[0].image) {
-        console.warn("⚠ Old format data detected. Cleaning up...");
+        console.warn("Old format data detected. Cleaning up...");
         localStorage.removeItem(SHELF_STORAGE_KEY);
-        console.log("✓ Shelf data reset. Ready to use without storage issues.");
+        console.log("Shelf data reset.");
       }
     }
   } catch (err) {
