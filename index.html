@@ -644,9 +644,9 @@ label {
   text-align: left;
 }
 
-/* ========== FORM SECTION GROUPING ========== */
+/* ========== FORM SECTION GROUPING (SPACING REDUCED 50%) ========== */
 .form-section {
-  margin-bottom: 14px;
+  margin-bottom: 7px; /* Reduced from 14px */
   padding: 6px;
   background: rgba(255, 247, 247, 0.3);
   border-radius: 10px;
@@ -663,6 +663,151 @@ label {
   margin-top: 0;
   font-weight: 700;
   text-align: left;
+}
+
+/* ========== SAVE CONFIRMATION TOAST ========== */
+.save-confirmation {
+  margin-top: 14px;
+  padding: 14px;
+  background: #f0fdf4;
+  border: 2px solid #22c55e;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #22c55e;
+  display: none;
+}
+
+.save-confirmation.show {
+  display: block;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.view-shelf-button {
+  width: 100%;
+  margin-top: 12px;
+  background: var(--accent-primary);
+  color: var(--bg-card);
+  border: 2px solid var(--accent-primary);
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+  display: none;
+}
+
+.view-shelf-button.show {
+  display: block;
+}
+
+.view-shelf-button:hover {
+  background: #ff5555;
+  border-color: #ff5555;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
+}
+
+/* ========== SPACING REDUCTION: TARGET SECTIONS ========== */
+/* Reduce spacing between photo section and PAO section */
+#photoToOCRSection {
+  margin-bottom: 7px; /* Reduced from 14px */
+}
+
+/* Reduce spacing between PAO section and opening date section */
+#paoSection {
+  margin-bottom: 7px; /* Reduced from 14px */
+}
+
+/* Reduce spacing between opening date and product name */
+#openingDateSection {
+  margin-bottom: 7px; /* Reduced from 14px */
+}
+
+/* Reduce spacing between product name and next card */
+#productNameSection {
+  margin-bottom: 7px; /* Reduced from 14px */
+}
+
+/* Reduce spacing between main form card and info card */
+.card + .card {
+  margin-top: 8px; /* Reduced from 16px */
+}
+
+/* ========== EMPTY STATE FIX: HIDE WHEN NO CONTENT ========== */
+/* Result block - hide when empty */
+.result:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Status label - hide when empty */
+.status-label:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Status block - hide when empty */
+.status:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Helper text - hide when empty */
+.helper-text:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Estimated badge - hide when empty */
+.estimated-badge:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* File name - hide when empty */
+.file-name:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Save confirmation - use show class only */
+.save-confirmation:not(.show) {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* View shelf button - use show class only */
+.view-shelf-button:not(.show) {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Preview image - hide when display:none */
+#preview[style*="display: none"],
+#preview[style*="display:none"] {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 </style>
 </head>
@@ -691,26 +836,28 @@ label {
 
 <div class="card">
 <!-- PHOTO ACTIONS (HIGHEST PRIORITY) -->
-<div class="photo-section-label">Upload a photo to auto-detect PAO</div>
-<div class="photo-buttons">
-  <button onclick="document.getElementById('cameraInput').click()">📸 Take a photo</button>
-  <button onclick="document.getElementById('galleryInput').click()">🖼 Select from gallery</button>
-</div>
-<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
-<input type="file" id="galleryInput" accept="image/*" style="display:none;">
-<div class="file-name" id="fileName"></div>
+<div id="photoToOCRSection" class="form-section">
+  <div class="photo-section-label">Upload a photo to auto-detect PAO</div>
+  <div class="photo-buttons">
+    <button onclick="document.getElementById('cameraInput').click()">📸 Take a photo</button>
+    <button onclick="document.getElementById('galleryInput').click()">🖼 Select from gallery</button>
+  </div>
+  <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+  <input type="file" id="galleryInput" accept="image/*" style="display:none;">
+  <div class="file-name" id="fileName"></div>
 
-<img id="preview" style="display:none">
-<div id="status" class="status" style="display:none"></div>
+  <img id="preview" style="display:none">
+  <div id="status" class="status" style="display:none"></div>
+</div>
 
 <!-- PAO SELECTION -->
-<div class="form-section">
+<div id="paoSection" class="form-section">
   <div class="pao-section-label">Select a PAO period</div>
   <div class="pao" id="paoBtns"></div>
 </div>
 
 <!-- OPENING DATE -->
-<div class="form-section">
+<div id="openingDateSection" class="form-section">
   <label>Opening Date</label>
   <div class="date-mode-toggle">
     <button id="exactBtn" class="active" onclick="setDateMode('exact')">I remember the exact date</button>
@@ -740,16 +887,26 @@ label {
 </div>
 
 <!-- PRODUCT NAME (LOW PRIORITY) -->
-<div class="form-section">
+<div id="productNameSection" class="form-section">
   <label>Product Name (optional)</label>
   <input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
 </div>
 
 <!-- RESULT -->
-<div id="result" class="result"></div>
+<div id="result" class="result" style="display:none"></div>
 <div id="statusLabel" class="status-label" style="display:none"></div>
 
 <button id="saveBtn" style="display:none">Save to My Shelf</button>
+
+<!-- SAVE CONFIRMATION -->
+<div id="saveConfirmation" class="save-confirmation">
+  ✓ Saved to My Shelf
+</div>
+
+<!-- VIEW SHELF BUTTON (ONLY AFTER SAVE) -->
+<button id="viewShelfBtn" class="view-shelf-button" onclick="showScreen('shelf')">
+  📦 View My Shelf
+</button>
 </div>
 
 <div class="card">
@@ -803,6 +960,8 @@ const fileName = document.getElementById("fileName");
 const saveBtn = document.getElementById("saveBtn");
 const shelfSummary = document.getElementById("shelfSummary");
 const shelfItems = document.getElementById("shelfItems");
+const saveConfirmation = document.getElementById("saveConfirmation");
+const viewShelfBtn = document.getElementById("viewShelfBtn");
 
 const exactBtn = document.getElementById("exactBtn");
 const estimatedBtn = document.getElementById("estimatedBtn");
@@ -1282,9 +1441,17 @@ saveBtn.onclick = () => {
   const saveSuccess = saveShelfToStorage(shelf);
   
   if (saveSuccess) {
-    alert("✓ Saved to My Shelf!");
+    // Show confirmation toast
+    saveConfirmation.classList.add('show');
+    
+    // Show "View My Shelf" button
+    viewShelfBtn.classList.add('show');
+    
+    // Clear product name for next entry
     productName.value = "";
-    showScreen('shelf');
+    
+    // STAY on Add Product screen - do NOT navigate
+    console.log("✓ Item saved. User can continue adding or choose to view shelf.");
   }
 };
 
