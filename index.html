@@ -36,14 +36,105 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
 }
 
+/* ========== SCREEN SYSTEM (CRITICAL) ========== */
+.screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* ========== FIRST SCREEN ========== */
+#firstScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  padding: 32px;
+}
+
+.logo {
+  font-size: 64px;
+  font-weight: 900;
+  color: var(--accent-primary);
+  margin-bottom: 80px;
+  letter-spacing: -2px;
+}
+
+.check-button {
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  color: var(--bg-card);
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.check-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(255, 107, 107, 0.4);
+}
+
+.check-button:active {
+  transform: scale(0.98);
+}
+
+.check-icon {
+  font-size: 48px;
+}
+
+/* ========== MAIN SCREEN ========== */
 .wrap { 
   max-width: 420px; 
   margin: 0 auto; 
   padding: 16px; 
   background: var(--bg-secondary);
   min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.back-button {
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  border: 2px solid var(--accent-tertiary);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-secondary);
 }
 
 .card { 
@@ -534,14 +625,49 @@ label {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
 }
+
+.shelf-nav-button {
+  width: 100%;
+  margin-top: 16px;
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  border: 2px solid var(--accent-tertiary);
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 10px;
+}
+
+.shelf-nav-button:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-secondary);
+  transform: translateY(-2px);
+}
 </style>
 </head>
 
 <body>
+
+<!-- ========== FIRST SCREEN ========== -->
+<div id="firstScreen" class="screen active">
+  <div class="logo">KEESS</div>
+  <button class="check-button" onclick="navigateToMain()">
+    <div class="check-icon">📸</div>
+    <div>Check cosmetic label</div>
+  </button>
+</div>
+
+<!-- ========== MAIN SCREEN ========== -->
+<div id="mainScreen" class="screen">
 <div class="wrap">
-<h2>KEESS</h2>
-<div class="subtitle">Keep or Toss</div>
-<div class="tagline">Know when to keep it. Know when to toss it.</div>
+<div class="header">
+  <div>
+    <h2>KEESS</h2>
+    <div class="subtitle">Keep or Toss</div>
+    <div class="tagline">Know when to keep it. Know when to toss it.</div>
+  </div>
+  <button class="back-button" onclick="navigateToFirst()">← Home</button>
+</div>
 
 <div class="card">
 <label>Product Name (optional)</label>
@@ -608,12 +734,21 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 </div>
 </div>
 
-<div id="shelfSection" class="shelf-section">
-<h2>📦 My Shelf</h2>
+<button class="shelf-nav-button" onclick="navigateToShelf()">📦 View My Shelf</button>
+
+</div>
+</div>
+
+<!-- ========== SHELF SCREEN ========== -->
+<div id="shelfScreen" class="screen">
+<div class="wrap">
+<div class="header">
+  <h2>📦 My Shelf</h2>
+  <button class="back-button" onclick="navigateToFirst()">← Home</button>
+</div>
 <div id="shelfSummary"></div>
 <div id="shelfItems"></div>
 </div>
-
 </div>
 
 <script>
@@ -651,6 +786,23 @@ const monthSelect = document.getElementById("monthSelect");
 const daySelect = document.getElementById("daySelect");
 const yearSelectEst = document.getElementById("yearSelectEst");
 const monthSelectEst = document.getElementById("monthSelectEst");
+
+// ========== NAVIGATION ==========
+function navigateToFirst() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('firstScreen').classList.add('active');
+}
+
+function navigateToMain() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('mainScreen').classList.add('active');
+}
+
+function navigateToShelf() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('shelfScreen').classList.add('active');
+  renderShelf();
+}
 
 function getPacificMidnight(dateStr) {
   const dateObj = new Date(dateStr + "T00:00:00");
@@ -1098,7 +1250,7 @@ saveBtn.onclick = () => {
   if (saveSuccess) {
     alert("✓ Saved to My Shelf!");
     productName.value = "";
-    renderShelf();
+    navigateToShelf();
   }
 };
 
@@ -1272,7 +1424,6 @@ function renderShelf() {
 })();
 
 initDateSelectors();
-renderShelf();
 </script>
 
 <input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
