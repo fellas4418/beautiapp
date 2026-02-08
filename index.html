@@ -6,29 +6,170 @@
 <title>KEESS</title>
 
 <style>
+/* ========== GLOBAL COLOR SYSTEM (LOCKED) ========== */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #fff7f7;
+  --bg-card: #ffffff;
+  --accent-primary: #ff6b6b;
+  --accent-secondary: #ffb8b8;
+  --accent-tertiary: #ffd4d4;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #b0b0b0;
+  --border-light: #f0e6e6;
+  --border-accent: #ffd4d4;
+  
+  /* Status colors (exceptions) */
+  --status-keep: #22c55e;
+  --status-use-soon: #f59e0b;
+  --status-toss: #ef4444;
+}
+
+/* ========== DESIGN RULE ========== */
+/* Do not change the color theme unless explicitly instructed by the user. */
+
 * { box-sizing: border-box; }
-body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
-.card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-h2 { margin: 0 0 8px 0; font-size: 28px; }
-.subtitle { font-size: 14px; color: #888; margin-bottom: 6px; }
-.tagline { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.4; }
-img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; }
-.pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
-button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
-button:hover { background: #2a3142; transform: translateY(-2px); }
-button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
-.result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
-.result-estimated-note {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #f0ad4e;
+
+body { 
+  margin: 0; 
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.wrap { 
+  max-width: 420px; 
+  margin: 0 auto; 
+  padding: 16px; 
+  background: var(--bg-secondary);
+  min-height: 100vh;
+}
+
+.card { 
+  background: var(--bg-card);
+  border-radius: 16px; 
+  padding: 20px; 
+  margin-bottom: 16px;
+  border: 2px solid var(--border-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+h2 { 
+  margin: 0 0 8px 0; 
+  font-size: 28px;
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.subtitle { 
+  font-size: 14px; 
+  color: var(--accent-primary);
+  margin-bottom: 6px;
   font-weight: 600;
 }
-.status-label { margin-top: 8px; font-weight: 800; font-size: 15px; text-align: center; padding: 10px; border-radius: 8px; }
-input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d2e; color: #fff; font-size: 14px; }
 
-.file-upload-wrapper { position: relative; margin-top: 10px; }
+.tagline { 
+  font-size: 13px; 
+  color: var(--text-secondary);
+  margin-bottom: 20px; 
+  line-height: 1.4;
+}
+
+img { 
+  width: 100%; 
+  border-radius: 12px; 
+  margin-top: 10px; 
+  display: block; 
+  max-height: 400px; 
+  object-fit: contain;
+  border: 2px solid var(--border-light);
+}
+
+.pao { 
+  display: grid; 
+  grid-template-columns: repeat(4, 1fr); 
+  gap: 10px; 
+  margin-top: 12px; 
+}
+
+button { 
+  padding: 12px; 
+  border-radius: 10px; 
+  border: 2px solid var(--accent-tertiary);
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  font-weight: 700; 
+  font-size: 15px; 
+  cursor: pointer; 
+  transition: all 0.2s;
+}
+
+button:hover { 
+  background: var(--bg-secondary);
+  border-color: var(--accent-secondary);
+  transform: translateY(-2px);
+}
+
+button.active { 
+  background: var(--accent-primary);
+  color: var(--bg-card);
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.result { 
+  margin-top: 14px; 
+  font-weight: 700;
+  font-size: 16px; 
+  text-align: center; 
+  padding: 14px; 
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  color: var(--text-primary);
+  border: 2px solid var(--border-light);
+}
+
+.result-estimated-note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--status-use-soon);
+  font-weight: 600;
+}
+
+.status-label { 
+  margin-top: 8px; 
+  font-weight: 800; 
+  font-size: 15px; 
+  text-align: center; 
+  padding: 10px; 
+  border-radius: 8px;
+  color: var(--bg-card);
+}
+
+input[type="text"] { 
+  width: 100%; 
+  margin-top: 10px; 
+  padding: 10px; 
+  border-radius: 8px; 
+  border: 2px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.file-upload-wrapper { 
+  position: relative; 
+  margin-top: 10px; 
+}
+
 .file-upload-wrapper input[type="file"] { 
   position: absolute; 
   opacity: 0; 
@@ -37,22 +178,52 @@ input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius
   cursor: pointer; 
   z-index: 2;
 }
+
 .file-upload-label {
   display: block;
   width: 100%;
   padding: 12px;
-  background: #667eea;
-  color: white;
+  background: var(--accent-primary);
+  color: var(--bg-card);
   text-align: center;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  border: 2px solid var(--accent-primary);
 }
-.file-upload-label:hover { background: #5568d3; }
-.file-name { margin-top: 8px; font-size: 13px; color: #aaa; text-align: center; }
-.status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
-label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
+
+.file-upload-label:hover { 
+  background: #ff5555;
+  border-color: #ff5555;
+  transform: translateY(-2px);
+}
+
+.file-name { 
+  margin-top: 8px; 
+  font-size: 13px; 
+  color: var(--text-secondary);
+  text-align: center; 
+}
+
+.status { 
+  margin-top: 10px; 
+  padding: 12px; 
+  border-radius: 8px; 
+  text-align: center; 
+  font-weight: 600; 
+  font-size: 14px;
+  border: 2px solid var(--border-light);
+}
+
+label { 
+  display: block; 
+  margin-top: 12px; 
+  margin-bottom: 4px; 
+  font-size: 14px; 
+  color: var(--text-secondary);
+  font-weight: 600;
+}
 
 .photo-buttons {
   display: grid;
@@ -63,15 +234,18 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 .photo-buttons button {
   padding: 12px;
-  background: #667eea;
-  color: white;
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  border: 2px solid var(--accent-tertiary);
   border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
 }
 
 .photo-buttons button:hover {
-  background: #5568d3;
+  background: var(--bg-secondary);
+  border-color: var(--accent-secondary);
+  transform: translateY(-2px);
 }
 
 @keyframes statusFadeUp {
@@ -89,10 +263,12 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   animation: statusFadeUp 250ms ease-out;
 }
 
-.shelf-section { margin-top: 24px; }
+.shelf-section { 
+  margin-top: 24px; 
+}
 
 .shelf-item { 
-  background: #111318; 
+  background: var(--bg-card);
   border-radius: 12px; 
   padding: 12px; 
   margin-bottom: 10px; 
@@ -100,6 +276,13 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   display: flex;
   align-items: center;
   gap: 12px;
+  border: 2px solid var(--border-light);
+  transition: all 0.2s;
+}
+
+.shelf-item:hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
 }
 
 .shelf-item-content {
@@ -110,7 +293,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 .shelf-item-name {
   font-size: 16px;
   font-weight: 700;
-  color: #e8e8ea;
+  color: var(--text-primary);
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -119,25 +302,26 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 .shelf-item-meta {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
   margin-bottom: 2px;
 }
 
 .shelf-item-dates {
   font-size: 11px;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .shelf-item-estimated-badge {
   display: inline-block;
   padding: 2px 6px;
-  background: #4d4d1b;
-  color: #f0ad4e;
+  background: #fff7ed;
+  color: var(--status-use-soon);
   border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
   margin-left: 4px;
   text-transform: uppercase;
+  border: 1px solid #fed7aa;
 }
 
 .shelf-item-status { 
@@ -147,14 +331,15 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   font-weight: 700;
   white-space: nowrap;
   flex-shrink: 0;
+  color: var(--bg-card);
 }
 
 .delete-btn { 
   position: absolute; 
   top: 8px; 
   right: 8px; 
-  background: #4d1b1b; 
-  color: #ff6b6b; 
+  background: var(--bg-card);
+  color: var(--accent-primary);
   width: 28px; 
   height: 28px; 
   border-radius: 50%; 
@@ -165,19 +350,27 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   cursor: pointer; 
   transition: all 0.2s; 
   padding: 0; 
-  z-index: 10; 
+  z-index: 10;
+  border: 2px solid var(--border-accent);
 }
-.delete-btn:hover { background: #6b2020; transform: scale(1.1); }
+
+.delete-btn:hover { 
+  background: #fee;
+  color: var(--status-toss);
+  border-color: var(--status-toss);
+  transform: scale(1.1);
+}
 
 .shelf-summary {
-  background: #1a1d2e;
+  background: var(--bg-secondary);
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 14px;
-  color: #e8e8ea;
+  color: var(--text-primary);
   margin-bottom: 12px;
   text-align: center;
   font-weight: 600;
+  border: 2px solid var(--border-light);
 }
 
 .date-mode-toggle {
@@ -189,15 +382,23 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 .date-mode-toggle button {
   padding: 10px;
-  background: #1f2430;
-  color: #fff;
+  background: var(--bg-card);
+  color: var(--accent-primary);
+  border: 2px solid var(--accent-tertiary);
   border-radius: 8px;
   font-weight: 600;
   font-size: 13px;
 }
 
+.date-mode-toggle button:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-secondary);
+}
+
 .date-mode-toggle button.active {
-  background: #667eea;
+  background: var(--accent-primary);
+  color: var(--bg-card);
+  border-color: var(--accent-primary);
 }
 
 .date-selectors-wrapper {
@@ -213,7 +414,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   right: 0;
   top: 50%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3) 20%, rgba(102, 126, 234, 0.3) 80%, transparent);
+  background: linear-gradient(90deg, transparent, var(--border-accent) 20%, var(--border-accent) 80%, transparent);
   transform: translateY(-50%);
   pointer-events: none;
   z-index: 1;
@@ -226,7 +427,7 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
   right: 0;
   top: 50%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.3) 20%, rgba(102, 126, 234, 0.3) 80%, transparent);
+  background: linear-gradient(90deg, transparent, var(--border-accent) 20%, var(--border-accent) 80%, transparent);
   transform: translateY(calc(-50% + 48px));
   pointer-events: none;
   z-index: 1;
@@ -247,9 +448,9 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 .date-selectors select {
   padding: 16px 10px;
   border-radius: 12px;
-  border: 2px solid #333;
-  background: #1a1d2e;
-  color: #fff;
+  border: 2px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-primary);
   font-size: 18px;
   font-weight: 700;
   text-align: center;
@@ -263,39 +464,75 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 
 .date-selectors select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  border-color: var(--accent-secondary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
 }
 
 .date-selectors.estimated select {
   border-style: dashed;
-  border-color: #4d4d1b;
-  background: rgba(77, 77, 27, 0.1);
+  border-color: #fed7aa;
+  background: #fff7ed;
 }
 
 .date-selectors.estimated select:focus {
-  border-color: #f0ad4e;
-  box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.2);
+  border-color: var(--status-use-soon);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
 }
 
 .estimated-badge {
   display: inline-block;
   margin-top: 12px;
   padding: 8px 16px;
-  background: #4d4d1b;
-  color: #f0ad4e;
+  background: #fff7ed;
+  color: var(--status-use-soon);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 700;
   text-align: center;
-  border: 2px dashed #f0ad4e;
+  border: 2px dashed var(--status-use-soon);
 }
 
 .helper-text {
   margin-top: 8px;
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
   font-style: italic;
+}
+
+.info-block {
+  background: var(--bg-secondary);
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  border: 2px solid var(--border-light);
+}
+
+.info-block strong {
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+#saveBtn {
+  width: 100%;
+  margin-top: 14px;
+  background: var(--accent-primary);
+  color: var(--bg-card);
+  border: 2px solid var(--accent-primary);
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+}
+
+#saveBtn:hover {
+  background: #ff5555;
+  border-color: #ff5555;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
 }
 </style>
 </head>
@@ -357,16 +594,16 @@ label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; c
 <div id="statusLabel" class="status-label" style="display:none"></div>
 <div id="status" class="status" style="display:none"></div>
 
-<button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
+<button id="saveBtn">Save to My Shelf</button>
 </div>
 
 <div class="card">
-<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa; margin-bottom: 14px;">
+<div class="info-block">
 Most people use expired cosmetics without knowing it.
 </div>
 <h3 style="margin:0 0 12px 0">ℹ️ What is PAO?</h3>
-<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa;">
-<strong style="color:#667eea">Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening.<br><br>
+<div class="info-block">
+<strong>Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening.<br><br>
 Check the jar icon on your product for the number (e.g., 12M = 12 months).
 </div>
 </div>
@@ -549,18 +786,6 @@ function addMonths(d, m) {
   return `${year}-${month}-${day}`;
 }
 
-function getWarningColor(daysLeft) {
-  if (daysLeft <= 7) {
-    return "#5d5d1b";
-  } else if (daysLeft <= 14) {
-    return "#4d4d1b";
-  } else if (daysLeft <= 30) {
-    return "#3d3d1b";
-  } else {
-    return "#4d4d1b";
-  }
-}
-
 function calculateDaysLeft(expiryDateStr) {
   const todayPacific = getTodayPacific();
   const expiryPacific = getPacificMidnight(expiryDateStr);
@@ -589,15 +814,15 @@ function updateResult() {
   
   if (daysLeft < 0) {
     statusText = "TOSS";
-    statusColor = "#4d1b1b";
+    statusColor = "#ef4444";
     resultMessage = "🗑️ This product should be thrown away";
   } else if (daysLeft <= 60) {
     statusText = "USE SOON";
-    statusColor = getWarningColor(daysLeft);
+    statusColor = "#f59e0b";
     resultMessage = "⚠ Expiring soon — " + daysLeft + " days left";
   } else {
     statusText = "KEEP";
-    statusColor = "#1b4d3e";
+    statusColor = "#22c55e";
     resultMessage = "✅ Safe (for now)";
   }
   
@@ -746,8 +971,8 @@ async function handleFileSelect(e) {
     ocrProcessed = true;
 
     status.style.display = "block";
-    status.style.background = "#4d4d1b";
-    status.style.color = "#f0ad4e";
+    status.style.background = "#fff7ed";
+    status.style.color = "#f59e0b";
     status.textContent = "🔍 Analyzing with Google Vision...";
 
     try {
@@ -756,23 +981,23 @@ async function handleFileSelect(e) {
       if (pao && SUPPORTED_PAOS.includes(pao)) {
         selectPAO(pao);
         updateResult();
-        status.style.background = "#1b4d3e";
-        status.style.color = "#20c997";
+        status.style.background = "#f0fdf4";
+        status.style.color = "#22c55e";
         status.textContent = `✓ Detected: ${pao}M`;
       } else if (pao) {
-        status.style.background = "#4d4d1b";
-        status.style.color = "#f0ad4e";
+        status.style.background = "#fff7ed";
+        status.style.color = "#f59e0b";
         status.textContent = `⚠ Detected ${pao}M but not supported. Select manually ↓`;
       } else {
-        status.style.background = "#4d1b1b";
-        status.style.color = "#ff6b6b";
+        status.style.background = "#fef2f2";
+        status.style.color = "#ef4444";
         status.textContent = "❌ Could not detect PAO. Select manually ↓";
       }
       
     } catch (err) {
       console.error(err);
-      status.style.background = "#4d1b1b";
-      status.style.color = "#ff6b6b";
+      status.style.background = "#fef2f2";
+      status.style.color = "#ef4444";
       status.textContent = "⚠ Error: " + err.message;
     }
   };
@@ -910,7 +1135,7 @@ function renderShelf() {
   
   if (shelf.length === 0) {
     shelfSummary.innerHTML = '';
-    shelfItems.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">No items in your shelf yet. Add your first product!</div>';
+    shelfItems.innerHTML = '<div style="text-align:center;color:#b0b0b0;padding:20px;">No items in your shelf yet. Add your first product!</div>';
     return;
   }
   
@@ -958,11 +1183,11 @@ function renderShelf() {
     
     let statusColor = "";
     if (itemStatus === "TOSS") {
-      statusColor = "#4d1b1b";
+      statusColor = "#ef4444";
     } else if (itemStatus === "USE SOON") {
-      statusColor = "#4d4d1b";
+      statusColor = "#f59e0b";
     } else {
-      statusColor = "#1b4d3e";
+      statusColor = "#22c55e";
     }
     
     const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
