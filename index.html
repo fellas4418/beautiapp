@@ -497,6 +497,25 @@ label {
   color: var(--text-tertiary);
 }
 
+.shelf-item-time-left {
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 4px;
+  padding: 4px 0;
+}
+
+.shelf-item-time-left.keep {
+  color: var(--status-keep);
+}
+
+.shelf-item-time-left.use-soon {
+  color: var(--status-use-soon);
+}
+
+.shelf-item-time-left.toss {
+  color: var(--warning-red);
+}
+
 .shelf-item-estimated-badge {
   display: inline-block;
   padding: 2px 6px;
@@ -1055,7 +1074,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 <div class="wrap">
 <div class="header">
   <h2>📦 My Shelf</h2>
-  <button class="back-button" onclick="showScreen('home')">← Home</button>
+  <button class="back-button" onclick="showScreen('add')">← Home</button>
 </div>
 <div id="shelfSummary"></div>
 <button id="selectAllBtn" class="select-all-btn" onclick="toggleSelectAll()">Select all</button>
@@ -1303,6 +1322,22 @@ function calculateDaysLeft(expiryDateStr) {
   const daysLeft = Math.ceil((expiryPacific - todayPacific) / (1000 * 60 * 60 * 24));
   
   return daysLeft;
+}
+
+function formatTimeLeft(daysLeft, status) {
+  if (status === 'TOSS') {
+    const daysAgo = Math.abs(daysLeft);
+    return `Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`;
+  } else if (status === 'USE SOON') {
+    return `Expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+  } else { // KEEP
+    if (daysLeft >= 90) {
+      const months = Math.floor(daysLeft / 30);
+      return `Safe for ${months} month${months === 1 ? '' : 's'}`;
+    } else {
+      return `Safe for ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+    }
+  }
 }
 
 function updateResult() {
@@ -1751,14 +1786,20 @@ function renderShelf() {
   
   shelfItems.innerHTML = itemsWithStatus.map(item => {
     const itemStatus = item.displayStatus;
+    const daysLeft = calculateDaysLeft(item.expiryDate);
+    const timeLeftText = formatTimeLeft(daysLeft, itemStatus);
     
     let statusColor = "";
+    let timeLeftClass = "";
     if (itemStatus === "TOSS") {
       statusColor = "#FF2B5B";
+      timeLeftClass = "toss";
     } else if (itemStatus === "USE SOON") {
       statusColor = "#F59E0B";
+      timeLeftClass = "use-soon";
     } else {
       statusColor = "#10B981";
+      timeLeftClass = "keep";
     }
     
     const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
@@ -1772,6 +1813,7 @@ function renderShelf() {
           <div class="shelf-item-name">${item.name}</div>
           <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
           <div class="shelf-item-dates">Opened: ${openingDateDisplay}${estimatedBadge}</div>
+          <div class="shelf-item-time-left ${timeLeftClass}">${timeLeftText}</div>
         </div>
         <div class="shelf-item-status" style="background: ${statusColor};">
           ${itemStatus}
