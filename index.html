@@ -325,7 +325,7 @@ label {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 0;
+  margin-top: 16px;
   margin-bottom: 12px;
 }
 
@@ -348,9 +348,9 @@ label {
 }
 
 .photo-section-label {
-  font-size: 13px;
-  color: #4a4a4a;
-  margin-bottom: 6px;
+  font-size: 26px;
+  color: var(--text-primary);
+  margin-bottom: 0;
   text-align: center;
   font-weight: 700;
 }
@@ -689,11 +689,17 @@ label {
   font-size: 15px;
   color: #22c55e;
   display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
 }
 
 .save-confirmation.show {
   display: block;
-  animation: fadeInUp 0.3s ease-out;
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.save-confirmation.fade-out {
+  animation: fadeOut 0.5s ease-out forwards;
 }
 
 @keyframes fadeInUp {
@@ -704,6 +710,15 @@ label {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -718,11 +733,6 @@ label {
   font-weight: 700;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
-  display: none;
-}
-
-.view-shelf-button.show {
-  display: block;
 }
 
 .view-shelf-button:hover {
@@ -783,18 +793,6 @@ label {
 }
 
 .file-name:empty {
-  display: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.save-confirmation:not(.show) {
-  display: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.view-shelf-button:not(.show) {
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -941,7 +939,7 @@ label {
 </div>
 
 <button id="viewShelfBtn" class="view-shelf-button" onclick="showScreen('shelf')">
-  <span id="viewShelfBtnText">📦 View My Shelf</span>
+  <span id="viewShelfBtnText">📦 View My Shelf (0)</span>
 </button>
 </div>
 
@@ -1035,11 +1033,7 @@ function updateViewShelfButtonText() {
   const shelf = loadShelfFromStorage();
   const totalCount = shelf.length;
   
-  if (totalCount === 0) {
-    viewShelfBtnText.textContent = "📦 View My Shelf";
-  } else {
-    viewShelfBtnText.textContent = `📦 View My Shelf (${totalCount})`;
-  }
+  viewShelfBtnText.textContent = `📦 View My Shelf (${totalCount})`;
 }
 
 function getPacificMidnight(dateStr) {
@@ -1487,8 +1481,16 @@ saveBtn.onclick = () => {
   const saveSuccess = saveShelfToStorage(shelf);
   
   if (saveSuccess) {
+    saveConfirmation.classList.remove('fade-out');
     saveConfirmation.classList.add('show');
-    viewShelfBtn.classList.add('show');
+    
+    setTimeout(() => {
+      saveConfirmation.classList.add('fade-out');
+      setTimeout(() => {
+        saveConfirmation.classList.remove('show', 'fade-out');
+      }, 500);
+    }, 1500);
+    
     updateViewShelfButtonText();
     productName.value = "";
     console.log("✓ Item saved. User can continue adding or choose to view shelf.");
@@ -1691,6 +1693,7 @@ function renderShelf() {
 })();
 
 initDateSelectors();
+updateViewShelfButtonText();
 </script>
 
 <input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
