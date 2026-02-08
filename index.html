@@ -6,28 +6,39 @@
 <title>KEESS</title>
 
 <style>
-/* ========== GLOBAL COLOR SYSTEM (LOCKED) ========== */
+/* ========== 80:10:10 COLOR SYSTEM ========== */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #fff7f7;
-  --bg-card: #ffffff;
-  --accent-primary: #ff6b6b;
-  --accent-secondary: #ffb8b8;
-  --accent-tertiary: #ffd4d4;
-  --text-primary: #1a1a1a;
-  --text-secondary: #6b6b6b;
-  --text-tertiary: #b0b0b0;
-  --border-light: #f0e6e6;
-  --border-accent: #ffd4d4;
+  /* 80% MAIN COLOR - Fresh Teal (primary actions, key UI) */
+  --main-teal: #2EC4C0;
+  --main-teal-hover: #26ADA9;
+  --main-teal-light: #E0F7F6;
   
-  /* Status colors (exceptions) */
-  --status-keep: #22c55e;
-  --status-use-soon: #f59e0b;
-  --status-toss: #ef4444;
+  /* 10% POINT COLOR - Soft Red/Coral (beauty/emotion accents) */
+  --point-coral: #FF6B9D;
+  --point-coral-light: #FFE5F0;
+  
+  /* 10% WARNING COLOR - Strong Red (TOSS & destructive only) */
+  --warning-red: #FF2B5B;
+  --warning-red-hover: #E61F4F;
+  --warning-red-light: #FFE8EE;
+  
+  /* Backgrounds (clean/neutral) */
+  --bg-primary: #FAFAFA;
+  --bg-secondary: #F2F2F2;
+  --bg-card: #FFFFFF;
+  
+  /* Text colors */
+  --text-primary: #1C1C1E;
+  --text-secondary: #6B6B6B;
+  --text-tertiary: #9A9A9A;
+  
+  /* Border */
+  --border-light: #E5E5E5;
+  
+  /* Status colors */
+  --status-use-soon: #F59E0B;
+  --status-keep: #10B981;
 }
-
-/* ========== DESIGN RULE ========== */
-/* Do not change the color theme unless explicitly instructed by the user. */
 
 * { box-sizing: border-box; }
 
@@ -39,7 +50,7 @@ body {
   overflow-x: hidden;
 }
 
-/* ========== SCREEN SYSTEM (CRITICAL) ========== */
+/* ========== SCREEN SYSTEM ========== */
 .screen {
   position: fixed;
   top: 0;
@@ -62,38 +73,61 @@ body {
   justify-content: center;
   background: var(--bg-primary);
   padding: 32px;
+  position: relative;
+}
+
+/* Point color accent on home screen */
+#homeScreen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--point-coral) 0%, transparent 100%);
+  opacity: 0.6;
 }
 
 .logo {
   font-size: 64px;
   font-weight: 900;
-  color: var(--accent-primary);
-  margin-bottom: 80px;
+  color: var(--main-teal);
+  margin-bottom: 16px;
   letter-spacing: -2px;
+}
+
+.logo-subtitle {
+  font-size: 14px;
+  color: var(--point-coral);
+  font-weight: 600;
+  margin-bottom: 60px;
+  letter-spacing: 1px;
 }
 
 .check-button {
   width: 240px;
   height: 240px;
   border-radius: 50%;
-  background: var(--accent-primary);
-  color: var(--bg-card);
+  background: var(--main-teal);
+  color: white;
   border: none;
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 8px 24px rgba(46, 196, 192, 0.3);
   transition: all 0.3s;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
+  margin-bottom: 40px;
 }
 
 .check-button:hover {
+  background: var(--main-teal-hover);
   transform: scale(1.05);
-  box-shadow: 0 12px 32px rgba(255, 107, 107, 0.4);
+  box-shadow: 0 12px 32px rgba(46, 196, 192, 0.4);
 }
 
 .check-button:active {
@@ -104,12 +138,32 @@ body {
   font-size: 48px;
 }
 
+.home-shelf-button {
+  background: var(--bg-card);
+  color: var(--main-teal);
+  border: 2px solid var(--main-teal);
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.home-shelf-button:hover {
+  background: var(--main-teal);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 196, 192, 0.3);
+}
+
 /* ========== ADD PRODUCT SCREEN ========== */
 .wrap { 
   max-width: 420px; 
   margin: 0 auto; 
   padding: 16px; 
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   min-height: 100vh;
 }
 
@@ -118,6 +172,8 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--point-coral);
 }
 
 .header-title {
@@ -126,8 +182,8 @@ body {
 
 .back-button {
   background: var(--bg-card);
-  color: var(--accent-primary);
-  border: 2px solid var(--accent-tertiary);
+  color: var(--main-teal);
+  border: 1px solid var(--border-light);
   padding: 8px 16px;
   border-radius: 8px;
   font-weight: 600;
@@ -137,8 +193,8 @@ body {
 }
 
 .back-button:hover {
-  background: var(--bg-secondary);
-  border-color: var(--accent-secondary);
+  background: var(--main-teal-light);
+  border-color: var(--main-teal);
 }
 
 .card { 
@@ -146,8 +202,21 @@ body {
   border-radius: 16px; 
   padding: 16px; 
   margin-bottom: 8px;
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+/* Point color accent on cards */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--point-coral);
+  opacity: 0.3;
 }
 
 h2 { 
@@ -159,7 +228,7 @@ h2 {
 
 .subtitle { 
   font-size: 14px; 
-  color: var(--accent-primary);
+  color: var(--main-teal);
   margin-bottom: 6px;
   font-weight: 600;
   display: none;
@@ -180,7 +249,7 @@ img {
   display: block; 
   max-height: 400px; 
   object-fit: contain;
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
 }
 
 .pao { 
@@ -193,9 +262,9 @@ img {
 button { 
   padding: 12px; 
   border-radius: 10px; 
-  border: 2px solid var(--accent-tertiary);
+  border: 1px solid var(--border-light);
   background: var(--bg-card);
-  color: var(--accent-primary);
+  color: var(--main-teal);
   font-weight: 700; 
   font-size: 15px; 
   cursor: pointer; 
@@ -203,16 +272,16 @@ button {
 }
 
 button:hover { 
-  background: var(--bg-secondary);
-  border-color: var(--accent-secondary);
+  background: var(--main-teal-light);
+  border-color: var(--main-teal);
   transform: translateY(-2px);
 }
 
 button.active { 
-  background: var(--accent-primary);
-  color: var(--bg-card);
-  border-color: var(--accent-primary);
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  background: var(--main-teal);
+  color: white;
+  border-color: var(--main-teal);
+  box-shadow: 0 4px 15px rgba(46, 196, 192, 0.3);
 }
 
 .result { 
@@ -224,7 +293,7 @@ button.active {
   background: var(--bg-secondary);
   border-radius: 10px;
   color: var(--text-primary);
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
 }
 
 .result-estimated-note {
@@ -241,7 +310,7 @@ button.active {
   text-align: center; 
   padding: 10px; 
   border-radius: 8px;
-  color: var(--bg-card);
+  color: white;
 }
 
 input[type="text"] { 
@@ -249,7 +318,7 @@ input[type="text"] {
   margin-top: 4px;
   padding: 10px; 
   border-radius: 8px; 
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
   background: var(--bg-card);
   color: var(--text-primary);
   font-size: 14px;
@@ -259,8 +328,8 @@ input[type="text"] {
 
 input[type="text"]:focus {
   outline: none;
-  border-color: var(--accent-secondary);
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+  border-color: var(--main-teal);
+  box-shadow: 0 0 0 3px rgba(46, 196, 192, 0.1);
 }
 
 .file-upload-wrapper { 
@@ -281,19 +350,18 @@ input[type="text"]:focus {
   display: block;
   width: 100%;
   padding: 12px;
-  background: var(--accent-primary);
-  color: var(--bg-card);
+  background: var(--main-teal);
+  color: white;
   text-align: center;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid var(--accent-primary);
+  border: none;
 }
 
 .file-upload-label:hover { 
-  background: #ff5555;
-  border-color: #ff5555;
+  background: var(--main-teal-hover);
   transform: translateY(-2px);
 }
 
@@ -311,7 +379,7 @@ input[type="text"]:focus {
   text-align: center; 
   font-weight: 600; 
   font-size: 14px;
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
 }
 
 label { 
@@ -333,21 +401,20 @@ label {
 
 .photo-buttons button {
   padding: 20px 12px;
-  background: var(--accent-primary);
-  color: var(--bg-card);
-  border: 2px solid var(--accent-primary);
+  background: var(--main-teal);
+  color: white;
+  border: none;
   border-radius: 12px;
   font-weight: 700;
   font-size: 16px;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+  box-shadow: 0 4px 12px rgba(46, 196, 192, 0.2);
   line-height: 1.4;
 }
 
 .photo-buttons button:hover {
-  background: #ff5555;
-  border-color: #ff5555;
+  background: var(--main-teal-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 6px 16px rgba(46, 196, 192, 0.3);
 }
 
 .photo-section-label {
@@ -364,6 +431,17 @@ label {
   font-weight: 800;
   display: block;
   margin-bottom: 2px;
+}
+
+/* Point color accent in photo section */
+.photo-section-label-main::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: var(--point-coral);
+  margin: 8px auto 0;
+  border-radius: 2px;
 }
 
 @keyframes statusFadeUp {
@@ -394,13 +472,13 @@ label {
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
   transition: all 0.2s;
 }
 
 .shelf-item:hover {
-  border-color: var(--border-accent);
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1);
+  border-color: var(--main-teal);
+  box-shadow: 0 2px 8px rgba(46, 196, 192, 0.1);
 }
 
 .shelf-item.selection-mode {
@@ -415,7 +493,7 @@ label {
   width: 24px;
   height: 24px;
   cursor: pointer;
-  accent-color: var(--accent-primary);
+  accent-color: var(--main-teal);
   display: none;
 }
 
@@ -452,14 +530,14 @@ label {
 .shelf-item-estimated-badge {
   display: inline-block;
   padding: 2px 6px;
-  background: #fff7ed;
+  background: #FEF3C7;
   color: var(--status-use-soon);
   border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
   margin-left: 4px;
   text-transform: uppercase;
-  border: 1px solid #fed7aa;
+  border: 1px solid #FCD34D;
 }
 
 .shelf-item-status { 
@@ -469,7 +547,7 @@ label {
   font-weight: 700;
   white-space: nowrap;
   flex-shrink: 0;
-  color: var(--bg-card);
+  color: white;
 }
 
 .delete-btn { 
@@ -477,7 +555,7 @@ label {
   top: 8px; 
   right: 8px; 
   background: var(--bg-card);
-  color: var(--accent-primary);
+  color: var(--warning-red);
   width: 28px; 
   height: 28px; 
   border-radius: 50%; 
@@ -489,13 +567,13 @@ label {
   transition: all 0.2s; 
   padding: 0; 
   z-index: 10;
-  border: 2px solid var(--border-accent);
+  border: 1px solid var(--border-light);
 }
 
 .delete-btn:hover { 
-  background: #fee;
-  color: var(--status-toss);
-  border-color: var(--status-toss);
+  background: var(--warning-red-light);
+  color: var(--warning-red);
+  border-color: var(--warning-red);
   transform: scale(1.1);
 }
 
@@ -508,8 +586,21 @@ label {
   padding: 12px;
   border-radius: 10px;
   margin-bottom: 12px;
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
   line-height: 1.8;
+  position: relative;
+}
+
+/* Point color accent in shelf summary */
+.shelf-summary::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--point-coral) 0%, transparent 100%);
+  opacity: 0.5;
 }
 
 .shelf-summary-line {
@@ -533,22 +624,22 @@ label {
 .date-mode-toggle button {
   padding: 10px;
   background: var(--bg-card);
-  color: var(--accent-primary);
-  border: 2px solid var(--accent-tertiary);
+  color: var(--main-teal);
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   font-weight: 600;
   font-size: 13px;
 }
 
 .date-mode-toggle button:hover {
-  background: var(--bg-secondary);
-  border-color: var(--accent-secondary);
+  background: var(--main-teal-light);
+  border-color: var(--main-teal);
 }
 
 .date-mode-toggle button.active {
-  background: var(--accent-primary);
-  color: var(--bg-card);
-  border-color: var(--accent-primary);
+  background: var(--main-teal);
+  color: white;
+  border-color: var(--main-teal);
 }
 
 .date-selectors-wrapper {
@@ -572,7 +663,7 @@ label {
 .date-selectors select {
   padding: 16px 10px;
   border-radius: 12px;
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
   background: var(--bg-card);
   color: var(--text-primary);
   font-size: 18px;
@@ -589,14 +680,14 @@ label {
 
 .date-selectors select:focus {
   outline: none;
-  border-color: var(--accent-secondary);
-  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+  border-color: var(--main-teal);
+  box-shadow: 0 0 0 3px rgba(46, 196, 192, 0.1);
 }
 
 .date-selectors.estimated select {
   border-style: dashed;
-  border-color: #fed7aa;
-  background: #fff7ed;
+  border-color: #FCD34D;
+  background: #FEF3C7;
 }
 
 .date-selectors.estimated select:focus {
@@ -608,13 +699,13 @@ label {
   display: inline-block;
   margin-top: 12px;
   padding: 8px 16px;
-  background: #fff7ed;
+  background: #FEF3C7;
   color: var(--status-use-soon);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 700;
   text-align: center;
-  border: 2px dashed var(--status-use-soon);
+  border: 1px dashed var(--status-use-soon);
 }
 
 .helper-text {
@@ -632,37 +723,36 @@ label {
   line-height: 1.6;
   color: var(--text-secondary);
   margin-bottom: 7px;
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
 }
 
 .info-block strong {
-  color: var(--accent-primary);
+  color: var(--main-teal);
   font-weight: 700;
 }
 
 #saveBtn {
   width: 100%;
   margin-top: 14px;
-  background: var(--accent-primary);
-  color: var(--bg-card);
-  border: 2px solid var(--accent-primary);
+  background: var(--main-teal);
+  color: white;
+  border: none;
   padding: 14px;
   font-size: 16px;
   font-weight: 700;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+  box-shadow: 0 4px 12px rgba(46, 196, 192, 0.2);
 }
 
 #saveBtn:hover {
-  background: #ff5555;
-  border-color: #ff5555;
+  background: var(--main-teal-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 6px 16px rgba(46, 196, 192, 0.3);
 }
 
 .pao-section-label {
   font-size: 13px;
-  color: #4a4a4a;
+  color: var(--text-secondary);
   margin-bottom: 8px;
   margin-top: 0;
   font-weight: 700;
@@ -672,7 +762,7 @@ label {
 .form-section {
   margin-bottom: 7px;
   padding: 6px;
-  background: rgba(255, 247, 247, 0.3);
+  background: rgba(250, 250, 250, 0.5);
   border-radius: 10px;
 }
 
@@ -682,57 +772,59 @@ label {
 
 .form-section-label {
   font-size: 13px;
-  color: #4a4a4a;
+  color: var(--text-secondary);
   margin-bottom: 8px;
   margin-top: 0;
   font-weight: 700;
   text-align: left;
 }
 
+/* Toast notification - lightweight, non-disruptive */
 .toast {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  background: #22c55e;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: var(--main-teal);
   color: white;
   padding: 20px 40px;
   border-radius: 16px;
   font-weight: 700;
   font-size: 18px;
-  box-shadow: 0 12px 40px rgba(34, 197, 94, 0.5);
+  box-shadow: 0 12px 40px rgba(46, 196, 192, 0.5);
   z-index: 10000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease-out;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .toast.show {
   opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
 
 .toast.hide {
   opacity: 0;
+  transform: translate(-50%, -50%) scale(0.9);
 }
 
 .view-shelf-button {
   width: 100%;
   margin-top: 12px;
-  background: var(--accent-primary);
-  color: var(--bg-card);
-  border: 2px solid var(--accent-primary);
+  background: var(--main-teal);
+  color: white;
+  border: none;
   padding: 14px;
   font-size: 16px;
   font-weight: 700;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+  box-shadow: 0 4px 12px rgba(46, 196, 192, 0.2);
 }
 
 .view-shelf-button:hover {
-  background: #ff5555;
-  border-color: #ff5555;
+  background: var(--main-teal-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 6px 16px rgba(46, 196, 192, 0.3);
 }
 
 #photoToOCRSection {
@@ -800,14 +892,14 @@ label {
 .delete-selected-btn {
   width: 100%;
   margin-top: 12px;
-  background: var(--status-toss);
-  color: var(--bg-card);
-  border: 2px solid var(--status-toss);
+  background: var(--warning-red);
+  color: white;
+  border: none;
   padding: 14px;
   font-size: 16px;
   font-weight: 700;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 43, 91, 0.2);
   display: none;
 }
 
@@ -816,10 +908,9 @@ label {
 }
 
 .delete-selected-btn:hover {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: var(--warning-red-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 6px 16px rgba(255, 43, 91, 0.3);
 }
 
 .cancel-selection-btn {
@@ -827,7 +918,7 @@ label {
   margin-top: 8px;
   background: var(--bg-card);
   color: var(--text-secondary);
-  border: 2px solid var(--border-light);
+  border: 1px solid var(--border-light);
   padding: 12px;
   font-size: 15px;
   font-weight: 600;
@@ -840,8 +931,8 @@ label {
 }
 
 .cancel-selection-btn:hover {
-  background: var(--bg-secondary);
-  border-color: var(--border-accent);
+  background: var(--main-teal-light);
+  border-color: var(--main-teal);
 }
 
 .select-all-btn {
@@ -849,8 +940,8 @@ label {
   margin-top: 12px;
   margin-bottom: 12px;
   background: var(--bg-card);
-  color: var(--accent-primary);
-  border: 2px solid var(--accent-tertiary);
+  color: var(--main-teal);
+  border: 1px solid var(--border-light);
   padding: 12px;
   font-size: 15px;
   font-weight: 600;
@@ -863,14 +954,19 @@ label {
 }
 
 .select-all-btn:hover {
-  background: var(--bg-secondary);
-  border-color: var(--accent-secondary);
+  background: var(--main-teal-light);
+  border-color: var(--main-teal);
 }
 
 h3 {
   margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 700;
+}
+
+/* Point color accents in shelf screen header */
+#shelfScreen .header {
+  border-bottom-color: var(--point-coral);
 }
 </style>
 </head>
@@ -883,9 +979,13 @@ h3 {
 <!-- ========== HOME SCREEN ========== -->
 <div id="homeScreen" class="screen active">
   <div class="logo">KEESS</div>
+  <div class="logo-subtitle">KEEP OR TOSS</div>
   <button class="check-button" onclick="showScreen('add')">
     <div class="check-icon">✓</div>
     <div>Check Freshness</div>
+  </button>
+  <button class="home-shelf-button" onclick="showScreen('shelf')">
+    <span id="homeShelfBtnText">📦 View My Shelf (0)</span>
   </button>
 </div>
 
@@ -917,7 +1017,7 @@ h3 {
 </div>
 
 <div id="paoSection" class="form-section">
-  <label>Select a PAO period</label>
+  <label>Select a PAO period (tap to toggle)</label>
   <div class="pao" id="paoBtns"></div>
 </div>
 
@@ -981,7 +1081,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 <div class="wrap">
 <div class="header">
   <h2>📦 My Shelf</h2>
-  <button class="back-button" onclick="showScreen('add')">← Home</button>
+  <button class="back-button" onclick="showScreen('home')">← Home</button>
 </div>
 <div id="shelfSummary"></div>
 <button id="selectAllBtn" class="select-all-btn" onclick="toggleSelectAll()">Select all</button>
@@ -1018,6 +1118,7 @@ const shelfItems = document.getElementById("shelfItems");
 const toast = document.getElementById("toast");
 const viewShelfBtn = document.getElementById("viewShelfBtn");
 const viewShelfBtnText = document.getElementById("viewShelfBtnText");
+const homeShelfBtnText = document.getElementById("homeShelfBtnText");
 const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const cancelSelectionBtn = document.getElementById("cancelSelectionBtn");
 const selectAllBtn = document.getElementById("selectAllBtn");
@@ -1042,7 +1143,7 @@ function showToast() {
   setTimeout(() => {
     toast.classList.remove('show');
     toast.classList.add('hide');
-  }, 2000);
+  }, 1800);
 }
 
 function showScreen(screen) {
@@ -1051,6 +1152,7 @@ function showScreen(screen) {
   if (screen === 'home') {
     document.getElementById('homeScreen').classList.add('active');
     currentScreen = 'home';
+    updateViewShelfButtonText();
   } else if (screen === 'add') {
     document.getElementById('addScreen').classList.add('active');
     currentScreen = 'add';
@@ -1068,6 +1170,7 @@ function updateViewShelfButtonText() {
   const totalCount = shelf.length;
   
   viewShelfBtnText.textContent = `📦 View My Shelf (${totalCount})`;
+  homeShelfBtnText.textContent = `📦 View My Shelf (${totalCount})`;
 }
 
 function getPacificMidnight(dateStr) {
@@ -1175,12 +1278,30 @@ function getOpeningDate() {
   }
 }
 
+// PAO BUTTON TOGGLE BEHAVIOR
 SUPPORTED_PAOS.forEach(m => {
   const b = document.createElement("button");
   b.textContent = m + "M";
-  b.onclick = () => { selectPAO(m); updateResult(); };
+  b.onclick = () => { 
+    togglePAO(m); 
+    updateResult(); 
+  };
   paoBox.appendChild(b);
 });
+
+function togglePAO(m) {
+  // If clicking the already-selected PAO, deselect it
+  if (selectedPAO === m) {
+    selectedPAO = null;
+    [...paoBox.children].forEach(b => b.classList.remove("active"));
+  } else {
+    // Otherwise, select the new PAO
+    selectedPAO = m;
+    [...paoBox.children].forEach(b => {
+      b.classList.toggle("active", b.textContent === m + "M");
+    });
+  }
+}
 
 function selectPAO(m) {
   selectedPAO = m;
@@ -1233,16 +1354,16 @@ function updateResult() {
   
   if (daysLeft < 0) {
     statusText = "TOSS";
-    statusColor = "#ef4444";
-    resultMessage = "🗑️ This product should be thrown away";
+    statusColor = "#FF2B5B";
+    resultMessage = '<span style="color: #FF2B5B;">🗑️</span> This product should be thrown away';
   } else if (daysLeft <= 60) {
     statusText = "USE SOON";
-    statusColor = "#f59e0b";
-    resultMessage = "⚠ Expiring soon — " + daysLeft + " days left";
+    statusColor = "#F59E0B";
+    resultMessage = '<span style="color: #F59E0B;">⚠️</span> Expiring soon — ' + daysLeft + ' days left';
   } else {
     statusText = "KEEP";
-    statusColor = "#22c55e";
-    resultMessage = "✅ Safe (for now)";
+    statusColor = "#10B981";
+    resultMessage = '<span style="color: #10B981;">✅</span> Safe (for now)';
   }
   
   if (dateMode === 'estimated') {
@@ -1390,8 +1511,8 @@ async function handleFileSelect(e) {
     ocrProcessed = true;
 
     status.style.display = "block";
-    status.style.background = "#fff7ed";
-    status.style.color = "#f59e0b";
+    status.style.background = "#FEF3C7";
+    status.style.color = "#F59E0B";
     status.textContent = "🔍 Analyzing with Google Vision...";
 
     try {
@@ -1400,24 +1521,24 @@ async function handleFileSelect(e) {
       if (pao && SUPPORTED_PAOS.includes(pao)) {
         selectPAO(pao);
         updateResult();
-        status.style.background = "#f0fdf4";
-        status.style.color = "#22c55e";
-        status.textContent = `✓ Detected: ${pao}M`;
+        status.style.background = "#D1FAE5";
+        status.style.color = "#10B981";
+        status.textContent = `✓ Detected: ${pao}M (tap to deselect)`;
       } else if (pao) {
-        status.style.background = "#fff7ed";
-        status.style.color = "#f59e0b";
-        status.textContent = `⚠ Detected ${pao}M but not supported. Select manually ↓`;
+        status.style.background = "#FEF3C7";
+        status.style.color = "#F59E0B";
+        status.textContent = `⚠️ Detected ${pao}M but not supported. Select manually ↓`;
       } else {
-        status.style.background = "#fef2f2";
-        status.style.color = "#ef4444";
+        status.style.background = "#FFE8EE";
+        status.style.color = "#FF2B5B";
         status.textContent = "❌ Could not detect PAO. Select manually ↓";
       }
       
     } catch (err) {
       console.error(err);
-      status.style.background = "#fef2f2";
-      status.style.color = "#ef4444";
-      status.textContent = "⚠ Error: " + err.message;
+      status.style.background = "#FFE8EE";
+      status.style.color = "#FF2B5B";
+      status.textContent = "⚠️ Error: " + err.message;
     }
   };
   
@@ -1450,7 +1571,7 @@ function saveShelfToStorage(shelf) {
     return true;
   } catch (err) {
     console.error("Shelf save error:", err);
-    alert("⚠ Save failed: " + err.message);
+    alert("⚠️ Save failed: " + err.message);
     return false;
   }
 }
@@ -1489,7 +1610,7 @@ function refreshAllStatuses() {
 
 saveBtn.onclick = () => {
   if (!selectedPAO) {
-    alert("⚠ First select a PAO period");
+    alert("⚠️ First select a PAO period");
     return;
   }
 
@@ -1518,7 +1639,7 @@ saveBtn.onclick = () => {
     showToast();
     updateViewShelfButtonText();
     productName.value = "";
-    console.log("✓ Item saved. User can continue adding or choose to view shelf.");
+    console.log("✓ Item saved. User remains on add screen.");
   }
 };
 
@@ -1586,7 +1707,7 @@ function deleteSelected() {
   const checkedBoxes = document.querySelectorAll('.shelf-item-checkbox:checked');
   
   if (checkedBoxes.length === 0) {
-    alert("⚠ Please select at least one item to delete");
+    alert("⚠️ Please select at least one item to delete");
     return;
   }
   
@@ -1602,6 +1723,7 @@ function deleteSelected() {
   
   exitSelectionMode();
   renderShelf();
+  updateViewShelfButtonText();
 }
 
 function formatOpeningDate(dateStr, isEstimated) {
@@ -1619,7 +1741,7 @@ function renderShelf() {
   
   if (shelf.length === 0) {
     shelfSummary.innerHTML = '';
-    shelfItems.innerHTML = '<div style="text-align:center;color:#b0b0b0;padding:20px;">No items in your shelf yet. Add your first product!</div>';
+    shelfItems.innerHTML = '<div style="text-align:center;color:#9A9A9A;padding:20px;">No items in your shelf yet. Add your first product!</div>';
     return;
   }
   
@@ -1629,7 +1751,7 @@ function renderShelf() {
   
   let summaryHTML = '<div class="shelf-summary">';
   summaryHTML += `<div class="shelf-summary-line">Total ${shelf.length} items</div>`;
-  summaryHTML += `<div class="shelf-summary-line"><span style="color:#ef4444">🗑️ ${tossCount} toss</span> · <span style="color:#f59e0b">⚠️ ${useSoonCount} use soon</span> · <span style="color:#22c55e">✅ ${keepCount} safe</span></div>`;
+  summaryHTML += `<div class="shelf-summary-line"><span style="color:#FF2B5B">🗑️ ${tossCount} toss</span> · <span style="color:#F59E0B">⚠️ ${useSoonCount} use soon</span> · <span style="color:#10B981">✅ ${keepCount} safe</span></div>`;
   summaryHTML += '</div>';
   
   shelfSummary.innerHTML = summaryHTML;
@@ -1658,11 +1780,11 @@ function renderShelf() {
     
     let statusColor = "";
     if (itemStatus === "TOSS") {
-      statusColor = "#ef4444";
+      statusColor = "#FF2B5B";
     } else if (itemStatus === "USE SOON") {
-      statusColor = "#f59e0b";
+      statusColor = "#F59E0B";
     } else {
-      statusColor = "#22c55e";
+      statusColor = "#10B981";
     }
     
     const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
@@ -1691,7 +1813,7 @@ function renderShelf() {
     if (stored) {
       const shelf = JSON.parse(stored);
       if (shelf.length > 0 && shelf[0].image) {
-        console.warn("⚠ Old format data detected. Cleaning up...");
+        console.warn("⚠️ Old format data detected. Cleaning up...");
         localStorage.removeItem(SHELF_STORAGE_KEY);
         console.log("✓ Shelf data reset. Ready to use without storage issues.");
       }
