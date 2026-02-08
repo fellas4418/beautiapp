@@ -9,8 +9,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body { 
-  background: #0a0a0a; 
-  color: #e8e8ea; 
+  background: #fff7f7; 
+  color: #1a1a1a; 
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
@@ -25,6 +25,7 @@ body {
   min-height: 100vh;
   padding: 24px;
   transition: opacity 300ms ease, transform 300ms ease;
+  background: linear-gradient(135deg, #fff7f7 0%, #ffe8e8 100%);
 }
 
 .initial-screen.hidden {
@@ -38,7 +39,7 @@ body {
   font-size: 11px;
   letter-spacing: 3px;
   font-weight: 700;
-  color: #444;
+  color: #d4a5a5;
   margin-bottom: 60px;
   text-transform: uppercase;
 }
@@ -47,9 +48,9 @@ body {
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-  border: 2px solid #333;
-  color: #fff;
+  background: linear-gradient(135deg, #ffffff 0%, #fff2f2 100%);
+  border: 3px solid #ffd4d4;
+  color: #ff4d4f;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -59,13 +60,14 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 32px rgba(255, 77, 79, 0.15);
 }
 
 .primary-scan-btn:hover {
   transform: scale(1.05);
-  border-color: #555;
-  box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+  border-color: #ffb8b8;
+  box-shadow: 0 12px 48px rgba(255, 77, 79, 0.25);
+  background: linear-gradient(135deg, #fff2f2 0%, #ffe8e8 100%);
 }
 
 .primary-scan-btn:active {
@@ -98,23 +100,23 @@ body {
   align-items: center;
   margin-bottom: 32px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 2px solid #f0e6e6;
 }
 
 .app-logo-small {
   font-size: 10px;
   letter-spacing: 2px;
   font-weight: 700;
-  color: #444;
+  color: #d4a5a5;
   text-transform: uppercase;
 }
 
 .nav-toggle {
-  background: none;
-  border: 1px solid #333;
-  color: #888;
-  padding: 8px 16px;
-  border-radius: 20px;
+  background: #ffffff;
+  border: 2px solid #f0e6e6;
+  color: #6b6b6b;
+  padding: 10px 20px;
+  border-radius: 24px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -122,14 +124,15 @@ body {
 }
 
 .nav-toggle:hover {
-  border-color: #555;
-  color: #aaa;
+  border-color: #ffd4d4;
+  color: #1a1a1a;
+  background: #fff7f7;
 }
 
 .nav-toggle.active {
-  background: #1a1a1a;
-  color: #fff;
-  border-color: #555;
+  background: #ff4d4f;
+  color: #ffffff;
+  border-color: #ff4d4f;
 }
 
 /* ========== RESULT DISPLAY (DOMINATES SCREEN) ========== */
@@ -162,20 +165,20 @@ body {
 }
 
 .status-text.safe {
-  color: #4a7c59;
+  color: #22c55e;
 }
 
 .status-text.use-soon {
-  color: #d4a259;
+  color: #f59e0b;
 }
 
 .status-text.toss {
-  color: #c85a54;
+  color: #ef4444;
 }
 
 .status-subtext {
   font-size: 14px;
-  color: #666;
+  color: #6b6b6b;
   text-align: center;
   font-weight: 500;
 }
@@ -184,7 +187,7 @@ body {
   margin-top: 24px;
   background: none;
   border: none;
-  color: #666;
+  color: #6b6b6b;
   font-size: 12px;
   cursor: pointer;
   text-decoration: underline;
@@ -192,17 +195,18 @@ body {
 }
 
 .details-toggle:hover {
-  color: #888;
+  color: #1a1a1a;
 }
 
 .result-details {
   display: none;
   margin-top: 16px;
   padding: 16px;
-  background: #111;
+  background: #ffffff;
+  border: 2px solid #f0e6e6;
   border-radius: 12px;
   font-size: 13px;
-  color: #888;
+  color: #6b6b6b;
   max-width: 300px;
   line-height: 1.6;
 }
@@ -223,11 +227,11 @@ body {
 }
 
 .form-section {
-  background: #0f0f0f;
+  background: #ffffff;
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 16px;
-  border: 1px solid #1a1a1a;
+  border: 2px solid #f0e6e6;
 }
 
 .form-section-title {
@@ -235,7 +239,7 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #666;
+  color: #6b6b6b;
   margin-bottom: 16px;
 }
 
@@ -245,11 +249,11 @@ body {
 }
 
 .expand-toggle {
-  background: none;
-  border: 1px solid #222;
-  color: #666;
-  padding: 10px 16px;
-  border-radius: 8px;
+  background: #ffffff;
+  border: 2px solid #f0e6e6;
+  color: #6b6b6b;
+  padding: 12px 16px;
+  border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -259,14 +263,15 @@ body {
 }
 
 .expand-toggle:hover {
-  border-color: #333;
-  color: #888;
+  border-color: #ffd4d4;
+  color: #1a1a1a;
+  background: #fff7f7;
 }
 
 .expand-toggle.expanded {
-  background: #111;
-  border-color: #333;
-  color: #aaa;
+  background: #fff7f7;
+  border-color: #ffd4d4;
+  color: #1a1a1a;
 }
 
 .expandable-content {
@@ -288,16 +293,20 @@ input[type="text"] {
   width: 100%; 
   padding: 12px; 
   border-radius: 8px; 
-  border: 1px solid #222; 
-  background: #0a0a0a; 
-  color: #fff; 
+  border: 2px solid #f0e6e6; 
+  background: #ffffff; 
+  color: #1a1a1a; 
   font-size: 14px; 
   transition: border-color 150ms ease;
 }
 
 input[type="text"]:focus {
   outline: none;
-  border-color: #333;
+  border-color: #ffd4d4;
+}
+
+input[type="text"]::placeholder {
+  color: #b0b0b0;
 }
 
 /* Date selectors (minimized) */
@@ -314,9 +323,9 @@ input[type="text"]:focus {
 
 .date-mode-toggle button {
   padding: 10px;
-  background: #0a0a0a;
-  color: #666;
-  border: 1px solid #222;
+  background: #ffffff;
+  color: #6b6b6b;
+  border: 2px solid #f0e6e6;
   border-radius: 8px;
   font-weight: 600;
   font-size: 12px;
@@ -325,14 +334,15 @@ input[type="text"]:focus {
 }
 
 .date-mode-toggle button:hover {
-  border-color: #333;
-  color: #888;
+  border-color: #ffd4d4;
+  color: #1a1a1a;
+  background: #fff7f7;
 }
 
 .date-mode-toggle button.active {
-  background: #1a1a1a;
-  border-color: #333;
-  color: #fff;
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #ffffff;
 }
 
 .date-selectors-wrapper {
@@ -354,9 +364,9 @@ input[type="text"]:focus {
 .date-selectors select {
   padding: 12px 8px;
   border-radius: 8px;
-  border: 1px solid #222;
-  background: #0a0a0a;
-  color: #fff;
+  border: 2px solid #f0e6e6;
+  background: #ffffff;
+  color: #1a1a1a;
   font-size: 14px;
   font-weight: 600;
   text-align: center;
@@ -368,26 +378,26 @@ input[type="text"]:focus {
 
 .date-selectors select:focus {
   outline: none;
-  border-color: #333;
+  border-color: #ffd4d4;
 }
 
 .date-selectors.estimated select {
   border-style: dashed;
-  border-color: #3a3a1a;
-  background: rgba(58, 58, 26, 0.1);
+  border-color: #ffd4d4;
+  background: #fff7f7;
 }
 
 .estimated-badge {
   display: inline-block;
   margin-top: 8px;
   padding: 6px 12px;
-  background: #2a2a1a;
-  color: #d4a259;
+  background: #fff7f7;
+  color: #f59e0b;
   border-radius: 12px;
   font-size: 10px;
   font-weight: 700;
   text-align: center;
-  border: 1px dashed #3a3a1a;
+  border: 2px dashed #ffd4d4;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -395,7 +405,7 @@ input[type="text"]:focus {
 .helper-text {
   margin-top: 8px;
   font-size: 11px;
-  color: #555;
+  color: #b0b0b0;
   font-style: italic;
 }
 
@@ -410,9 +420,9 @@ input[type="text"]:focus {
 .pao button { 
   padding: 12px; 
   border-radius: 8px; 
-  border: 1px solid #222; 
-  background: #0a0a0a; 
-  color: #666; 
+  border: 2px solid #f0e6e6; 
+  background: #ffffff; 
+  color: #6b6b6b; 
   font-weight: 700; 
   font-size: 14px; 
   cursor: pointer; 
@@ -420,14 +430,15 @@ input[type="text"]:focus {
 }
 
 .pao button:hover { 
-  border-color: #333; 
-  color: #888; 
+  border-color: #ffd4d4; 
+  color: #1a1a1a; 
+  background: #fff7f7;
 }
 
 .pao button.active { 
-  background: #1a1a1a; 
-  border-color: #444;
-  color: #fff;
+  background: #ff4d4f; 
+  border-color: #ff4d4f;
+  color: #ffffff;
 }
 
 /* Photo upload */
@@ -443,9 +454,9 @@ input[type="text"]:focus {
 
 .photo-buttons button {
   padding: 12px;
-  background: #0a0a0a;
-  color: #666;
-  border: 1px solid #222;
+  background: #ffffff;
+  color: #6b6b6b;
+  border: 2px solid #f0e6e6;
   border-radius: 8px;
   font-weight: 600;
   font-size: 12px;
@@ -454,15 +465,15 @@ input[type="text"]:focus {
 }
 
 .photo-buttons button:hover {
-  background: #111;
-  border-color: #333;
-  color: #888;
+  background: #fff7f7;
+  border-color: #ffd4d4;
+  color: #1a1a1a;
 }
 
 .file-name { 
   margin-top: 8px; 
   font-size: 11px; 
-  color: #555; 
+  color: #b0b0b0; 
   text-align: center; 
 }
 
@@ -473,7 +484,7 @@ img {
   display: block; 
   max-height: 300px; 
   object-fit: contain; 
-  border: 1px solid #1a1a1a;
+  border: 2px solid #f0e6e6;
 }
 
 .status { 
@@ -489,9 +500,9 @@ img {
 .save-btn {
   width: 100%;
   padding: 16px;
-  background: #1a1a1a;
-  color: #fff;
-  border: 1px solid #333;
+  background: #ff4d4f;
+  color: #ffffff;
+  border: none;
   border-radius: 12px;
   font-weight: 700;
   font-size: 14px;
@@ -500,12 +511,13 @@ img {
   transition: all 150ms ease;
   text-transform: uppercase;
   letter-spacing: 1px;
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
 }
 
 .save-btn:hover {
-  background: #222;
-  border-color: #444;
+  background: #ff3333;
   transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(255, 77, 79, 0.3);
 }
 
 .save-btn:active {
@@ -527,22 +539,23 @@ img {
   font-weight: 900;
   margin-bottom: 20px;
   letter-spacing: -0.5px;
+  color: #1a1a1a;
 }
 
 .shelf-summary {
-  background: #0f0f0f;
+  background: #ffffff;
   padding: 12px 16px;
   border-radius: 12px;
   font-size: 13px;
-  color: #888;
+  color: #6b6b6b;
   margin-bottom: 16px;
   text-align: center;
   font-weight: 600;
-  border: 1px solid #1a1a1a;
+  border: 2px solid #f0e6e6;
 }
 
 .shelf-item { 
-  background: #0f0f0f; 
+  background: #ffffff; 
   border-radius: 12px; 
   padding: 16px; 
   margin-bottom: 12px; 
@@ -550,12 +563,13 @@ img {
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid #1a1a1a;
+  border: 2px solid #f0e6e6;
   transition: all 150ms ease;
 }
 
 .shelf-item:hover {
-  border-color: #222;
+  border-color: #ffd4d4;
+  box-shadow: 0 2px 8px rgba(255, 77, 79, 0.1);
 }
 
 .shelf-item-content {
@@ -566,7 +580,7 @@ img {
 .shelf-item-name {
   font-size: 15px;
   font-weight: 700;
-  color: #e8e8ea;
+  color: #1a1a1a;
   margin-bottom: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -575,26 +589,27 @@ img {
 
 .shelf-item-meta {
   font-size: 11px;
-  color: #666;
+  color: #6b6b6b;
   margin-bottom: 3px;
 }
 
 .shelf-item-dates {
   font-size: 10px;
-  color: #555;
+  color: #b0b0b0;
 }
 
 .shelf-item-estimated-badge {
   display: inline-block;
   padding: 2px 6px;
-  background: #2a2a1a;
-  color: #d4a259;
+  background: #fff7f7;
+  color: #f59e0b;
   border-radius: 4px;
   font-size: 9px;
   font-weight: 700;
   margin-left: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border: 1px solid #ffd4d4;
 }
 
 .shelf-item-status { 
@@ -606,14 +621,15 @@ img {
   flex-shrink: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #ffffff;
 }
 
 .delete-btn { 
   position: absolute; 
   top: 10px; 
   right: 10px; 
-  background: #1a1a1a; 
-  color: #666; 
+  background: #ffffff; 
+  color: #d4a5a5; 
   width: 24px; 
   height: 24px; 
   border-radius: 50%; 
@@ -625,22 +641,22 @@ img {
   transition: all 150ms ease; 
   padding: 0; 
   z-index: 10;
-  border: 1px solid #222;
+  border: 2px solid #f0e6e6;
 }
 
 .delete-btn:hover { 
-  background: #4d1b1b; 
-  color: #c85a54;
-  border-color: #4d1b1b;
+  background: #ffd4d4; 
+  color: #ef4444;
+  border-color: #ffd4d4;
 }
 
 /* Info section */
 .info-section {
-  background: #0f0f0f;
+  background: #ffffff;
   border-radius: 16px;
   padding: 20px;
   margin-top: 24px;
-  border: 1px solid #1a1a1a;
+  border: 2px solid #f0e6e6;
 }
 
 .info-title {
@@ -648,18 +664,18 @@ img {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #666;
+  color: #6b6b6b;
   margin-bottom: 12px;
 }
 
 .info-content {
   font-size: 13px;
   line-height: 1.6;
-  color: #666;
+  color: #6b6b6b;
 }
 
 .info-content strong {
-  color: #888;
+  color: #1a1a1a;
 }
 
 /* Responsive adjustments */
@@ -1071,7 +1087,7 @@ function updateResult() {
   }
   
   if (dateMode === 'estimated') {
-    detailsContent += '<br><br><span style="color:#d4a259;">Opening date is estimated</span>';
+    detailsContent += '<br><br><span style="color:#f59e0b;">Opening date is estimated</span>';
   }
   
   statusText.textContent = statusTextContent;
@@ -1214,8 +1230,9 @@ async function handleFileSelect(e) {
     ocrProcessed = true;
 
     status.style.display = "block";
-    status.style.background = "#2a2a1a";
-    status.style.color = "#d4a259";
+    status.style.background = "#fff7f7";
+    status.style.color = "#f59e0b";
+    status.style.border = "2px solid #ffd4d4";
     status.textContent = "Analyzing...";
 
     try {
@@ -1224,23 +1241,27 @@ async function handleFileSelect(e) {
       if (pao && SUPPORTED_PAOS.includes(pao)) {
         selectPAO(pao);
         updateResult();
-        status.style.background = "#1b3a2e";
-        status.style.color = "#4a7c59";
+        status.style.background = "#f0fdf4";
+        status.style.color = "#22c55e";
+        status.style.border = "2px solid #bbf7d0";
         status.textContent = `Detected: ${pao}M`;
       } else if (pao) {
-        status.style.background = "#2a2a1a";
-        status.style.color = "#d4a259";
+        status.style.background = "#fff7f7";
+        status.style.color = "#f59e0b";
+        status.style.border = "2px solid #ffd4d4";
         status.textContent = `Detected ${pao}M but not supported. Select manually.`;
       } else {
-        status.style.background = "#3a1a1a";
-        status.style.color = "#c85a54";
+        status.style.background = "#fef2f2";
+        status.style.color = "#ef4444";
+        status.style.border = "2px solid #fecaca";
         status.textContent = "Could not detect PAO. Select manually.";
       }
       
     } catch (err) {
       console.error(err);
-      status.style.background = "#3a1a1a";
-      status.style.color = "#c85a54";
+      status.style.background = "#fef2f2";
+      status.style.color = "#ef4444";
+      status.style.border = "2px solid #fecaca";
       status.textContent = "Error: " + err.message;
     }
   };
@@ -1378,7 +1399,7 @@ function renderShelf() {
   
   if (shelf.length === 0) {
     shelfSummary.innerHTML = '';
-    shelfItems.innerHTML = '<div style="text-align:center;color:#555;padding:40px;">No items yet</div>';
+    shelfItems.innerHTML = '<div style="text-align:center;color:#b0b0b0;padding:40px;">No items yet</div>';
     return;
   }
   
@@ -1433,11 +1454,11 @@ function renderShelf() {
     
     let statusColor = "";
     if (item.status === "TOSS") {
-      statusColor = "#3a1a1a";
+      statusColor = "#ef4444";
     } else if (item.status === "USE SOON") {
-      statusColor = "#2a2a1a";
+      statusColor = "#f59e0b";
     } else {
-      statusColor = "#1b3a2e";
+      statusColor = "#22c55e";
     }
     
     const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
