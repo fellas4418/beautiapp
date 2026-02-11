@@ -190,6 +190,48 @@ body {
   border-color: var(--main-teal);
 }
 
+/* ========== STICKY STATUS BAR ========== */
+.status-bar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  z-index: 100;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.status-bar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.status-bar.toss {
+  background: var(--warning-red);
+}
+
+.status-bar.use-soon {
+  background: var(--status-use-soon);
+}
+
+.status-bar.keep {
+  background: var(--status-keep);
+}
+
+.status-bar:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 .card { 
   background: var(--bg-card);
   border-radius: 16px; 
@@ -1154,6 +1196,9 @@ h3 {
   </div>
 </div>
 
+<!-- STICKY STATUS BAR -->
+<div id="statusBar" class="status-bar" onclick="handleStatusBarClick()"></div>
+
 <div class="card">
 <div id="photoToOCRSection" class="form-section">
   <div class="photo-section-label">
@@ -1290,6 +1335,7 @@ const homeShelfCount = document.getElementById("homeShelfCount");
 const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const cancelSelectionBtn = document.getElementById("cancelSelectionBtn");
 const selectAllBtn = document.getElementById("selectAllBtn");
+const statusBar = document.getElementById("statusBar");
 
 const exactBtn = document.getElementById("exactBtn");
 const estimatedBtn = document.getElementById("estimatedBtn");
@@ -1318,6 +1364,34 @@ function showToast(message = "✓ We'll remind you later", isWarning = false) {
   }, 1800);
 }
 
+function updateStatusBar() {
+  const shelf = loadShelfFromStorage();
+  
+  if (shelf.length === 0) {
+    statusBar.textContent = '';
+    statusBar.className = 'status-bar';
+    return;
+  }
+  
+  const tossCount = shelf.filter(item => item.status === "TOSS").length;
+  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
+  
+  if (tossCount > 0) {
+    statusBar.textContent = `🔴 TOSS NOW · ${tossCount} item${tossCount === 1 ? '' : 's'}`;
+    statusBar.className = 'status-bar toss';
+  } else if (useSoonCount > 0) {
+    statusBar.textContent = `🟠 USE SOON · ${useSoonCount} item${useSoonCount === 1 ? '' : 's'}`;
+    statusBar.className = 'status-bar use-soon';
+  } else {
+    statusBar.textContent = '🟢 ALL SAFE';
+    statusBar.className = 'status-bar keep';
+  }
+}
+
+function handleStatusBarClick() {
+  showScreen('shelf');
+}
+
 function showScreen(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   
@@ -1329,6 +1403,7 @@ function showScreen(screen) {
     document.getElementById('addScreen').classList.add('active');
     currentScreen = 'add';
     updateViewShelfButtonText();
+    updateStatusBar();
   } else if (screen === 'shelf') {
     document.getElementById('shelfScreen').classList.add('active');
     currentScreen = 'shelf';
@@ -1904,6 +1979,7 @@ saveBtn.onclick = () => {
   if (saveSuccess) {
     showToast();
     updateViewShelfButtonText();
+    updateStatusBar();
     productName.value = "";
     console.log("✓ Item saved. User remains on add screen.");
   }
@@ -2200,6 +2276,7 @@ function renderShelf() {
 
 initDateSelectors();
 updateViewShelfButtonText();
+updateStatusBar();
 </script>
 
 <input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
