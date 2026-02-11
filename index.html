@@ -965,7 +965,6 @@ label {
   box-shadow: 0 6px 16px rgba(255, 43, 91, 0.3);
 }
 
-/* Cancel 버튼 고정 위치 */
 .cancel-selection-btn {
   position: absolute; /* fixed -> absolute */
   bottom: 12px; /* 화면 아래에서 12px 간격을 둔다 */
@@ -989,9 +988,10 @@ label {
 /* 활성화되면 화면 위로 나타나게 */
 .cancel-selection-btn.show {
   display: block;
-  bottom: 0;
+  bottom: 12px; /* 12px 간격으로 고정 */
 }
 
+/* 호버 시 버튼 색상 변화 */
 .cancel-selection-btn:hover {
   background: var(--main-teal-light);
   border-color: var(--main-teal);
