@@ -58,7 +58,13 @@ body {
   overflow-y: auto;
   display: none;
 }
+.screen {
+  pointer-events: none;
+}
 
+.screen.active {
+  pointer-events: auto;
+}
 .screen.active {
   display: block;
 }
