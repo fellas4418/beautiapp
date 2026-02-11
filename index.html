@@ -1093,8 +1093,12 @@ h3 {
   box-shadow: none !important;
 }
 .select-gallery-button {
-  background: #FFF1F4;
-  border: 1px solid #FFD6DF;
+  background: var(--bg-secondary);
+  border: 1px solid var(--main-teal);
+  color: var(--main-teal);
+}
+.select-gallery-button:hover {
+  background: var(--main-teal-light);
 }
 
 .select-gallery-button:hover {
@@ -1145,10 +1149,10 @@ h3 {
 
     <button class="select-gallery-button" onclick="document.getElementById('galleryInput').click()">
       <div class="photo-icon">🖼</div>
-      <div class="photo-label">Already have a photo?</div>
+      <div class="photo-label">Select from gallery</div>
     </button>
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
-    <input type="file" id="galleryInput" accept="image/*" style="display:none;">
+<input type="file" id="galleryInput" accept="image/*" style="display:none;">
     
   </div>
   <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
