@@ -45,7 +45,6 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  overflow-x: hidden;
 }
 
 /* ========== SCREEN SYSTEM ========== */
@@ -57,6 +56,7 @@ body {
   height: 100vh;
   overflow-y: auto;
   display: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .screen {
@@ -79,6 +79,7 @@ body {
   background: var(--bg-primary);
   padding: 32px;
   position: relative;
+  min-height: 100vh;
 }
 
 .logo {
@@ -148,8 +149,9 @@ body {
   max-width: 420px; 
   margin: 0 auto; 
   padding: 16px; 
+  padding-bottom: 32px;
   background: var(--bg-primary);
-  min-height: 100vh;
+  min-height: auto;
 }
 
 .header {
