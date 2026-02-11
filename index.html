@@ -59,13 +59,6 @@ body {
   display: none;
 }
 
-.screen {
-  pointer-events: none;
-}
-
-.screen.active {
-  pointer-events: auto;
-}
 .screen.active {
   display: block;
 }
@@ -117,6 +110,16 @@ body {
   margin-bottom: 40px;
 }
 
+.check-button:hover {
+  background: var(--main-teal-hover);
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(46, 196, 192, 0.4);
+}
+
+.check-button:active {
+  transform: scale(0.98);
+}
+
 .check-icon {
   font-size: 48px;
 }
@@ -141,6 +144,12 @@ body {
 .home-shelf-button .shelf-count {
   color: var(--warning-red);
   font-weight: 800;
+}
+
+.home-shelf-button:hover {
+  background: var(--main-teal-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 196, 192, 0.3);
 }
 
 /* ========== ADD PRODUCT SCREEN ========== */
@@ -240,6 +249,22 @@ h2 {
   font-weight: 800;
 }
 
+.subtitle { 
+  font-size: 14px; 
+  color: var(--main-teal);
+  margin-bottom: 6px;
+  font-weight: 600;
+  display: none;
+}
+
+.tagline { 
+  font-size: 13px; 
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  line-height: 1.4;
+  display: none;
+}
+
 img { 
   width: 100%; 
   border-radius: 12px; 
@@ -330,6 +355,39 @@ input[type="text"]:focus {
   box-shadow: 0 0 0 3px rgba(46, 196, 192, 0.1);
 }
 
+.file-upload-wrapper { 
+  position: relative; 
+  margin-top: 10px; 
+}
+
+.file-upload-wrapper input[type="file"] { 
+  position: absolute; 
+  opacity: 0; 
+  width: 100%; 
+  height: 100%; 
+  cursor: pointer; 
+  z-index: 2;
+}
+
+.file-upload-label {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: var(--main-teal);
+  color: white;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.file-upload-label:hover { 
+  background: var(--main-teal-hover);
+  transform: translateY(-2px);
+}
+
 .file-name { 
   margin-top: 8px; 
   font-size: 13px; 
@@ -392,6 +450,12 @@ label {
   text-align: center;
 }
 
+.photo-buttons button:first-child:hover {
+  background: var(--main-teal-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(46, 196, 192, 0.4);
+}
+
 .photo-buttons button:last-child {
   padding: 18px 20px;
   background: var(--bg-secondary);
@@ -420,6 +484,14 @@ label {
   text-align: center;
 }
 
+.photo-buttons button:last-child:hover {
+  background: var(--main-teal-light);
+  border-color: var(--main-teal);
+  color: var(--main-teal);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(46, 196, 192, 0.15);
+}
+
 .photo-section-label {
   font-size: 18px;
   color: var(--text-primary);
@@ -434,6 +506,21 @@ label {
   font-weight: 800;
   display: block;
   margin-bottom: 8px;
+}
+
+@keyframes statusFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-label.animate {
+  animation: statusFadeUp 250ms ease-out;
 }
 
 .shelf-section { 
@@ -779,6 +866,22 @@ label {
   font-weight: 600;
 }
 
+.info-block {
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 7px;
+  border: 1px solid var(--border-light);
+}
+
+.info-block strong {
+  color: var(--main-teal);
+  font-weight: 700;
+}
+
 /* PRIMARY ACTION BUTTON - Solid teal */
 #saveBtn {
   width: 100%;
@@ -799,6 +902,15 @@ label {
   box-shadow: 0 6px 16px rgba(46, 196, 192, 0.3);
 }
 
+.pao-section-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  margin-top: 0;
+  font-weight: 700;
+  text-align: left;
+}
+
 .form-section {
   margin-bottom: 16px;
   padding: 0;
@@ -806,6 +918,15 @@ label {
 
 .form-section:last-of-type {
   margin-bottom: 0;
+}
+
+.form-section-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  margin-top: 0;
+  font-weight: 700;
+  text-align: left;
 }
 
 /* Toast notification - lightweight, non-disruptive */
@@ -1001,6 +1122,11 @@ label {
   border-color: var(--main-teal);
 }
 
+h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+}
 /* HOME My Shelf 버튼 스타일 강제 무력화 (최종 고정) */
 #homeScreen .home-shelf-button,
 #homeScreen .home-shelf-button * {
@@ -1008,11 +1134,13 @@ label {
   border: none !important;
   box-shadow: none !important;
 }
-
 .select-gallery-button {
   background: var(--bg-secondary);
   border: 1px solid var(--main-teal);
   color: var(--main-teal);
+}
+.select-gallery-button:hover {
+  background: var(--main-teal-light);
 }
 
 .select-gallery-button:hover {
@@ -1087,6 +1215,9 @@ label {
       <div class="photo-icon">🖼️</div>
       <div class="photo-label">Select from gallery</div>
     </button>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+<input type="file" id="galleryInput" accept="image/*" style="display:none;">
+    
   </div>
   <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
   <input type="file" id="galleryInput" accept="image/*" style="display:none;">
@@ -1146,6 +1277,14 @@ label {
 </button>
 </div>
 
+<div class="card">
+<h3>ℹ️ What is PAO?</h3>
+<div class="info-block">
+<strong>Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening.<br><br>
+Check the jar icon on your product for the number (e.g., 12M = 12 months).
+</div>
+</div>
+
 </div>
 </div>
 
@@ -1169,7 +1308,6 @@ const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
 const SHELF_STORAGE_KEY = "myShelf";
 const PACIFIC_TZ = "America/Los_Angeles";
-const GOOGLE_VISION_API_KEY = "AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw";
 
 let selectedPAO = null;
 let currentImageDataURL = null;
@@ -1242,7 +1380,7 @@ function updateStatusBar() {
     statusBar.textContent = `🔴 TOSS NOW · ${tossCount} item${tossCount === 1 ? '' : 's'}`;
     statusBar.className = 'status-bar toss';
   } else if (useSoonCount > 0) {
-    statusBar.textContent = `🟠 USE SOON · ${useSoonCount} item${useSoonCount === 1 ? '' : 's'}`;
+    statusBar.innerHTML = `<span class="status-dot use-soon"></span> USE SOON · ${useSoonCount} item`;
     statusBar.className = 'status-bar use-soon';
   } else {
     statusBar.textContent = '🟢 ALL SAFE';
@@ -1400,10 +1538,12 @@ SUPPORTED_PAOS.forEach(m => {
 });
 
 function togglePAO(m) {
+  // If clicking the already-selected PAO, deselect it
   if (selectedPAO === m) {
     selectedPAO = null;
     [...paoBox.children].forEach(b => b.classList.remove("active"));
   } else {
+    // Otherwise, select the new PAO
     selectedPAO = m;
     [...paoBox.children].forEach(b => {
       b.classList.toggle("active", b.textContent === m + "M");
@@ -1445,7 +1585,7 @@ function formatTimeLeft(daysLeft, status) {
     return `Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`;
   } else if (status === 'USE SOON') {
     return `Expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
-  } else {
+  } else { // KEEP
     if (daysLeft >= 90) {
       const months = Math.floor(daysLeft / 30);
       return `Safe for ${months} month${months === 1 ? '' : 's'}`;
@@ -1497,6 +1637,9 @@ function updateResult() {
   }
   
   if (statusText !== lastStatus) {
+    statusLabel.classList.remove("animate");
+    void statusLabel.offsetWidth;
+    statusLabel.classList.add("animate");
     lastStatus = statusText;
   }
   
@@ -1556,9 +1699,16 @@ function extractPAO(text) {
 }
 
 async function detectWithGoogle(base64Image) {
+  const apiKey = document.getElementById("apiKey");
+  const key = apiKey.value.trim();
+  
+  if (!key) {
+    throw new Error("API key not found");
+  }
+  
   const base64Content = base64Image.split(',')[1];
   
-  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
+  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -1600,6 +1750,70 @@ async function detectWithGoogle(base64Image) {
   return extractPAO(fullText);
 }
 
+// NEW: Blur detection function
+function checkImageBlur(imageElement) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Use smaller canvas for performance
+    const maxSize = 500;
+    let width = imageElement.naturalWidth;
+    let height = imageElement.naturalHeight;
+    
+    if (width > height) {
+      if (width > maxSize) {
+        height = (height * maxSize) / width;
+        width = maxSize;
+      }
+    } else {
+      if (height > maxSize) {
+        width = (width * maxSize) / height;
+        height = maxSize;
+      }
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(imageElement, 0, 0, width, height);
+    
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    
+    // Calculate Laplacian variance (edge detection)
+    let variance = 0;
+    const kernel = [
+      [0, 1, 0],
+      [1, -4, 1],
+      [0, 1, 0]
+    ];
+    
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        let sum = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const px = (y + ky) * width + (x + kx);
+            const gray = (data[px * 4] + data[px * 4 + 1] + data[px * 4 + 2]) / 3;
+            sum += gray * kernel[ky + 1][kx + 1];
+          }
+        }
+        variance += sum * sum;
+      }
+    }
+    
+    variance = variance / ((width - 2) * (height - 2));
+    
+    console.log("Blur check variance:", variance);
+    
+    // Lower threshold = more likely to detect blur
+    // Adjust this value based on testing
+    const isBlurry = variance < 100;
+    
+    resolve(isBlurry);
+  });
+}
+
 async function handleFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1624,7 +1838,18 @@ async function handleFileSelect(e) {
 
     ocrProcessed = true;
 
+    // NEW: Wait for image to load, then check blur
     preview.onload = async () => {
+      const isBlurry = await checkImageBlur(preview);
+      
+      if (isBlurry) {
+        console.log("⚠️ Image is blurry - skipping OCR");
+        showToast("📸 Photo is blurry. Please retake.", true);
+        status.style.display = "none";
+        return;
+      }
+      
+      // If not blurry, proceed with existing OCR flow
       status.style.display = "block";
       status.style.background = "#FEF3C7";
       status.style.color = "#F59E0B";
@@ -1988,10 +2213,73 @@ function renderShelf() {
   }).join('');
 }
 
+(function cleanupOldData() {
+  try {
+    const stored = localStorage.getItem(SHELF_STORAGE_KEY);
+    if (stored) {
+      const shelf = JSON.parse(stored);
+      if (shelf.length > 0 && shelf[0].image) {
+        console.warn("⚠️ Old format data detected. Cleaning up...");
+        localStorage.removeItem(SHELF_STORAGE_KEY);
+        console.log("✓ Shelf data reset. Ready to use without storage issues.");
+      }
+    }
+  } catch (err) {
+    console.error("Data cleanup error:", err);
+  }
+})();
+
+(async function initNotifications() {
+  if (!("Notification" in window)) {
+    console.log("Browser does not support notifications");
+    return;
+  }
+
+  if (Notification.permission === "default") {
+    try {
+      await Notification.requestPermission();
+    } catch (err) {
+      console.error("Notification permission error:", err);
+    }
+  }
+
+  if (Notification.permission !== "granted") {
+    console.log("Notification permission not granted");
+    return;
+  }
+
+  const shelf = refreshAllStatuses();
+  
+  if (shelf.length === 0) {
+    return;
+  }
+
+  const tossCount = shelf.filter(item => item.status === "TOSS").length;
+  const useSoonCount = shelf.filter(item => item.status === "USE SOON").length;
+
+  if (tossCount > 0) {
+    new Notification("KEESS · Keep or Toss", {
+      body: "🗑️ You have expired products. Time to toss them.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🗑️</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: TOSS");
+  } else if (useSoonCount > 0) {
+    new Notification("KEESS · Keep or Toss", {
+      body: "⚠️ Some products are expiring soon.",
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>⚠️</text></svg>",
+      silent: true
+    });
+    console.log("✓ Notification sent: USE SOON");
+  }
+})();
+
 initDateSelectors();
 updateViewShelfButtonText();
 updateStatusBar();
 </script>
+
+<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
 
 </body>
 </html>
