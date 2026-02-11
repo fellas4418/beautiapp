@@ -1092,6 +1092,17 @@ h3 {
   border: none !important;
   box-shadow: none !important;
 }
+/* Select from gallery 강조 */
+.select-gallery-button {
+  background: #FFF1F4;       /* 연한 핑크 */
+  border: 1px solid #FFD6DF;
+  margin-top: 12px;
+}
+
+.select-gallery-button .photo-label {
+  color: #333;
+  font-weight: 600;
+}
 </style>
 </head>
 
@@ -1134,10 +1145,14 @@ h3 {
       <div class="photo-icon">📸</div>
       <div class="photo-label">Take a photo</div>
     </button>
-    <button onclick="document.getElementById('galleryInput').click()">
-      <div class="photo-icon">🖼️</div>
+
+    <button class="select-gallery-button" onclick="document.getElementById('galleryInput').click()">
+      <div class="photo-icon">🖼</div>
       <div class="photo-label">Already have a photo?</div>
     </button>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+    <input type="file" id="galleryInput" accept="image/*" style="display:none;">
+    
   </div>
   <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
   <input type="file" id="galleryInput" accept="image/*" style="display:none;">
