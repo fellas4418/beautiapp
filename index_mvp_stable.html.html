@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PAO Calculator</title>
+
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #0b0c10; color: #e8e8ea; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.wrap { max-width: 420px; margin: 0 auto; padding: 16px; }
+.card { background: #111318; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+h2 { margin: 0 0 20px 0; font-size: 28px; }
+img { width: 100%; border-radius: 12px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; }
+.pao { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+button { padding: 12px; border-radius: 10px; border: none; background: #1f2430; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+button:hover { background: #2a3142; transform: translateY(-2px); }
+button.active { background: linear-gradient(135deg, #667eea, #764ba2); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
+.result { margin-top: 14px; font-weight: 800; font-size: 17px; text-align: center; padding: 14px; background: #1a1d2e; border-radius: 10px; }
+.status-label { margin-top: 8px; font-weight: 800; font-size: 15px; text-align: center; padding: 10px; border-radius: 8px; }
+input[type="date"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: none; font-size: 14px; }
+input[type="text"] { width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #1a1d2e; color: #fff; font-size: 14px; }
+
+.file-upload-wrapper { position: relative; margin-top: 10px; }
+.file-upload-wrapper input[type="file"] { 
+  position: absolute; 
+  opacity: 0; 
+  width: 100%; 
+  height: 100%; 
+  cursor: pointer; 
+  z-index: 2;
+}
+.file-upload-label {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  background: #667eea;
+  color: white;
+  text-align: center;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.file-upload-label:hover { background: #5568d3; }
+.file-name { margin-top: 8px; font-size: 13px; color: #aaa; text-align: center; }
+.status { margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 14px; }
+label { display: block; margin-top: 12px; margin-bottom: 4px; font-size: 14px; color: #aaa; }
+
+@keyframes statusFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.status-label.animate {
+  animation: statusFadeUp 250ms ease-out;
+}
+
+.shelf-section { margin-top: 24px; }
+
+/* NEW: Compact shelf item styling */
+.shelf-item { 
+  background: #111318; 
+  border-radius: 12px; 
+  padding: 12px; 
+  margin-bottom: 10px; 
+  position: relative; 
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shelf-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.shelf-item-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e8e8ea;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shelf-item-meta {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 2px;
+}
+
+.shelf-item-dates {
+  font-size: 11px;
+  color: #666;
+}
+
+.shelf-item-status { 
+  padding: 6px 12px; 
+  border-radius: 6px; 
+  font-size: 12px; 
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.delete-btn { 
+  position: absolute; 
+  top: 8px; 
+  right: 8px; 
+  background: #4d1b1b; 
+  color: #ff6b6b; 
+  width: 28px; 
+  height: 28px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 16px; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  padding: 0; 
+  z-index: 10; 
+}
+.delete-btn:hover { background: #6b2020; transform: scale(1.1); }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+<h2>💄 PAO Calculator</h2>
+
+<div class="card">
+<label>Product Name (optional)</label>
+<input type="text" id="productName" placeholder="e.g. Estée Lauder Night Repair">
+
+<label>Opening Date</label>
+<input type="date" id="opened">
+
+<label>Period After Opening (PAO)</label>
+<div class="pao" id="paoBtns"></div>
+
+<label>Upload Product Photo</label>
+<div class="file-upload-wrapper">
+  <input type="file" id="fileInput" accept="image/*">
+  <div class="file-upload-label">📷 Select Photo</div>
+</div>
+<div class="file-name" id="fileName"></div>
+
+<img id="preview" style="display:none">
+
+<div id="result" class="result">Select a PAO period</div>
+<div id="statusLabel" class="status-label" style="display:none"></div>
+<div id="status" class="status" style="display:none"></div>
+
+<button id="saveBtn" style="width:100%; margin-top:14px; background:#20c997;">Save to My Shelf</button>
+</div>
+
+<div class="card">
+<h3 style="margin:0 0 12px 0">ℹ️ What is PAO?</h3>
+<div style="background: #1a1d2e; padding: 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; color: #aaa;">
+<strong style="color:#667eea">Period After Opening (PAO)</strong> indicates the time a cosmetic product can be safely used after opening.<br><br>
+Check the jar icon on your product for the number (e.g., 12M = 12 months).
+</div>
+</div>
+
+<div id="shelfSection" class="shelf-section">
+<h2>📦 My Shelf</h2>
+<div id="shelfItems"></div>
+</div>
+
+</div>
+
+<script>
+const SUPPORTED_PAOS = [3, 6, 12, 24];
+const PAOS = [3, 6, 9, 12, 18, 24, 36];
+const SHELF_STORAGE_KEY = "myShelf";
+
+let selectedPAO = null;
+let currentImageDataURL = null;
+let lastStatus = null;
+let ocrProcessed = false;
+
+const productName = document.getElementById("productName");
+const opened = document.getElementById("opened");
+const paoBox = document.getElementById("paoBtns");
+const result = document.getElementById("result");
+const statusLabel = document.getElementById("statusLabel");
+const preview = document.getElementById("preview");
+const status = document.getElementById("status");
+const fileName = document.getElementById("fileName");
+const saveBtn = document.getElementById("saveBtn");
+const shelfItems = document.getElementById("shelfItems");
+
+opened.value = new Date().toISOString().slice(0, 10);
+
+SUPPORTED_PAOS.forEach(m => {
+  const b = document.createElement("button");
+  b.textContent = m + "M";
+  b.onclick = () => { selectPAO(m); updateResult(); };
+  paoBox.appendChild(b);
+});
+
+function selectPAO(m) {
+  selectedPAO = m;
+  [...paoBox.children].forEach(b => {
+    b.classList.toggle("active", b.textContent === m + "M");
+  });
+}
+
+function addMonths(d, m) {
+  const [y, mo, da] = d.split("-").map(Number);
+  const dt = new Date(y, mo - 1, da);
+  dt.setMonth(dt.getMonth() + m);
+  return dt;
+}
+
+function updateResult() {
+  if (!selectedPAO) { 
+    result.textContent = "Select a PAO period";
+    statusLabel.style.display = "none";
+    lastStatus = null;
+    return; 
+  }
+  const toss = addMonths(opened.value, selectedPAO);
+  const daysLeft = Math.ceil((toss - new Date()) / (1000 * 60 * 60 * 24));
+  
+  let emoji = "✅";
+  if (daysLeft < 0) emoji = "❌";
+  else if (daysLeft <= 30) emoji = "⚠️";
+  
+  result.textContent = `${emoji} ${selectedPAO}M · Expires on ${toss.toISOString().slice(0, 10)}`;
+  
+  if (daysLeft < 0) {
+    result.textContent += ` (expired ${Math.abs(daysLeft)} days ago)`;
+  } else {
+    result.textContent += ` (${daysLeft} days left)`;
+  }
+
+  let statusText = "";
+  let statusColor = "";
+  
+  if (daysLeft < 0) {
+    statusText = "TOSS";
+    statusColor = "#4d1b1b";
+  } else if (daysLeft <= 60) {
+    statusText = "USE SOON";
+    statusColor = "#4d4d1b";
+  } else {
+    statusText = "KEEP";
+    statusColor = "#1b4d3e";
+  }
+  
+  if (statusText !== lastStatus) {
+    statusLabel.classList.remove("animate");
+    void statusLabel.offsetWidth;
+    statusLabel.classList.add("animate");
+    lastStatus = statusText;
+  }
+  
+  statusLabel.textContent = statusText;
+  statusLabel.style.background = statusColor;
+  statusLabel.style.display = "block";
+
+  saveBtn.style.display = "block";
+}
+
+function extractPAO(text) {
+  console.log("Detected text:", text);
+  
+  const versions = [
+    text,
+    text.toUpperCase(),
+    text.replace(/\s+/g, ''),
+    text.replace(/[^a-zA-Z0-9]/g, ' '),
+  ];
+  
+  const patterns = [
+    /(\d{1,2})\s*M\b/gi,
+    /(\d{1,2})M/gi,
+    /M\s*(\d{1,2})/gi,
+  ];
+  
+  for (let ver of versions) {
+    for (let pattern of patterns) {
+      pattern.lastIndex = 0;
+      let match;
+      while ((match = pattern.exec(ver)) !== null) {
+        const num = parseInt(match[1]);
+        if (PAOS.includes(num)) {
+          console.log("✓ Found PAO:", num);
+          return num;
+        }
+      }
+    }
+  }
+  
+  const numbers = text.match(/\d+/g);
+  if (numbers) {
+    for (let numStr of numbers) {
+      const num = parseInt(numStr);
+      if (PAOS.includes(num)) {
+        const idx = text.indexOf(numStr);
+        const context = text.substring(Math.max(0, idx - 2), Math.min(text.length, idx + numStr.length + 2));
+        if (/m/i.test(context)) {
+          console.log("✓ Found PAO by context:", num);
+          return num;
+        }
+      }
+    }
+  }
+  
+  return null;
+}
+
+async function detectWithGoogle(base64Image) {
+  const apiKey = document.getElementById("apiKey");
+  const key = apiKey.value.trim();
+  
+  if (!key) {
+    throw new Error("API key not found");
+  }
+  
+  const base64Content = base64Image.split(',')[1];
+  
+  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      requests: [
+        {
+          image: {
+            content: base64Content
+          },
+          features: [
+            {
+              type: 'TEXT_DETECTION',
+              maxResults: 10
+            }
+          ]
+        }
+      ]
+    })
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error?.message || `API error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  
+  console.log("Google Vision response:", data);
+  
+  const textAnnotations = data.responses[0]?.textAnnotations;
+  
+  if (!textAnnotations || textAnnotations.length === 0) {
+    return null;
+  }
+  
+  const fullText = textAnnotations[0].description;
+  
+  return extractPAO(fullText);
+}
+
+document.getElementById("fileInput").onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  ocrProcessed = false;
+
+  fileName.textContent = file.name;
+  
+  const reader = new FileReader();
+  
+  reader.onload = async (event) => {
+    const base64 = event.target.result;
+    currentImageDataURL = base64;
+    
+    preview.src = base64;
+    preview.style.display = "block";
+
+    if (ocrProcessed) {
+      console.log("This image was already OCR processed. Skipping...");
+      return;
+    }
+
+    ocrProcessed = true;
+
+    status.style.display = "block";
+    status.style.background = "#4d4d1b";
+    status.style.color = "#f0ad4e";
+    status.textContent = "🔍 Analyzing with Google Vision...";
+
+    try {
+      const pao = await detectWithGoogle(base64);
+      
+      if (pao && SUPPORTED_PAOS.includes(pao)) {
+        selectPAO(pao);
+        updateResult();
+        status.style.background = "#1b4d3e";
+        status.style.color = "#20c997";
+        status.textContent = `✓ Detected: ${pao}M`;
+      } else if (pao) {
+        status.style.background = "#4d4d1b";
+        status.style.color = "#f0ad4e";
+        status.textContent = `⚠ Detected ${pao}M but not supported. Select manually ↓`;
+      } else {
+        status.style.background = "#4d1b1b";
+        status.style.color = "#ff6b6b";
+        status.textContent = "❌ Could not detect PAO. Select manually ↓";
+      }
+      
+    } catch (err) {
+      console.error(err);
+      status.style.background = "#4d1b1b";
+      status.style.color = "#ff6b6b";
+      status.textContent = "⚠ Error: " + err.message;
+    }
+  };
+  
+  reader.readAsDataURL(file);
+};
+
+function loadShelfFromStorage() {
+  try {
+    const stored = localStorage.getItem(SHELF_STORAGE_KEY);
+    if (!stored) {
+      console.log("No shelf data");
+      return [];
+    }
+    const parsed = JSON.parse(stored);
+    console.log("Loaded shelf data:", parsed.length, "items");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error("Shelf load error:", err);
+    return [];
+  }
+}
+
+function saveShelfToStorage(shelf) {
+  try {
+    localStorage.setItem(SHELF_STORAGE_KEY, JSON.stringify(shelf));
+    console.log("Saved shelf data:", shelf.length, "items");
+    return true;
+  } catch (err) {
+    console.error("Shelf save error:", err);
+    alert("⚠ Save failed: " + err.message);
+    return false;
+  }
+}
+
+function computeStatusFromExpiry(expiryDate) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const expiry = new Date(expiryDate);
+  expiry.setHours(0, 0, 0, 0);
+  
+  const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+  
+  if (daysLeft < 0) {
+    return "TOSS";
+  } else if (daysLeft <= 60) {
+    return "USE SOON";
+  } else {
+    return "KEEP";
+  }
+}
+
+function refreshAllStatuses() {
+  const shelf = loadShelfFromStorage();
+  let updated = false;
+  
+  shelf.forEach(item => {
+    const newStatus = computeStatusFromExpiry(item.expiryDate);
+    if (item.status !== newStatus) {
+      item.status = newStatus;
+      updated = true;
+    }
+  });
+  
+  if (updated) {
+    saveShelfToStorage(shelf);
+    console.log("✓ Statuses refreshed and saved");
+  }
+  
+  return shelf;
+}
+
+saveBtn.onclick = () => {
+  if (!selectedPAO) {
+    alert("⚠ First select a PAO period");
+    return;
+  }
+
+  const expiryDate = addMonths(opened.value, selectedPAO).toISOString().slice(0, 10);
+  const itemStatus = computeStatusFromExpiry(expiryDate);
+
+  // NEW: Get product name or default to "noname"
+  const name = productName.value.trim() || "noname";
+
+  const item = {
+    name: name,
+    pao: selectedPAO + "M",
+    openingDate: opened.value,
+    expiryDate: expiryDate,
+    status: itemStatus,
+    createdAt: Date.now()
+  };
+
+  const shelf = loadShelfFromStorage();
+  shelf.push(item);
+  
+  const saveSuccess = saveShelfToStorage(shelf);
+  
+  if (saveSuccess) {
+    alert("✓ Saved to My Shelf!");
+    productName.value = ""; // Clear input after save
+    renderShelf();
+  }
+};
+
+function getStatusPriority(status) {
+  const priorities = {
+    "TOSS": 1,
+    "USE SOON": 2,
+    "KEEP": 3
+  };
+  return priorities[status] || 999;
+}
+
+function deleteItem(createdAt) {
+  if (!confirm("Really delete?")) return;
+  
+  const shelf = loadShelfFromStorage();
+  const updatedShelf = shelf.filter(item => item.createdAt !== createdAt);
+  saveShelfToStorage(updatedShelf);
+  renderShelf();
+}
+
+function renderShelf() {
+  const shelf = refreshAllStatuses();
+  
+  if (shelf.length === 0) {
+    shelfItems.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">No items in your shelf yet. Add your first product!</div>';
+    return;
+  }
+  
+  const itemsWithStatus = shelf.map(item => {
+    if (!item.createdAt) {
+      item.createdAt = Date.now() + Math.random();
+    }
+    
+    // NEW: Ensure name field exists, default to "noname"
+    if (!item.name) {
+      item.name = "noname";
+    }
+    
+    return {
+      ...item,
+      displayStatus: item.status
+    };
+  });
+  
+  itemsWithStatus.sort((a, b) => {
+    return getStatusPriority(a.displayStatus) - getStatusPriority(b.displayStatus);
+  });
+  
+  shelfItems.innerHTML = itemsWithStatus.map(item => {
+    const itemStatus = item.displayStatus;
+    
+    let statusColor = "";
+    if (itemStatus === "TOSS") {
+      statusColor = "#4d1b1b";
+    } else if (itemStatus === "USE SOON") {
+      statusColor = "#4d4d1b";
+    } else {
+      statusColor = "#1b4d3e";
+    }
+    
+    // NEW: Compact card layout
+    return `
+      <div class="shelf-item">
+        <button class="delete-btn" onclick="deleteItem(${item.createdAt})">×</button>
+        <div class="shelf-item-content">
+          <div class="shelf-item-name">${item.name}</div>
+          <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
+          <div class="shelf-item-dates">Opened: ${item.openingDate}</div>
+        </div>
+        <div class="shelf-item-status" style="background: ${statusColor};">
+          ${itemStatus}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+opened.onchange = updateResult;
+
+(function cleanupOldData() {
+  try {
+    const stored = localStorage.getItem(SHELF_STORAGE_KEY);
+    if (stored) {
+      const shelf = JSON.parse(stored);
+      if (shelf.length > 0 && shelf[0].image) {
+        console.warn("⚠ Old format data detected. Cleaning up...");
+        localStorage.removeItem(SHELF_STORAGE_KEY);
+        console.log("✓ Shelf data reset. Ready to use without storage issues.");
+      }
+    }
+  } catch (err) {
+    console.error("Data cleanup error:", err);
+  }
+})();
+
+renderShelf();
+</script>
+
+<input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
+
+</body>
+</html>
