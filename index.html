@@ -1833,7 +1833,9 @@ function renderShelf() {
         <input type="checkbox" class="shelf-item-checkbox" data-id="${item.createdAt}" onchange="updateDeleteButtonText()">
         <button class="delete-btn" onclick="enterSelectionMode(); setTimeout(() => { document.querySelector('[data-id=\\'${item.createdAt}\\']').checked = true; updateDeleteButtonText(); }, 10);">×</button>
         <div class="shelf-item-content">
-          <div class="shelf-item-name">${item.name}</div>
+          <div class="shelf-item-name" onclick="enableNameEdit(${item.createdAt})">
+  ${item.name}
+</div>
           <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
           <div class="shelf-item-dates">Opened: ${openingDateDisplay}${estimatedBadge}</div>
           <div class="shelf-item-time-left ${timeLeftClass}">${timeLeftText}</div>
@@ -1909,6 +1911,47 @@ function renderShelf() {
 
 initDateSelectors();
 updateViewShelfButtonText();
+
+function enableNameEdit(id) {
+  const shelf = loadShelfFromStorage();
+  const item = shelf.find(i => i.createdAt === id);
+  if (!item) return;
+
+  const nameDiv = document.querySelector(
+    `.shelf-item-name[onclick="enableNameEdit(${id})"]`
+  );
+
+  if (!nameDiv) return;
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = item.name === "noname" ? "" : item.name;
+  input.placeholder = "Enter product name";
+  input.style.width = "100%";
+  input.style.fontSize = "16px";
+  input.style.fontWeight = "700";
+
+  input.onblur = () => saveNameEdit(id, input.value);
+  input.onkeydown = (e) => {
+    if (e.key === "Enter") {
+      input.blur();
+    }
+  };
+
+  nameDiv.replaceWith(input);
+  input.focus();
+}
+
+function saveNameEdit(id, newName) {
+  const shelf = loadShelfFromStorage();
+  const item = shelf.find(i => i.createdAt === id);
+  if (!item) return;
+
+  item.name = newName.trim() || "noname";
+  saveShelfToStorage(shelf);
+  renderShelf();
+}
+
 </script>
 
 <input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
