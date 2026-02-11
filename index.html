@@ -966,9 +966,7 @@ label {
 }
 
 .cancel-selection-btn {
-  position: absolute; /* fixed -> absolute */
-  bottom: 12px; /* 화면 아래에서 12px 간격을 둔다 */
-  left: 0;
+  position: relative;  /* 고정 위치 제거 */
   width: 100%;
   margin: 0;
   background: var(--bg-card);
@@ -978,24 +976,20 @@ label {
   padding: 16px;
   font-size: 15px;
   font-weight: 600;
-  border-radius: 0;
-  display: none;
+  border-radius: 10px;  /* 둥근 모서리로 디자인 */
+  display: block;  /* 항상 보이게 */
   z-index: 1000;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  text-align: center;
   transition: transform 0.3s ease-in-out;
 }
 
-/* 활성화되면 화면 위로 나타나게 */
-.cancel-selection-btn.show {
-  display: block;
-  bottom: 12px; /* 12px 간격으로 고정 */
-}
-
-/* 호버 시 버튼 색상 변화 */
+/* 호버 시 색상 변화 */
 .cancel-selection-btn:hover {
   background: var(--main-teal-light);
   border-color: var(--main-teal);
-  transform: translateY(0);
+  transform: scale(1.05);  /* 살짝 확대 효과 */
 }
 
 /* Add padding to shelf screen content to prevent overlap with fixed button */
