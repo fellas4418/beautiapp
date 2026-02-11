@@ -1052,45 +1052,105 @@ label {
   color: var(--text-secondary);
 }
 
-/* ========== TOSS WARNING SCREEN ========== */
-.warning-icon {
-  font-size: 72px;
-  text-align: center;
+/* ========== TOSS WARNING SCREEN (NEW MULTI-SELECT) ========== */
+.toss-warning-message {
+  background: var(--warning-red-bg);
+  border: 2px solid var(--warning-red-muted);
+  border-radius: 12px;
+  padding: 20px;
   margin-bottom: 20px;
+  text-align: center;
 }
 
-.warning-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--warning-red);
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.warning-message {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: center;
-  line-height: 1.6;
+.toss-warning-icon {
+  font-size: 48px;
   margin-bottom: 12px;
 }
 
-.warning-info {
-  font-size: 14px;
-  color: var(--text-secondary);
-  text-align: center;
-  line-height: 1.6;
-  margin-bottom: 32px;
+.toss-warning-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--warning-red);
+  margin-bottom: 8px;
 }
 
-.warning-actions {
+.toss-warning-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.toss-products-list {
+  margin-bottom: 20px;
+}
+
+.toss-product-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
 }
 
-.warning-btn-primary {
+.toss-product-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--warning-red);
+  flex-shrink: 0;
+}
+
+.toss-product-thumbnail {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border-light);
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+}
+
+.toss-product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.toss-product-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.toss-product-expired {
+  font-size: 13px;
+  color: var(--warning-red);
+  font-weight: 600;
+}
+
+.toss-select-all-btn {
+  width: 100%;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.toss-select-all-btn:hover {
+  background: var(--main-teal-light);
+  border-color: var(--main-teal);
+}
+
+.toss-confirm-btn {
   width: 100%;
   background: var(--warning-red);
   color: white;
@@ -1104,29 +1164,10 @@ label {
   box-shadow: 0 4px 12px rgba(255, 43, 91, 0.2);
 }
 
-.warning-btn-primary:hover {
+.toss-confirm-btn:hover {
   background: var(--warning-red-hover);
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(255, 43, 91, 0.3);
-}
-
-.warning-btn-secondary {
-  width: 100%;
-  background: var(--bg-card);
-  color: var(--main-teal);
-  border: 2px solid var(--main-teal);
-  padding: 16px;
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.warning-btn-secondary:hover {
-  background: var(--main-teal-light);
-  transform: translateY(-2px);
 }
 
 /* ========== DISCARD CONFIRMATION SCREEN ========== */
@@ -1386,24 +1427,26 @@ label {
 </div>
 </div>
 
-<!-- ========== TOSS WARNING SCREEN ========== -->
+<!-- ========== TOSS WARNING SCREEN (UPDATED WITH MULTI-SELECT) ========== -->
 <div id="tossWarningScreen" class="screen">
 <div class="wrap">
 <div class="header">
-  <h2>Expired Product</h2>
+  <h2>Expired Products</h2>
   <button class="back-button" onclick="showScreen('shelf')">← Back</button>
 </div>
 
 <div class="card">
-  <div class="warning-icon">⚠️</div>
-  <div class="warning-title">EXPIRED PRODUCT</div>
-  <div class="warning-message" id="warningDaysText">Expired 42 days ago</div>
-  <div class="warning-info">Bacteria risk increases after opening.</div>
-  
-  <div class="warning-actions">
-    <button class="warning-btn-primary" onclick="showDiscardConfirmation()">MARK AS DISCARDED</button>
-    <button class="warning-btn-secondary" onclick="showReminderSetup()">KEEP ANYWAY</button>
+  <div class="toss-warning-message">
+    <div class="toss-warning-icon">⚠️</div>
+    <div class="toss-warning-title">EXPIRED PRODUCT</div>
+    <div class="toss-warning-subtitle">Bacteria risk increases after opening.</div>
   </div>
+  
+  <button class="toss-select-all-btn" id="tossSelectAllBtn" onclick="toggleTossSelectAll()">Select All</button>
+  
+  <div class="toss-products-list" id="tossProductsList"></div>
+  
+  <button class="toss-confirm-btn" onclick="confirmTossSelection()">Confirm</button>
 </div>
 </div>
 </div>
@@ -1417,7 +1460,7 @@ label {
 
 <div class="card">
   <div class="confirmation-icon">✓</div>
-  <div class="confirmation-title">You've discarded this product.</div>
+  <div class="confirmation-title" id="discardConfirmMessage">The selected products have been discarded.</div>
   
   <button class="confirmation-btn" onclick="confirmDiscard()">Return to Shelf</button>
 </div>
@@ -1465,6 +1508,7 @@ let selectionMode = false;
 let editingItemId = null;
 let currentTossItemId = null;
 let selectedReminderDays = null;
+let selectedTossItems = new Set();
 
 const productName = document.getElementById("productName");
 const paoBox = document.getElementById("paoBtns");
@@ -1484,8 +1528,10 @@ const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const cancelSelectionBtn = document.getElementById("cancelSelectionBtn");
 const selectAllBtn = document.getElementById("selectAllBtn");
 const statusBar = document.getElementById("statusBar");
-const warningDaysText = document.getElementById("warningDaysText");
+const tossProductsList = document.getElementById("tossProductsList");
+const tossSelectAllBtn = document.getElementById("tossSelectAllBtn");
 const reminderConfirmBtn = document.getElementById("reminderConfirmBtn");
+const discardConfirmMessage = document.getElementById("discardConfirmMessage");
 
 const exactBtn = document.getElementById("exactBtn");
 const estimatedBtn = document.getElementById("estimatedBtn");
@@ -1543,14 +1589,109 @@ function handleStatusBarClick() {
   const tossItems = shelf.filter(item => item.status === "TOSS");
   
   if (tossItems.length > 0) {
-    // Show warning for first toss item
-    currentTossItemId = tossItems[0].createdAt;
-    const daysAgo = Math.abs(calculateDaysLeft(tossItems[0].expiryDate));
-    warningDaysText.textContent = `Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`;
     showScreen('tossWarning');
   } else {
     showScreen('shelf');
   }
+}
+
+function renderTossProducts() {
+  const shelf = loadShelfFromStorage();
+  const tossItems = shelf.filter(item => item.status === "TOSS");
+  
+  if (tossItems.length === 0) {
+    tossProductsList.innerHTML = '<div style="text-align:center;color:#9A9A9A;padding:20px;">No expired products</div>';
+    return;
+  }
+  
+  tossProductsList.innerHTML = tossItems.map(item => {
+    const daysAgo = Math.abs(calculateDaysLeft(item.expiryDate));
+    const displayName = item.name === "noname" ? "Product" : item.name;
+    const isChecked = selectedTossItems.has(item.createdAt);
+    
+    // Use stored image or placeholder
+    const thumbnailSrc = item.imageDataURL || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="60" height="60"%3E%3Crect width="60" height="60" fill="%23E5E5E5"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-size="24" fill="%239A9A9A"%3E📦%3C/text%3E%3C/svg%3E';
+    
+    return `
+      <div class="toss-product-item">
+        <input 
+          type="checkbox" 
+          class="toss-product-checkbox" 
+          data-id="${item.createdAt}"
+          ${isChecked ? 'checked' : ''}
+          onchange="toggleTossItem(${item.createdAt})"
+        />
+        <img src="${thumbnailSrc}" alt="${displayName}" class="toss-product-thumbnail" />
+        <div class="toss-product-info">
+          <div class="toss-product-name">${displayName}</div>
+          <div class="toss-product-expired">Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  updateTossSelectAllButton();
+}
+
+function toggleTossItem(itemId) {
+  if (selectedTossItems.has(itemId)) {
+    selectedTossItems.delete(itemId);
+  } else {
+    selectedTossItems.add(itemId);
+  }
+  updateTossSelectAllButton();
+}
+
+function toggleTossSelectAll() {
+  const shelf = loadShelfFromStorage();
+  const tossItems = shelf.filter(item => item.status === "TOSS");
+  
+  const allSelected = tossItems.every(item => selectedTossItems.has(item.createdAt));
+  
+  if (allSelected) {
+    // Deselect all
+    selectedTossItems.clear();
+  } else {
+    // Select all
+    tossItems.forEach(item => {
+      selectedTossItems.add(item.createdAt);
+    });
+  }
+  
+  renderTossProducts();
+}
+
+function updateTossSelectAllButton() {
+  const shelf = loadShelfFromStorage();
+  const tossItems = shelf.filter(item => item.status === "TOSS");
+  
+  if (tossItems.length === 0) return;
+  
+  const allSelected = tossItems.every(item => selectedTossItems.has(item.createdAt));
+  
+  if (allSelected) {
+    tossSelectAllBtn.textContent = "Deselect All";
+  } else {
+    tossSelectAllBtn.textContent = "Select All";
+  }
+}
+
+function confirmTossSelection() {
+  if (selectedTossItems.size === 0) {
+    // If nothing selected, just go back to shelf
+    showScreen('shelf');
+    return;
+  }
+  
+  // Show confirmation message
+  const count = selectedTossItems.size;
+  if (count === 1) {
+    discardConfirmMessage.textContent = "The selected product has been discarded.";
+  } else {
+    discardConfirmMessage.textContent = `${count} products have been discarded.`;
+  }
+  
+  showScreen('discardConfirm');
 }
 
 function showScreen(screen) {
@@ -1574,6 +1715,8 @@ function showScreen(screen) {
   } else if (screen === 'tossWarning') {
     document.getElementById('tossWarningScreen').classList.add('active');
     currentScreen = 'tossWarning';
+    selectedTossItems.clear();
+    renderTossProducts();
   } else if (screen === 'discardConfirm') {
     document.getElementById('discardConfirmScreen').classList.add('active');
     currentScreen = 'discardConfirm';
@@ -1589,15 +1732,6 @@ function showScreen(screen) {
 }
 
 function showTossWarning(itemId) {
-  const shelf = loadShelfFromStorage();
-  const item = shelf.find(i => i.createdAt === itemId);
-  
-  if (!item) return;
-  
-  currentTossItemId = itemId;
-  const daysAgo = Math.abs(calculateDaysLeft(item.expiryDate));
-  warningDaysText.textContent = `Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`;
-  
   showScreen('tossWarning');
 }
 
@@ -1606,16 +1740,12 @@ function showDiscardConfirmation() {
 }
 
 function confirmDiscard() {
-  if (!currentTossItemId) {
-    showScreen('shelf');
-    return;
-  }
-  
+  // Delete selected items
   const shelf = loadShelfFromStorage();
-  const updatedShelf = shelf.filter(item => item.createdAt !== currentTossItemId);
+  const updatedShelf = shelf.filter(item => !selectedTossItems.has(item.createdAt));
   saveShelfToStorage(updatedShelf);
   
-  currentTossItemId = null;
+  selectedTossItems.clear();
   showScreen('shelf');
   updateViewShelfButtonText();
   updateStatusBar();
@@ -1641,9 +1771,6 @@ function confirmReminder() {
     alert('Please select a reminder option');
     return;
   }
-  
-  // In a real app, this would set up an actual notification
-  // For now, we'll just show a confirmation message
   
   showToast('✓ Reminder set! You\'ll be notified before expiration.');
   
@@ -2130,6 +2257,7 @@ saveBtn.onclick = () => {
     expiryDate: expiryDate,
     status: itemStatus,
     isEstimated: dateMode === 'estimated',
+    imageDataURL: currentImageDataURL,
     createdAt: Date.now()
   };
 
@@ -2228,6 +2356,7 @@ function deleteSelected() {
   exitSelectionMode();
   renderShelf();
   updateViewShelfButtonText();
+  updateStatusBar();
 }
 
 function formatOpeningDate(dateStr, isEstimated) {
