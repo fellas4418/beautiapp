@@ -49,15 +49,14 @@ body {
 
 /* ========== SCREEN SYSTEM ========== */
 .screen {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100dvh;
-overflow-y: auto;
--webkit-overflow-scrolling: touch;
-display: none;
-padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  display: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .screen {
@@ -153,7 +152,6 @@ padding-bottom: calc(24px + env(safe-area-inset-bottom));
   padding-bottom: 32px;
   background: var(--bg-primary);
   min-height: auto;
-  padding-bottom: 40px;
 }
 
 .header {
@@ -1054,6 +1052,203 @@ label {
   color: var(--text-secondary);
 }
 
+/* ========== TOSS WARNING SCREEN ========== */
+.warning-icon {
+  font-size: 72px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.warning-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--warning-red);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.warning-message {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.warning-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.warning-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.warning-btn-primary {
+  width: 100%;
+  background: var(--warning-red);
+  color: white;
+  border: none;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 43, 91, 0.2);
+}
+
+.warning-btn-primary:hover {
+  background: var(--warning-red-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 43, 91, 0.3);
+}
+
+.warning-btn-secondary {
+  width: 100%;
+  background: var(--bg-card);
+  color: var(--main-teal);
+  border: 2px solid var(--main-teal);
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.warning-btn-secondary:hover {
+  background: var(--main-teal-light);
+  transform: translateY(-2px);
+}
+
+/* ========== DISCARD CONFIRMATION SCREEN ========== */
+.confirmation-icon {
+  font-size: 72px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.confirmation-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.confirmation-btn {
+  width: 100%;
+  background: var(--main-teal);
+  color: white;
+  border: none;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(46, 196, 192, 0.2);
+}
+
+.confirmation-btn:hover {
+  background: var(--main-teal-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 196, 192, 0.3);
+}
+
+/* ========== REMINDER SETUP SCREEN ========== */
+.reminder-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 32px;
+  line-height: 1.4;
+}
+
+.reminder-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.reminder-option-btn {
+  width: 100%;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 2px solid var(--border-light);
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.reminder-option-btn:hover {
+  border-color: var(--main-teal);
+  background: var(--main-teal-light);
+}
+
+.reminder-option-btn.selected {
+  background: var(--main-teal);
+  color: white;
+  border-color: var(--main-teal);
+}
+
+.reminder-skip-btn {
+  width: 100%;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reminder-skip-btn:hover {
+  color: var(--main-teal);
+  transform: none;
+}
+
+.reminder-confirm-btn {
+  width: 100%;
+  background: var(--main-teal);
+  color: white;
+  border: none;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(46, 196, 192, 0.2);
+  margin-bottom: 12px;
+  display: none;
+}
+
+.reminder-confirm-btn.show {
+  display: block;
+}
+
+.reminder-confirm-btn:hover {
+  background: var(--main-teal-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 196, 192, 0.3);
+}
+
 </style>
 </head>
 
@@ -1104,9 +1299,6 @@ label {
       <div class="photo-icon">🖼️</div>
       <div class="photo-label">Select from gallery</div>
     </button>
-  </div>
-  <div class="helper-text" style="display:block;">
-    Make sure the photo is clear and in focus. Blurry images may not be detected.
   </div>
   <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
   <input type="file" id="galleryInput" accept="image/*" style="display:none;">
@@ -1170,7 +1362,8 @@ label {
   <h3>What is PAO?</h3>
   <div class="info-block">
     <strong>Period After Opening (PAO)</strong> tells you how long a cosmetic product is safe to use after you open it.<br><br>
-    For example, a <strong>6M</strong> symbol means the product should be used within 6 months after opening, while a <strong>12M</strong> symbol means 12 months.
+    For example, a <strong>6M</strong> symbol means the product should be used within 6 months after opening.<br>
+    A <strong>12M</strong> symbol means 12 months.<br><br>
     You can usually find the PAO symbol on the packaging as an open jar icon with a number followed by "M".
   </div>
 </div>
@@ -1193,6 +1386,68 @@ label {
 </div>
 </div>
 
+<!-- ========== TOSS WARNING SCREEN ========== -->
+<div id="tossWarningScreen" class="screen">
+<div class="wrap">
+<div class="header">
+  <h2>Expired Product</h2>
+  <button class="back-button" onclick="showScreen('shelf')">← Back</button>
+</div>
+
+<div class="card">
+  <div class="warning-icon">⚠️</div>
+  <div class="warning-title">EXPIRED PRODUCT</div>
+  <div class="warning-message" id="warningDaysText">Expired 42 days ago</div>
+  <div class="warning-info">Bacteria risk increases after opening.</div>
+  
+  <div class="warning-actions">
+    <button class="warning-btn-primary" onclick="showDiscardConfirmation()">MARK AS DISCARDED</button>
+    <button class="warning-btn-secondary" onclick="showReminderSetup()">KEEP ANYWAY</button>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ========== DISCARD CONFIRMATION SCREEN ========== -->
+<div id="discardConfirmScreen" class="screen">
+<div class="wrap">
+<div class="header">
+  <h2>Discarded</h2>
+</div>
+
+<div class="card">
+  <div class="confirmation-icon">✓</div>
+  <div class="confirmation-title">You've discarded this product.</div>
+  
+  <button class="confirmation-btn" onclick="confirmDiscard()">Return to Shelf</button>
+</div>
+</div>
+</div>
+
+<!-- ========== REMINDER SETUP SCREEN ========== -->
+<div id="reminderSetupScreen" class="screen">
+<div class="wrap">
+<div class="header">
+  <h2>Set Reminder</h2>
+  <button class="back-button" onclick="showScreen('tossWarning')">← Back</button>
+</div>
+
+<div class="card">
+  <div class="reminder-title">You chose to keep this product. Would you like a reminder when it expires?</div>
+  
+  <div class="reminder-options">
+    <button class="reminder-option-btn" data-days="0" onclick="selectReminderOption(this, 0)">On expiry day</button>
+    <button class="reminder-option-btn" data-days="1" onclick="selectReminderOption(this, 1)">1 day before</button>
+    <button class="reminder-option-btn" data-days="3" onclick="selectReminderOption(this, 3)">3 days before</button>
+    <button class="reminder-option-btn" data-days="7" onclick="selectReminderOption(this, 7)">1 week before</button>
+  </div>
+  
+  <button class="reminder-confirm-btn" id="reminderConfirmBtn" onclick="confirmReminder()">Set Reminder</button>
+  <button class="reminder-skip-btn" onclick="skipReminder()">Skip</button>
+</div>
+</div>
+</div>
+
 <script>
 const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
@@ -1208,6 +1463,8 @@ let dateMode = 'exact';
 let currentScreen = 'home';
 let selectionMode = false;
 let editingItemId = null;
+let currentTossItemId = null;
+let selectedReminderDays = null;
 
 const productName = document.getElementById("productName");
 const paoBox = document.getElementById("paoBtns");
@@ -1227,6 +1484,8 @@ const deleteSelectedBtn = document.getElementById("deleteSelectedBtn");
 const cancelSelectionBtn = document.getElementById("cancelSelectionBtn");
 const selectAllBtn = document.getElementById("selectAllBtn");
 const statusBar = document.getElementById("statusBar");
+const warningDaysText = document.getElementById("warningDaysText");
+const reminderConfirmBtn = document.getElementById("reminderConfirmBtn");
 
 const exactBtn = document.getElementById("exactBtn");
 const estimatedBtn = document.getElementById("estimatedBtn");
@@ -1280,7 +1539,18 @@ function updateStatusBar() {
 }
 
 function handleStatusBarClick() {
-  showScreen('shelf');
+  const shelf = loadShelfFromStorage();
+  const tossItems = shelf.filter(item => item.status === "TOSS");
+  
+  if (tossItems.length > 0) {
+    // Show warning for first toss item
+    currentTossItemId = tossItems[0].createdAt;
+    const daysAgo = Math.abs(calculateDaysLeft(tossItems[0].expiryDate));
+    warningDaysText.textContent = `Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`;
+    showScreen('tossWarning');
+  } else {
+    showScreen('shelf');
+  }
 }
 
 function showScreen(screen) {
@@ -1301,7 +1571,95 @@ function showScreen(screen) {
     exitSelectionMode();
     editingItemId = null;
     renderShelf();
+  } else if (screen === 'tossWarning') {
+    document.getElementById('tossWarningScreen').classList.add('active');
+    currentScreen = 'tossWarning';
+  } else if (screen === 'discardConfirm') {
+    document.getElementById('discardConfirmScreen').classList.add('active');
+    currentScreen = 'discardConfirm';
+  } else if (screen === 'reminderSetup') {
+    document.getElementById('reminderSetupScreen').classList.add('active');
+    currentScreen = 'reminderSetup';
+    selectedReminderDays = null;
+    reminderConfirmBtn.classList.remove('show');
+    document.querySelectorAll('.reminder-option-btn').forEach(btn => {
+      btn.classList.remove('selected');
+    });
   }
+}
+
+function showTossWarning(itemId) {
+  const shelf = loadShelfFromStorage();
+  const item = shelf.find(i => i.createdAt === itemId);
+  
+  if (!item) return;
+  
+  currentTossItemId = itemId;
+  const daysAgo = Math.abs(calculateDaysLeft(item.expiryDate));
+  warningDaysText.textContent = `Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`;
+  
+  showScreen('tossWarning');
+}
+
+function showDiscardConfirmation() {
+  showScreen('discardConfirm');
+}
+
+function confirmDiscard() {
+  if (!currentTossItemId) {
+    showScreen('shelf');
+    return;
+  }
+  
+  const shelf = loadShelfFromStorage();
+  const updatedShelf = shelf.filter(item => item.createdAt !== currentTossItemId);
+  saveShelfToStorage(updatedShelf);
+  
+  currentTossItemId = null;
+  showScreen('shelf');
+  updateViewShelfButtonText();
+  updateStatusBar();
+}
+
+function showReminderSetup() {
+  showScreen('reminderSetup');
+}
+
+function selectReminderOption(button, days) {
+  selectedReminderDays = days;
+  
+  document.querySelectorAll('.reminder-option-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  
+  button.classList.add('selected');
+  reminderConfirmBtn.classList.add('show');
+}
+
+function confirmReminder() {
+  if (selectedReminderDays === null) {
+    alert('Please select a reminder option');
+    return;
+  }
+  
+  // In a real app, this would set up an actual notification
+  // For now, we'll just show a confirmation message
+  
+  showToast('✓ Reminder set! You\'ll be notified before expiration.');
+  
+  setTimeout(() => {
+    currentTossItemId = null;
+    showScreen('shelf');
+  }, 1800);
+}
+
+function skipReminder() {
+  showToast('✓ Product added to your shelf.');
+  
+  setTimeout(() => {
+    currentTossItemId = null;
+    showScreen('shelf');
+  }, 1800);
 }
 
 function updateViewShelfButtonText() {
@@ -1963,9 +2321,12 @@ function renderShelf() {
     
     let statusColor = "";
     let timeLeftClass = "";
+    let statusClickHandler = "";
+    
     if (itemStatus === "TOSS") {
       statusColor = "#FF2B5B";
       timeLeftClass = "toss";
+      statusClickHandler = `onclick="showTossWarning(${item.createdAt})" style="cursor:pointer;"`;
     } else if (itemStatus === "USE SOON") {
       statusColor = "#F59E0B";
       timeLeftClass = "use-soon";
@@ -2009,7 +2370,7 @@ function renderShelf() {
           <div class="shelf-item-dates">Opened: ${openingDateDisplay}${estimatedBadge}</div>
           <div class="shelf-item-time-left ${timeLeftClass}">${timeLeftText}</div>
         </div>
-        <div class="shelf-item-status" style="background: ${statusColor};">
+        <div class="shelf-item-status" style="background: ${statusColor};" ${statusClickHandler}>
           ${itemStatus}
         </div>
       </div>
