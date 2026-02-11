@@ -1104,15 +1104,22 @@ h3 {
 .select-gallery-button:hover {
   background: #FFE6EC;
 }
-.select-gallery-button {
-  color: #1C1C1E;
-}
 
-.select-gallery-button .photo-label {
+.select-gallery-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   color: #1C1C1E;
 }
 
 .select-gallery-button .photo-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.select-gallery-button .photo-label {
   color: #1C1C1E;
 }
 
