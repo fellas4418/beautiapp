@@ -967,7 +967,7 @@ label {
 
 .cancel-selection-btn {
   width: 100%;
-  margin-top: 12px;
+  margin-top: 8px;
   background: var(--bg-card);
   color: var(--text-secondary);
   border: 1px solid var(--border-light);
@@ -975,17 +975,13 @@ label {
   font-size: 15px;
   font-weight: 600;
   border-radius: 10px;
-  display: block; /* fixed -> block */
-  position: relative; /* 화면에 따라 위치를 유동적으로 설정 */
-  bottom: 0; /* 스크롤 시 버튼이 페이지 하단에 위치하도록 */
+  display: none; /* 처음에는 보이지 않음 */
 }
 
-/* 버튼 활성화 시 보여지는 효과 */
 .cancel-selection-btn.show {
-  display: block;
+  display: block; /* 선택 모드에서만 보이도록 변경 */
 }
 
-/* 버튼 hover 효과 */
 .cancel-selection-btn:hover {
   background: var(--main-teal-light);
   border-color: var(--main-teal);
@@ -2320,7 +2316,7 @@ function enterSelectionMode() {
     item.classList.add('selection-mode');
   });
   deleteSelectedBtn.classList.add('show');
-  cancelSelectionBtn.classList.add('show');
+  cancelSelectionBtn.classList.add('show');  // 취소 버튼을 보이게 합니다.
   selectAllBtn.classList.add('show');
   updateDeleteButtonText();
 }
@@ -2335,7 +2331,7 @@ function exitSelectionMode() {
     }
   });
   deleteSelectedBtn.classList.remove('show');
-  cancelSelectionBtn.classList.remove('show');
+  cancelSelectionBtn.classList.remove('show');  // 취소 버튼을 숨깁니다.
   selectAllBtn.classList.remove('show');
 }
 
