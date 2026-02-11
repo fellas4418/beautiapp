@@ -864,6 +864,10 @@ label {
   transform: translate(-50%, -50%) scale(0.9);
 }
 
+.toast.warning {
+  background: var(--warning-red);
+}
+
 /* SECONDARY BUTTON STYLE - White bg, teal border, red accent on count */
 .view-shelf-button {
   width: 100%;
@@ -1053,7 +1057,7 @@ h3 {
     <div>Is this still safe?</div>
   </button>
   <button class="home-shelf-button" onclick="showScreen('shelf')">
-    <span>📦 My Shelf</span>
+    <span>🧴My Shelf</span>
     <span class="shelf-count" id="homeShelfCount"> · 0 items</span>
   </button>
 </div>
@@ -1075,7 +1079,7 @@ h3 {
   </div>
   <div class="photo-buttons">
     <button onclick="document.getElementById('cameraInput').click()">📸 Take a photo</button>
-    <button onclick="document.getElementById('galleryInput').click()">🖼 Select<br>from gallery</button>
+    <button onclick="document.getElementById('galleryInput').click()">🖼️ Select<br>from gallery</button>
   </div>
   <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
   <input type="file" id="galleryInput" accept="image/*" style="display:none;">
@@ -1130,7 +1134,7 @@ h3 {
 <button id="saveBtn" style="display:none">Save so I don't forget</button>
 
 <button id="viewShelfBtn" class="view-shelf-button" onclick="showScreen('shelf')">
-  <span>📦 My Shelf</span>
+  <span>🧴My Shelf</span>
   <span class="shelf-count" id="viewShelfCount"> · 0 items</span>
 </button>
 </div>
@@ -1150,7 +1154,7 @@ Check the jar icon on your product for the number (e.g., 12M = 12 months).
 <div id="shelfScreen" class="screen">
 <div class="wrap">
 <div class="header">
-  <h2>📦 My Shelf</h2>
+  <h2>🧴My Shelf</h2>
   <button class="back-button" onclick="showScreen('add')">← Home</button>
 </div>
 <div id="shelfSummary"></div>
@@ -1207,8 +1211,12 @@ const daySelect = document.getElementById("daySelect");
 const yearSelectEst = document.getElementById("yearSelectEst");
 const monthSelectEst = document.getElementById("monthSelectEst");
 
-function showToast() {
-  toast.classList.remove('hide');
+function showToast(message = "✓ We'll remind you later", isWarning = false) {
+  toast.textContent = message;
+  toast.classList.remove('hide', 'warning');
+  if (isWarning) {
+    toast.classList.add('warning');
+  }
   toast.classList.add('show');
   
   setTimeout(() => {
@@ -1574,6 +1582,70 @@ async function detectWithGoogle(base64Image) {
   return extractPAO(fullText);
 }
 
+// NEW: Blur detection function
+function checkImageBlur(imageElement) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Use smaller canvas for performance
+    const maxSize = 500;
+    let width = imageElement.naturalWidth;
+    let height = imageElement.naturalHeight;
+    
+    if (width > height) {
+      if (width > maxSize) {
+        height = (height * maxSize) / width;
+        width = maxSize;
+      }
+    } else {
+      if (height > maxSize) {
+        width = (width * maxSize) / height;
+        height = maxSize;
+      }
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(imageElement, 0, 0, width, height);
+    
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    
+    // Calculate Laplacian variance (edge detection)
+    let variance = 0;
+    const kernel = [
+      [0, 1, 0],
+      [1, -4, 1],
+      [0, 1, 0]
+    ];
+    
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        let sum = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const px = (y + ky) * width + (x + kx);
+            const gray = (data[px * 4] + data[px * 4 + 1] + data[px * 4 + 2]) / 3;
+            sum += gray * kernel[ky + 1][kx + 1];
+          }
+        }
+        variance += sum * sum;
+      }
+    }
+    
+    variance = variance / ((width - 2) * (height - 2));
+    
+    console.log("Blur check variance:", variance);
+    
+    // Lower threshold = more likely to detect blur
+    // Adjust this value based on testing
+    const isBlurry = variance < 100;
+    
+    resolve(isBlurry);
+  });
+}
+
 async function handleFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1598,36 +1670,49 @@ async function handleFileSelect(e) {
 
     ocrProcessed = true;
 
-    status.style.display = "block";
-    status.style.background = "#FEF3C7";
-    status.style.color = "#F59E0B";
-    status.textContent = "🔍 Analyzing with Google Vision...";
-
-    try {
-      const pao = await detectWithGoogle(base64);
+    // NEW: Wait for image to load, then check blur
+    preview.onload = async () => {
+      const isBlurry = await checkImageBlur(preview);
       
-      if (pao && SUPPORTED_PAOS.includes(pao)) {
-        selectPAO(pao);
-        updateResult();
-        status.style.background = "#D1FAE5";
-        status.style.color = "#10B981";
-        status.textContent = `✓ Detected: ${pao}M (tap to deselect)`;
-      } else if (pao) {
-        status.style.background = "#FEF3C7";
-        status.style.color = "#F59E0B";
-        status.textContent = `⚠️ Detected ${pao}M but not supported. Select manually ↓`;
-      } else {
-        status.style.background = "#FFE8EE";
-        status.style.color = "#FF2B5B";
-        status.textContent = "❌ Could not detect PAO. Select manually ↓";
+      if (isBlurry) {
+        console.log("⚠️ Image is blurry - skipping OCR");
+        showToast("📸 Photo is blurry. Please retake.", true);
+        status.style.display = "none";
+        return;
       }
       
-    } catch (err) {
-      console.error(err);
-      status.style.background = "#FFE8EE";
-      status.style.color = "#FF2B5B";
-      status.textContent = "⚠️ Error: " + err.message;
-    }
+      // If not blurry, proceed with existing OCR flow
+      status.style.display = "block";
+      status.style.background = "#FEF3C7";
+      status.style.color = "#F59E0B";
+      status.textContent = "🔍 Analyzing with Google Vision...";
+
+      try {
+        const pao = await detectWithGoogle(base64);
+        
+        if (pao && SUPPORTED_PAOS.includes(pao)) {
+          selectPAO(pao);
+          updateResult();
+          status.style.background = "#D1FAE5";
+          status.style.color = "#10B981";
+          status.textContent = `✓ Detected: ${pao}M (tap to deselect)`;
+        } else if (pao) {
+          status.style.background = "#FEF3C7";
+          status.style.color = "#F59E0B";
+          status.textContent = `⚠️ Detected ${pao}M but not supported. Select manually ↓`;
+        } else {
+          status.style.background = "#FFE8EE";
+          status.style.color = "#FF2B5B";
+          status.textContent = "❌ Could not detect PAO. Select manually ↓";
+        }
+        
+      } catch (err) {
+        console.error(err);
+        status.style.background = "#FFE8EE";
+        status.style.color = "#FF2B5B";
+        status.textContent = "⚠️ Error: " + err.message;
+      }
+    };
   };
   
   reader.readAsDataURL(file);
