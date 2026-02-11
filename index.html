@@ -486,6 +486,76 @@ label {
   white-space: nowrap;
 }
 
+.shelf-item-name.clickable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.shelf-item-name.clickable:hover {
+  color: var(--main-teal);
+}
+
+.shelf-item-name-edit-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.shelf-item-name-edit-input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.2s;
+  margin: 0;
+}
+
+.shelf-item-name-edit-input:focus {
+  outline: none;
+  border-color: var(--main-teal);
+  box-shadow: 0 0 0 3px rgba(46, 196, 192, 0.1);
+}
+
+.shelf-item-name-edit-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+  border: none;
+  flex-shrink: 0;
+}
+
+.shelf-item-name-edit-btn.confirm {
+  background: var(--main-teal);
+  color: white;
+}
+
+.shelf-item-name-edit-btn.confirm:hover {
+  background: var(--main-teal-hover);
+  transform: scale(1.05);
+}
+
+.shelf-item-name-edit-btn.cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.shelf-item-name-edit-btn.cancel:hover {
+  background: var(--border-light);
+  color: var(--text-primary);
+}
+
 .shelf-item-meta {
   font-size: 12px;
   color: var(--text-secondary);
@@ -959,29 +1029,6 @@ h3 {
   font-size: 18px;
   font-weight: 700;
 }
-
-/* HOME 화면에서만 My Shelf 미니멀 처리 */
-#homeScreen .home-shelf-button {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-
-  color: #6B6B6B;
-  font-size: 15px;
-  font-weight: 600;
-
-  margin-top: 32px;
-}
-
-#homeScreen .home-shelf-button:hover {
-  text-decoration: underline;
-}
-
-#homeScreen .home-shelf-button:active {
-  opacity: 0.6;
-}
-
 </style>
 </head>
 
@@ -1120,6 +1167,7 @@ let ocrProcessed = false;
 let dateMode = 'exact';
 let currentScreen = 'home';
 let selectionMode = false;
+let editingItemId = null;
 
 const productName = document.getElementById("productName");
 const paoBox = document.getElementById("paoBtns");
@@ -1177,6 +1225,7 @@ function showScreen(screen) {
     document.getElementById('shelfScreen').classList.add('active');
     currentScreen = 'shelf';
     exitSelectionMode();
+    editingItemId = null;
     renderShelf();
   }
 }
@@ -1768,6 +1817,41 @@ function formatOpeningDate(dateStr, isEstimated) {
   }
 }
 
+function startEditingName(itemId) {
+  editingItemId = itemId;
+  renderShelf();
+  
+  setTimeout(() => {
+    const input = document.querySelector(`#edit-input-${itemId}`);
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 10);
+}
+
+function confirmEditName(itemId) {
+  const input = document.querySelector(`#edit-input-${itemId}`);
+  if (!input) return;
+  
+  const newName = input.value.trim() || "noname";
+  
+  const shelf = loadShelfFromStorage();
+  const item = shelf.find(item => item.createdAt === itemId);
+  if (item) {
+    item.name = newName;
+    saveShelfToStorage(shelf);
+  }
+  
+  editingItemId = null;
+  renderShelf();
+}
+
+function cancelEditName() {
+  editingItemId = null;
+  renderShelf();
+}
+
 function renderShelf() {
   const shelf = refreshAllStatuses();
   
@@ -1828,14 +1912,34 @@ function renderShelf() {
     const openingDateDisplay = formatOpeningDate(item.openingDate, item.isEstimated || false);
     const estimatedBadge = (item.isEstimated || false) ? '<span class="shelf-item-estimated-badge">Estimated</span>' : '';
     
+    const isEditing = editingItemId === item.createdAt;
+    const displayName = item.name === "noname" ? "" : item.name;
+    
+    let nameHTML;
+    if (isEditing) {
+      nameHTML = `
+        <div class="shelf-item-name-edit-wrapper">
+          <input 
+            type="text" 
+            id="edit-input-${item.createdAt}" 
+            class="shelf-item-name-edit-input" 
+            value="${displayName}"
+            placeholder="Product name"
+          />
+          <button class="shelf-item-name-edit-btn confirm" onclick="confirmEditName(${item.createdAt})">✓</button>
+          <button class="shelf-item-name-edit-btn cancel" onclick="cancelEditName()">✕</button>
+        </div>
+      `;
+    } else {
+      nameHTML = `<div class="shelf-item-name clickable" onclick="startEditingName(${item.createdAt})">${item.name}</div>`;
+    }
+    
     return `
       <div class="shelf-item ${selectionMode ? 'selection-mode' : ''}">
         <input type="checkbox" class="shelf-item-checkbox" data-id="${item.createdAt}" onchange="updateDeleteButtonText()">
         <button class="delete-btn" onclick="enterSelectionMode(); setTimeout(() => { document.querySelector('[data-id=\\'${item.createdAt}\\']').checked = true; updateDeleteButtonText(); }, 10);">×</button>
         <div class="shelf-item-content">
-          <div class="shelf-item-name" onclick="enableNameEdit(${item.createdAt})">
-  ${item.name}
-</div>
+          ${nameHTML}
           <div class="shelf-item-meta">${item.pao} · Expires ${item.expiryDate}</div>
           <div class="shelf-item-dates">Opened: ${openingDateDisplay}${estimatedBadge}</div>
           <div class="shelf-item-time-left ${timeLeftClass}">${timeLeftText}</div>
@@ -1911,47 +2015,6 @@ function renderShelf() {
 
 initDateSelectors();
 updateViewShelfButtonText();
-
-function enableNameEdit(id) {
-  const shelf = loadShelfFromStorage();
-  const item = shelf.find(i => i.createdAt === id);
-  if (!item) return;
-
-  const nameDiv = document.querySelector(
-    `.shelf-item-name[onclick="enableNameEdit(${id})"]`
-  );
-
-  if (!nameDiv) return;
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = item.name === "noname" ? "" : item.name;
-  input.placeholder = "Enter product name";
-  input.style.width = "100%";
-  input.style.fontSize = "16px";
-  input.style.fontWeight = "700";
-
-  input.onblur = () => saveNameEdit(id, input.value);
-  input.onkeydown = (e) => {
-    if (e.key === "Enter") {
-      input.blur();
-    }
-  };
-
-  nameDiv.replaceWith(input);
-  input.focus();
-}
-
-function saveNameEdit(id, newName) {
-  const shelf = loadShelfFromStorage();
-  const item = shelf.find(i => i.createdAt === id);
-  if (!item) return;
-
-  item.name = newName.trim() || "noname";
-  saveShelfToStorage(shelf);
-  renderShelf();
-}
-
 </script>
 
 <input type="text" id="apiKey" value="AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw" style="display:none;" />
