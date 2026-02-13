@@ -1497,6 +1497,25 @@ const PAOS = [3, 6, 9, 12, 18, 24, 36];
 const SHELF_STORAGE_KEY = "myShelf";
 const PACIFIC_TZ = "America/Los_Angeles";
 
+async function trackEvent(eventName, payload = {}) {
+  try {
+    await fetch("https://keess-vision-proxy.ohryee.workers.dev/event", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        event: eventName,
+        ...payload,
+        timestamp: Date.now(),
+        userAgent: navigator.userAgent
+      })
+    });
+  } catch (err) {
+    console.log("Event tracking failed:", err);
+  }
+}
+
 let selectedPAO = null;
 let currentImageDataURL = null;
 let lastStatus = null;
@@ -1706,6 +1725,7 @@ function showScreen(screen) {
     updateViewShelfButtonText();
     updateStatusBar();
   } else if (screen === 'shelf') {
+    trackEvent("view_shelf");
     document.getElementById('shelfScreen').classList.add('active');
     currentScreen = 'shelf';
     exitSelectionMode();
@@ -1739,6 +1759,9 @@ function showDiscardConfirmation() {
 }
 
 function confirmDiscard() {
+  trackEvent("products_discarded", {
+  count: selectedTossItems.size
+});
   // Delete selected items
   const shelf = loadShelfFromStorage();
   const updatedShelf = shelf.filter(item => !selectedTossItems.has(item.createdAt));
@@ -2149,6 +2172,7 @@ async function handleFileSelect(e) {
         
         if (pao && SUPPORTED_PAOS.includes(pao)) {
           selectPAO(pao);
+          trackEvent("ocr_success", { pao: pao });
           updateResult();
           status.style.background = "#D1FAE5";
           status.style.color = "#10B981";
@@ -2272,6 +2296,11 @@ saveBtn.onclick = () => {
     updateStatusBar();
     productName.value = "";
     console.log("✓ Item saved. User remains on add screen.");
+    trackEvent("product_saved", {
+  pao: selectedPAO,
+  status: itemStatus,
+  isEstimated: dateMode === 'estimated'
+});
   }
 };
 
