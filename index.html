@@ -1496,7 +1496,6 @@ const SUPPORTED_PAOS = [3, 6, 12, 24];
 const PAOS = [3, 6, 9, 12, 18, 24, 36];
 const SHELF_STORAGE_KEY = "myShelf";
 const PACIFIC_TZ = "America/Los_Angeles";
-const GOOGLE_VISION_API_KEY = "AIzaSyAtwhPrHK5d_yLVkBfOc8tDjfk-2_cHDrw";
 
 let selectedPAO = null;
 let currentImageDataURL = null;
@@ -2072,7 +2071,8 @@ function extractPAO(text) {
 async function detectWithGoogle(base64Image) {
   const base64Content = base64Image.split(',')[1];
   
-  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
+  const response = await fetch(
+  "https://keess-vision-proxy.ohryee.workers.dev", {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
